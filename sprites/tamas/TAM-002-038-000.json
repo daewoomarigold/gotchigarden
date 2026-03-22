@@ -426,12 +426,7 @@
   "enabled": true,
   "bodyAnimAnchors": [
     {
-      "offsetX": 6,
-      "offsetY": 18,
-      "useFace": true
-    },
-    {
-      "offsetX": 6,
+      "offsetX": 5,
       "offsetY": 18,
       "useFace": true
     },
@@ -441,7 +436,12 @@
       "useFace": true
     },
     {
-      "offsetX": 6,
+      "offsetX": 5,
+      "offsetY": 18,
+      "useFace": true
+    },
+    {
+      "offsetX": 5,
       "offsetY": 18,
       "useFace": true
     },
@@ -452,12 +452,12 @@
     },
     {
       "offsetX": 3,
-      "offsetY": 20,
+      "offsetY": 19,
       "useFace": true
     },
     {
       "offsetX": 3,
-      "offsetY": 24,
+      "offsetY": 22,
       "useFace": true
     },
     {
