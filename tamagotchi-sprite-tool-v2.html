@@ -513,6 +513,7 @@ header h1 {
   <span class="version-badge">v2</span>
   <button class="btn btn-primary" id="btn-open-folder">↑ Open Folder</button>
   <button class="btn btn-commit-all" id="btn-commit-all" disabled>↓ Commit All</button>
+  <button class="btn" id="btn-export-dex" disabled style="border-color:var(--purple);color:var(--purple);">★ Export TamaDex</button>
   <div class="header-sep"></div>
   <div class="header-status" id="header-status">Open a folder containing sprite sheet PNGs and character JSONs</div>
 </header>
@@ -677,6 +678,13 @@ header h1 {
               <div class="id-preview" id="id-preview">ID: TAM-002-001-000</div>
             </div>
             <button class="btn btn-primary btn-full" id="btn-apply-info">Apply Info Changes</button>
+            <div style="margin-top:8px;padding:10px;background:var(--raised);border-radius:4px;border:1px solid var(--border);">
+              <label style="font-size:10px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;display:flex;align-items:center;gap:8px;cursor:pointer;">
+                <input type="checkbox" id="l-enabled" style="accent-color:var(--purple);width:14px;height:14px;">
+                <span>Enabled — available for student selection</span>
+              </label>
+              <div style="font-size:9px;color:var(--muted);margin-top:4px;padding-left:22px;">Flagged in tamadex.json export</div>
+            </div>
           </div>
         </div>
 
@@ -755,7 +763,25 @@ function detectBands(pixels, w, h, rowGapMin) {
     if (active[i]-active[i-1]>rowGapMin) { bands.push([bs,active[i-1]]); bs=active[i]; }
   }
   bands.push([bs,active[active.length-1]]);
-  return bands.filter(([r1,r2])=>r2-r1+1>=5);
+
+  // Pass 2: re-split tall bands using threshold=8.0
+  // Higher threshold cuts through JPEG noise that prevents clean splits
+  const SPLIT_THRESH = 8.0;
+  const refined = [];
+  for (const [r1,r2] of bands) {
+    if (r2-r1+1 <= 80) { refined.push([r1,r2]); continue; }
+    const sub=[]; let sbs=-1;
+    for (let y=r1;y<=r2;y++) {
+      if (rowMax[y]>SPLIT_THRESH) { if(sbs===-1) sbs=y; }
+      else { if(sbs!==-1){sub.push([sbs,y-1]);sbs=-1;} }
+    }
+    if (sbs!==-1) sub.push([sbs,r2]);
+    const valid=sub.filter(([a,b])=>b-a+1>=5);
+    if (valid.length>1) refined.push(...valid);
+    else refined.push([r1,r2]);
+  }
+
+  return refined.filter(([r1,r2])=>r2-r1+1>=5);
 }
 
 function detectSprites(pixels, w, bandRow1, bandRow2, colGapMin, prevBandEnd=0) {
@@ -1069,6 +1095,8 @@ async function openFolder() {
   hideLoading();
   buildCharList();
   updateHeaderStatus();
+  document.getElementById('btn-export-dex').disabled = false;
+  await tryLoadExistingDex();
 
   if (collection.length) {
     selectChar(collection[0].id);
@@ -1113,9 +1141,11 @@ function buildCharList(filter='') {
     item.dataset.id = entry.id;
 
     const genColor = entry.gen==='baby' ? 'gen-baby' : 'gen-adult';
+    const dexEntry = (window._loadedDex?.characters||[]).find(c=>c.id===entry.id);
+    const isEnabled   = dexEntry?.enabled || entry.json.enabled || false;
     item.innerHTML = `
       <div class="char-item-info">
-        <div class="char-item-name">${entry.name}${entry.json.variant ? ` <span style="color:var(--purple);font-size:0.65rem;">(${entry.json.variant})</span>` : ''}</div>
+        <div class="char-item-name">${entry.name}${entry.json.variant ? ` <span style="color:var(--purple);font-size:0.65rem;">(${entry.json.variant})</span>` : ''}${isEnabled ? ` <span style="color:var(--purple);font-size:0.6rem;">★</span>` : ''}</div>
         <div class="char-item-id"><span class="${genColor}">${entry.id}</span></div>
       </div>
       <div class="dirty-dot" title="Unsaved changes"></div>`;
@@ -1571,6 +1601,9 @@ function populateInfoTab(entry) {
   const parts=entry.id.split('-');
   document.getElementById('l-num').value     = parseInt(parts[2])||1;
   document.getElementById('l-var-num').value = parseInt(parts[3])||0;
+  // Beta flag — read from loaded dex if available
+  const dexEntry = (window._loadedDex?.characters||[]).find(c=>c.id===entry.id);
+  document.getElementById('l-enabled').checked  = dexEntry?.enabled || entry.json.enabled || false;
   updateIdPreview();
 }
 
@@ -1598,6 +1631,7 @@ document.getElementById('btn-apply-info').addEventListener('click',()=>{
   entry.json.variant     = document.getElementById('l-variant').value.trim()||undefined;
   entry.json.generation  = gen;
   entry.json.id          = newId;
+  entry.json.enabled        = document.getElementById('l-enabled').checked;
 
   document.getElementById('ch-name').textContent = entry.json.displayName;
   document.getElementById('ch-id').textContent   = newId;
@@ -1732,7 +1766,66 @@ function hideLoading() {
 // INIT
 // ═══════════════════════════════════════════════════════════════════════════
 
+// ── Export TamaDex ─────────────────────────────────────────────────────────
+function exportTamaDex() {
+  if (!collection.length) return;
+
+  // Load existing dex to preserve beta flags if one was loaded
+  const existing = window._loadedDex || {};
+  const existingMap = {};
+  (existing.characters || []).forEach(c => existingMap[c.id] = c);
+
+  const characters = collection.map(entry => {
+    const prev = existingMap[entry.id] || {};
+    return {
+      id:          entry.id,
+      displayName: entry.json.displayName,
+      variant:     entry.json.variant || null,
+      generation:  entry.json.generation || 'adult',
+      sheet:       entry.json.sheet || '',
+      hasAnchors:  !!(entry.json.bodyAnimAnchors?.length),
+      enabled:        prev.enabled || false,  // preserve existing beta flag
+    };
+  });
+
+  // Sort: adults first, then babies; within each by id
+  characters.sort((a,b) => {
+    if (a.generation !== b.generation)
+      return a.generation === 'adult' ? -1 : 1;
+    return a.id.localeCompare(b.id);
+  });
+
+  const manifest = {
+    generated:  new Date().toISOString().split('T')[0],
+    total:      characters.length,
+    enabledCount:  characters.filter(c=>c.enabled).length,
+    characters,
+  };
+
+  const blob = new Blob([JSON.stringify(manifest, null, 2)], {type:'application/json'});
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href = url; a.download = 'tamadex.json'; a.click();
+  URL.revokeObjectURL(url);
+  toast('★ Exported tamadex.json');
+}
+
+document.getElementById('btn-export-dex').addEventListener('click', exportTamaDex);
 document.getElementById('btn-open-folder').addEventListener('click', openFolder);
+
+// ── Load TamaDex (to preserve beta flags when re-exporting) ──────────────
+// If a tamadex.json is in the folder, load it automatically
+async function tryLoadExistingDex() {
+  try {
+    const dexHandle = await dirHandle.getFileHandle('tamadex.json');
+    const text = await (await dexHandle.getFile()).text();
+    window._loadedDex = JSON.parse(text);
+    const enabledCount = window._loadedDex.characters?.filter(c=>c.enabled).length || 0;
+    if (enabledCount > 0) toast(`TamaDex loaded — ${enabledCount} enabled characters`);
+  } catch(e) {
+    window._loadedDex = null; // no existing dex, that's fine
+  }
+}
 
 // Check File System Access API support
 if (!('showDirectoryPicker' in window)) {
