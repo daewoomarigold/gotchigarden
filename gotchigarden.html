@@ -287,8 +287,9 @@ const imageCache = {};  // filename → HTMLImageElement
 async function fetchJSON(charId) {
   if (jsonCache[charId]) return jsonCache[charId];
   const url  = rawUrl(TAMA_PATH, `${charId}.json`);
+  console.log('Fetching JSON:', url);
   const resp = await fetch(url);
-  if (!resp.ok) throw new Error(`${resp.status} fetching ${charId}.json`);
+  if (!resp.ok) throw new Error(`${resp.status} ${resp.statusText} — ${url}`);
   const data = await resp.json();
   jsonCache[charId] = data;
   return data;
@@ -298,11 +299,12 @@ async function fetchImage(folder, filename) {
   const key = `${folder}/${filename}`;
   if (imageCache[key]) return imageCache[key];
   const url = rawUrl(folder, filename);
+  console.log('Fetching image:', url);
   const img = await new Promise((resolve, reject) => {
     const i = new Image();
     i.crossOrigin = 'anonymous';
     i.onload  = () => resolve(i);
-    i.onerror = () => reject(new Error(`Failed to load ${filename}`));
+    i.onerror = () => reject(new Error(`Failed to load image — ${url}`));
     i.src = url;
   });
   imageCache[key] = img;
@@ -364,23 +366,22 @@ class GotchiCell {
 
   async _load() {
     try {
-      // Fetch JSON and images in parallel
-      const [charJSON, sheetImg, bgImg] = await Promise.all([
-        fetchJSON(this.student.charId),
-        // sheet filename comes from the JSON's sheet field once we have it
-        // but we need JSON first — fetch bg in parallel, sheet after
-        null, // placeholder
-        fetchImage(BG_PATH, this.student.bgFile),
-      ]);
+      // Step 1: fetch the character JSON
+      const charJSON = await fetchJSON(this.student.charId);
 
-      // Now fetch the sprite sheet using the sheet field from the JSON
-      const json = await fetchJSON(this.student.charId);
-      const sheet = await fetchImage(TAMA_PATH, json.sheet);
+      // Step 2: fetch sprite sheet using the sheet field from JSON
+      const sheetImg = await fetchImage(TAMA_PATH, charJSON.sheet);
 
-      this._init(json, sheet, bgImg);
+      // Step 3: fetch background
+      const bgImg = await fetchImage(BG_PATH, this.student.bgFile);
+
+      this._init(charJSON, sheetImg, bgImg);
     } catch(e) {
       console.error(`Failed to load cell for ${this.student.name}:`, e);
-      this.loadingEl.innerHTML = `<span style="color:var(--red);font-size:9px;">⚠ ${e.message}</span>`;
+      this.loadingEl.innerHTML = `
+        <div style="color:var(--red);font-size:8px;padding:6px;text-align:center;line-height:1.6;word-break:break-all;">
+          ⚠ ${e.message}
+        </div>`;
     }
   }
 
