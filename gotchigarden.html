@@ -223,8 +223,10 @@ const GITHUB_REPO   = 'gotchigarden';
 // GitHub Pages base URL — assets served from here allow cross-origin requests
 const PAGES_BASE = `https://${GITHUB_USER}.github.io/${GITHUB_REPO}`;
 
-const TAMA_PATH = 'sprites/tamas';       // folder containing JSONs + PNGs
-const BG_PATH   = 'sprites/backgrounds'; // folder containing background tiles
+const TAMA_PATH = 'sprites/tamas';
+const BG_PATH   = 'sprites/background';
+
+const DEFAULT_BG = 'LCD Handhelds - Tamagotchi Smart - Backgrounds - Base_tile_00.png';
 
 function rawUrl(folder, filename) {
   return `${PAGES_BASE}/${folder}/${encodeURIComponent(filename)}`;
@@ -239,22 +241,22 @@ function rawUrl(folder, filename) {
 //   gotchiPoints
 //   petCount  — how many pets to spawn in their cell
 const STUDENTS = [
-  { id:1,  name:'Alice',   charId:'TAM-002-001-000', bgFile:'bg_tile_00.png', gotchiPoints:120, petCount:1 },
-  { id:2,  name:'Ben',     charId:'TAM-002-002-000', bgFile:'bg_tile_00.png', gotchiPoints:85,  petCount:1 },
-  { id:3,  name:'Chloe',   charId:'TAM-002-003-000', bgFile:'bg_tile_00.png', gotchiPoints:210, petCount:1 },
-  { id:4,  name:'Dylan',   charId:'TAM-002-001-000', bgFile:'bg_tile_00.png', gotchiPoints:55,  petCount:2 },
-  { id:5,  name:'Eva',     charId:'TAM-002-002-000', bgFile:'bg_tile_00.png', gotchiPoints:175, petCount:1 },
-  { id:6,  name:'Finn',    charId:'TAM-002-003-000', bgFile:'bg_tile_00.png', gotchiPoints:90,  petCount:1 },
-  { id:7,  name:'Grace',   charId:'TAM-002-001-000', bgFile:'bg_tile_00.png', gotchiPoints:140, petCount:1 },
-  { id:8,  name:'Henry',   charId:'TAM-002-002-000', bgFile:'bg_tile_00.png', gotchiPoints:30,  petCount:1 },
-  { id:9,  name:'Iris',    charId:'TAM-002-003-000', bgFile:'bg_tile_00.png', gotchiPoints:200, petCount:1 },
-  { id:10, name:'Jake',    charId:'TAM-002-001-000', bgFile:'bg_tile_00.png', gotchiPoints:65,  petCount:1 },
-  { id:11, name:'Kira',    charId:'TAM-002-002-000', bgFile:'bg_tile_00.png', gotchiPoints:155, petCount:1 },
-  { id:12, name:'Luca',    charId:'TAM-002-003-000', bgFile:'bg_tile_00.png', gotchiPoints:110, petCount:1 },
-  { id:13, name:'Maya',    charId:'TAM-002-001-000', bgFile:'bg_tile_00.png', gotchiPoints:240, petCount:1 },
-  { id:14, name:'Noah',    charId:'TAM-002-002-000', bgFile:'bg_tile_00.png', gotchiPoints:45,  petCount:1 },
-  { id:15, name:'Olivia',  charId:'TAM-002-003-000', bgFile:'bg_tile_00.png', gotchiPoints:185, petCount:1 },
-  { id:16, name:'Pierce',  charId:'TAM-002-001-000', bgFile:'bg_tile_00.png', gotchiPoints:75,  petCount:2 },
+  { id:1,  name:'Alice',   charId:'TAM-002-001-000', bgFile:DEFAULT_BG, gotchiPoints:120, petCount:1 },
+  { id:2,  name:'Ben',     charId:'TAM-002-002-000', bgFile:DEFAULT_BG, gotchiPoints:85,  petCount:1 },
+  { id:3,  name:'Chloe',   charId:'TAM-002-003-000', bgFile:DEFAULT_BG, gotchiPoints:210, petCount:1 },
+  { id:4,  name:'Dylan',   charId:'TAM-002-001-000', bgFile:DEFAULT_BG, gotchiPoints:55,  petCount:2 },
+  { id:5,  name:'Eva',     charId:'TAM-002-002-000', bgFile:DEFAULT_BG, gotchiPoints:175, petCount:1 },
+  { id:6,  name:'Finn',    charId:'TAM-002-003-000', bgFile:DEFAULT_BG, gotchiPoints:90,  petCount:1 },
+  { id:7,  name:'Grace',   charId:'TAM-002-001-000', bgFile:DEFAULT_BG, gotchiPoints:140, petCount:1 },
+  { id:8,  name:'Henry',   charId:'TAM-002-002-000', bgFile:DEFAULT_BG, gotchiPoints:30,  petCount:1 },
+  { id:9,  name:'Iris',    charId:'TAM-002-003-000', bgFile:DEFAULT_BG, gotchiPoints:200, petCount:1 },
+  { id:10, name:'Jake',    charId:'TAM-002-001-000', bgFile:DEFAULT_BG, gotchiPoints:65,  petCount:1 },
+  { id:11, name:'Kira',    charId:'TAM-002-002-000', bgFile:DEFAULT_BG, gotchiPoints:155, petCount:1 },
+  { id:12, name:'Luca',    charId:'TAM-002-003-000', bgFile:DEFAULT_BG, gotchiPoints:110, petCount:1 },
+  { id:13, name:'Maya',    charId:'TAM-002-001-000', bgFile:DEFAULT_BG, gotchiPoints:240, petCount:1 },
+  { id:14, name:'Noah',    charId:'TAM-002-002-000', bgFile:DEFAULT_BG, gotchiPoints:45,  petCount:1 },
+  { id:15, name:'Olivia',  charId:'TAM-002-003-000', bgFile:DEFAULT_BG, gotchiPoints:185, petCount:1 },
+  { id:16, name:'Pierce',  charId:'TAM-002-001-000', bgFile:DEFAULT_BG, gotchiPoints:75,  petCount:2 },
 ];
 
 // ─── ANIMATION DEFS ───────────────────────────────────────────────────────
