@@ -156,7 +156,7 @@
       "index": 2,
       "role": "body_zoom",
       "rowStart": 158,
-      "rowEnd": 235,
+      "rowEnd": 233,
       "frameCount": 3,
       "sprites": [
         {
@@ -164,7 +164,7 @@
           "x": 22,
           "y": 158,
           "w": 90,
-          "h": 78,
+          "h": 76,
           "label": "normal"
         },
         {
@@ -172,7 +172,7 @@
           "x": 152,
           "y": 158,
           "w": 90,
-          "h": 78,
+          "h": 76,
           "label": "happy"
         },
         {
@@ -180,12 +180,13 @@
           "x": 282,
           "y": 158,
           "w": 90,
-          "h": 78,
+          "h": 76,
           "label": "sleep"
         }
       ],
       "compositesWith": "face_zoom"
     }
   ],
-  "animations": []
+  "animations": [],
+  "enabled": true
 }

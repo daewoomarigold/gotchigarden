@@ -336,7 +336,7 @@
       "index": 5,
       "role": "face_zoom",
       "rowStart": 362,
-      "rowEnd": 407,
+      "rowEnd": 405,
       "frameCount": 9,
       "sprites": [
         {
@@ -344,7 +344,7 @@
           "x": 20,
           "y": 362,
           "w": 90,
-          "h": 46,
+          "h": 44,
           "label": "normal"
         },
         {
@@ -352,7 +352,7 @@
           "x": 150,
           "y": 362,
           "w": 90,
-          "h": 46,
+          "h": 44,
           "label": "eyes_closed"
         },
         {
@@ -360,7 +360,7 @@
           "x": 280,
           "y": 362,
           "w": 90,
-          "h": 46,
+          "h": 44,
           "label": "happy"
         },
         {
@@ -368,7 +368,7 @@
           "x": 410,
           "y": 362,
           "w": 90,
-          "h": 46,
+          "h": 44,
           "label": "crying"
         },
         {
@@ -376,7 +376,7 @@
           "x": 540,
           "y": 362,
           "w": 90,
-          "h": 46,
+          "h": 44,
           "label": "annoyed"
         },
         {
@@ -384,7 +384,7 @@
           "x": 673,
           "y": 362,
           "w": 84,
-          "h": 46,
+          "h": 44,
           "label": "blush_angry"
         },
         {
@@ -392,7 +392,7 @@
           "x": 800,
           "y": 362,
           "w": 94,
-          "h": 46,
+          "h": 44,
           "label": "worried"
         },
         {
@@ -400,7 +400,7 @@
           "x": 930,
           "y": 362,
           "w": 90,
-          "h": 46,
+          "h": 44,
           "label": "blush_happy"
         },
         {
@@ -408,11 +408,59 @@
           "x": 1060,
           "y": 362,
           "w": 90,
-          "h": 46,
+          "h": 44,
           "label": "somber"
         }
       ]
     }
   ],
-  "animations": []
+  "animations": [],
+  "enabled": true,
+  "bodyAnimAnchors": [
+    {
+      "offsetX": 7,
+      "offsetY": 26,
+      "useFace": true
+    },
+    {
+      "offsetX": 8,
+      "offsetY": 24,
+      "useFace": true
+    },
+    {
+      "offsetX": 6,
+      "offsetY": 26,
+      "useFace": true
+    },
+    {
+      "offsetX": 8,
+      "offsetY": 24,
+      "useFace": true
+    },
+    {
+      "offsetX": 4,
+      "offsetY": 26,
+      "useFace": true
+    },
+    {
+      "offsetX": 1,
+      "offsetY": 25,
+      "useFace": true
+    },
+    {
+      "offsetX": 2,
+      "offsetY": 30,
+      "useFace": true
+    },
+    {
+      "offsetX": 0,
+      "offsetY": 0,
+      "useFace": false
+    },
+    {
+      "offsetX": 0,
+      "offsetY": 0,
+      "useFace": false
+    }
+  ]
 }
