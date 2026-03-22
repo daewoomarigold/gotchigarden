@@ -1,0 +1,580 @@
+{
+  "id": "TAM-002-064-006",
+  "displayName": "Tsuyopitchi",
+  "generation": "adult",
+  "layoutType": "adult",
+  "sheet": "LCD Handhelds - Tamagotchi Smart - Characters - Tsuyopitchi (Teddy Tsuyomi).png",
+  "bands": [
+    {
+      "index": 0,
+      "role": "base",
+      "rowStart": 11,
+      "rowEnd": 65,
+      "frameCount": 2,
+      "sprites": [
+        {
+          "index": 0,
+          "x": 17,
+          "y": 11,
+          "w": 68,
+          "h": 55,
+          "label": "neutral"
+        },
+        {
+          "index": 1,
+          "x": 115,
+          "y": 11,
+          "w": 67,
+          "h": 55,
+          "label": "sad"
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "role": "body_anim",
+      "rowStart": 76,
+      "rowEnd": 133,
+      "frameCount": 10,
+      "sprites": [
+        {
+          "index": 0,
+          "x": 17,
+          "y": 76,
+          "w": 68,
+          "h": 58,
+          "label": "stand"
+        },
+        {
+          "index": 1,
+          "x": 111,
+          "y": 76,
+          "w": 74,
+          "h": 58,
+          "label": "hand_up"
+        },
+        {
+          "index": 2,
+          "x": 213,
+          "y": 76,
+          "w": 67,
+          "h": 58,
+          "label": "annoyed"
+        },
+        {
+          "index": 3,
+          "x": 306,
+          "y": 76,
+          "w": 73,
+          "h": 58,
+          "label": "jump"
+        },
+        {
+          "index": 4,
+          "x": 410,
+          "y": 76,
+          "w": 66,
+          "h": 58,
+          "label": "walk_1"
+        },
+        {
+          "index": 5,
+          "x": 503,
+          "y": 76,
+          "w": 72,
+          "h": 58,
+          "label": "walk_2"
+        },
+        {
+          "index": 6,
+          "x": 605,
+          "y": 76,
+          "w": 67,
+          "h": 58,
+          "label": "sit"
+        },
+        {
+          "index": 7,
+          "x": 714,
+          "y": 76,
+          "w": 70,
+          "h": 58,
+          "label": "kiss"
+        },
+        {
+          "index": 8,
+          "x": 797,
+          "y": 76,
+          "w": 74,
+          "h": 58,
+          "label": "march"
+        },
+        {
+          "index": 9,
+          "x": 894,
+          "y": 76,
+          "w": 46,
+          "h": 58
+        }
+      ],
+      "compositesWith": "face_small"
+    },
+    {
+      "index": 2,
+      "role": "small_anim",
+      "rowStart": 162,
+      "rowEnd": 201,
+      "frameCount": 7,
+      "sprites": [
+        {
+          "index": 0,
+          "x": 11,
+          "y": 162,
+          "w": 48,
+          "h": 40,
+          "label": "stand"
+        },
+        {
+          "index": 1,
+          "x": 74,
+          "y": 162,
+          "w": 52,
+          "h": 40,
+          "label": "happy"
+        },
+        {
+          "index": 2,
+          "x": 143,
+          "y": 162,
+          "w": 48,
+          "h": 40,
+          "label": "sad"
+        },
+        {
+          "index": 3,
+          "x": 205,
+          "y": 162,
+          "w": 54,
+          "h": 40,
+          "label": "angry"
+        },
+        {
+          "index": 4,
+          "x": 277,
+          "y": 162,
+          "w": 45,
+          "h": 40,
+          "label": "walk"
+        },
+        {
+          "index": 5,
+          "x": 342,
+          "y": 162,
+          "w": 47,
+          "h": 40,
+          "label": "sit"
+        },
+        {
+          "index": 6,
+          "x": 404,
+          "y": 162,
+          "w": 52,
+          "h": 40,
+          "label": "march"
+        }
+      ]
+    },
+    {
+      "index": 3,
+      "role": "body_zoom",
+      "rowStart": 227,
+      "rowEnd": 333,
+      "frameCount": 1,
+      "sprites": [
+        {
+          "index": 0,
+          "x": 2,
+          "y": 227,
+          "w": 258,
+          "h": 107,
+          "label": "neutral"
+        }
+      ],
+      "compositesWith": "face_zoom"
+    },
+    {
+      "index": 4,
+      "role": "face_small",
+      "rowStart": 338,
+      "rowEnd": 368,
+      "frameCount": 24,
+      "sprites": [
+        {
+          "index": 0,
+          "x": 9,
+          "y": 338,
+          "w": 20,
+          "h": 31,
+          "label": "normal"
+        },
+        {
+          "index": 1,
+          "x": 37,
+          "y": 338,
+          "w": 23,
+          "h": 31,
+          "label": "blush"
+        },
+        {
+          "index": 2,
+          "x": 74,
+          "y": 338,
+          "w": 21,
+          "h": 31,
+          "label": "happy"
+        },
+        {
+          "index": 3,
+          "x": 103,
+          "y": 338,
+          "w": 23,
+          "h": 31,
+          "label": "annoyed"
+        },
+        {
+          "index": 4,
+          "x": 141,
+          "y": 338,
+          "w": 20,
+          "h": 31,
+          "label": "normal_2"
+        },
+        {
+          "index": 5,
+          "x": 169,
+          "y": 338,
+          "w": 23,
+          "h": 31,
+          "label": "wowed"
+        },
+        {
+          "index": 6,
+          "x": 207,
+          "y": 338,
+          "w": 53,
+          "h": 31,
+          "label": "neutral_eyes_closed"
+        },
+        {
+          "index": 7,
+          "x": 272,
+          "y": 338,
+          "w": 21,
+          "h": 31,
+          "label": "smile_eyes_closed"
+        },
+        {
+          "index": 8,
+          "x": 301,
+          "y": 338,
+          "w": 23,
+          "h": 31,
+          "label": "eyes_open_happy"
+        },
+        {
+          "index": 9,
+          "x": 339,
+          "y": 338,
+          "w": 52,
+          "h": 31,
+          "label": "eyes_closed_happy"
+        },
+        {
+          "index": 10,
+          "x": 405,
+          "y": 338,
+          "w": 20,
+          "h": 31,
+          "label": "sad_crying"
+        },
+        {
+          "index": 11,
+          "x": 433,
+          "y": 338,
+          "w": 23,
+          "h": 31,
+          "label": "disappointed"
+        },
+        {
+          "index": 12,
+          "x": 470,
+          "y": 338,
+          "w": 54,
+          "h": 31,
+          "label": "fever"
+        },
+        {
+          "index": 13,
+          "x": 536,
+          "y": 338,
+          "w": 53,
+          "h": 31,
+          "label": "surprised"
+        },
+        {
+          "index": 14,
+          "x": 603,
+          "y": 338,
+          "w": 53,
+          "h": 31,
+          "label": "worried"
+        },
+        {
+          "index": 15,
+          "x": 669,
+          "y": 338,
+          "w": 52,
+          "h": 31,
+          "label": "contemplating"
+        },
+        {
+          "index": 16,
+          "x": 734,
+          "y": 338,
+          "w": 54,
+          "h": 31
+        },
+        {
+          "index": 17,
+          "x": 801,
+          "y": 338,
+          "w": 51,
+          "h": 31
+        },
+        {
+          "index": 18,
+          "x": 866,
+          "y": 338,
+          "w": 19,
+          "h": 31
+        },
+        {
+          "index": 19,
+          "x": 894,
+          "y": 338,
+          "w": 22,
+          "h": 31
+        },
+        {
+          "index": 20,
+          "x": 932,
+          "y": 338,
+          "w": 19,
+          "h": 31
+        },
+        {
+          "index": 21,
+          "x": 960,
+          "y": 338,
+          "w": 22,
+          "h": 31
+        },
+        {
+          "index": 22,
+          "x": 997,
+          "y": 338,
+          "w": 20,
+          "h": 31
+        },
+        {
+          "index": 23,
+          "x": 1026,
+          "y": 338,
+          "w": 22,
+          "h": 31
+        }
+      ]
+    },
+    {
+      "index": 5,
+      "role": "face_zoom",
+      "rowStart": 374,
+      "rowEnd": 439,
+      "frameCount": 23,
+      "sprites": [
+        {
+          "index": 0,
+          "x": 4,
+          "y": 374,
+          "w": 18,
+          "h": 66,
+          "label": "normal"
+        },
+        {
+          "index": 1,
+          "x": 36,
+          "y": 374,
+          "w": 18,
+          "h": 66,
+          "label": "eyes_closed"
+        },
+        {
+          "index": 2,
+          "x": 63,
+          "y": 374,
+          "w": 57,
+          "h": 66,
+          "label": "happy"
+        },
+        {
+          "index": 3,
+          "x": 132,
+          "y": 374,
+          "w": 22,
+          "h": 66,
+          "label": "crying"
+        },
+        {
+          "index": 4,
+          "x": 164,
+          "y": 374,
+          "w": 21,
+          "h": 66,
+          "label": "annoyed"
+        },
+        {
+          "index": 5,
+          "x": 193,
+          "y": 374,
+          "w": 57,
+          "h": 66,
+          "label": "blush_angry"
+        },
+        {
+          "index": 6,
+          "x": 264,
+          "y": 374,
+          "w": 18,
+          "h": 66,
+          "label": "worried"
+        },
+        {
+          "index": 7,
+          "x": 296,
+          "y": 374,
+          "w": 87,
+          "h": 66,
+          "label": "blush_happy"
+        },
+        {
+          "index": 8,
+          "x": 392,
+          "y": 374,
+          "w": 20,
+          "h": 66,
+          "label": "somber"
+        },
+        {
+          "index": 9,
+          "x": 426,
+          "y": 374,
+          "w": 19,
+          "h": 66
+        },
+        {
+          "index": 10,
+          "x": 453,
+          "y": 374,
+          "w": 57,
+          "h": 66
+        },
+        {
+          "index": 11,
+          "x": 522,
+          "y": 374,
+          "w": 22,
+          "h": 66
+        },
+        {
+          "index": 12,
+          "x": 554,
+          "y": 374,
+          "w": 90,
+          "h": 66
+        },
+        {
+          "index": 13,
+          "x": 654,
+          "y": 374,
+          "w": 20,
+          "h": 66
+        },
+        {
+          "index": 14,
+          "x": 684,
+          "y": 374,
+          "w": 20,
+          "h": 66
+        },
+        {
+          "index": 15,
+          "x": 714,
+          "y": 374,
+          "w": 55,
+          "h": 66
+        },
+        {
+          "index": 16,
+          "x": 782,
+          "y": 374,
+          "w": 20,
+          "h": 66
+        },
+        {
+          "index": 17,
+          "x": 816,
+          "y": 374,
+          "w": 19,
+          "h": 66
+        },
+        {
+          "index": 18,
+          "x": 843,
+          "y": 374,
+          "w": 59,
+          "h": 66
+        },
+        {
+          "index": 19,
+          "x": 914,
+          "y": 374,
+          "w": 120,
+          "h": 66
+        },
+        {
+          "index": 20,
+          "x": 1042,
+          "y": 374,
+          "w": 22,
+          "h": 66
+        },
+        {
+          "index": 21,
+          "x": 1074,
+          "y": 374,
+          "w": 21,
+          "h": 66
+        },
+        {
+          "index": 22,
+          "x": 1103,
+          "y": 374,
+          "w": 57,
+          "h": 66
+        }
+      ]
+    }
+  ],
+  "animations": [],
+  "variant": "Teddy Tsuyomi"
+}
