@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>★ GotchiGarden</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@400;700&family=DM+Mono:wght@400;500&display=swap');
+
+:root {
+  --bg:      #1a0a2e;
+  --surface: #2d1b4e;
+  --border:  #6b3fa0;
+  --text:    #e8d5ff;
+  --muted:   #9b7cc8;
+  --accent:  #ff6eb4;
+  --cyan:    #4ef0d8;
+  --yellow:  #ffe066;
+  --green:   #6bffb8;
+  --red:     #ff6b6b;
+  --cw: 225px; --ch: 225px; --np: 22px; --gap: 10px;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  background: var(--bg); color: var(--text);
+  font-family: 'DM Mono', monospace;
+  width: 100vw; height: 100vh; overflow: hidden;
+  display: flex; flex-direction: column;
+}
+
+header {
+  height: 44px; background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center;
+  justify-content: space-between;
+  padding: 0 20px; flex-shrink: 0; z-index: 10;
+}
+.hdr-title { font-family:'Pixelify Sans',monospace; font-size:1.1rem; color:var(--accent); letter-spacing:2px; }
+.hdr-meta  { font-size:10px; color:var(--muted); letter-spacing:1px; text-transform:uppercase; }
+.hdr-btns  { display:flex; gap:8px; }
+
+.grid-area { flex:1; display:flex; align-items:center; justify-content:center; overflow:hidden; }
+
+.classroom-grid {
+  display: grid;
+  grid-template-columns: repeat(8, var(--cw));
+  grid-template-rows: repeat(2, calc(var(--ch) + var(--np)));
+  gap: var(--gap);
+}
+
+.gotchi-cell { display:flex; flex-direction:column; cursor:pointer; transition:transform 0.12s; }
+.gotchi-cell:hover { transform:scale(1.02); }
+.gotchi-cell.selected .cell-vp {
+  border-color:var(--yellow);
+  box-shadow:0 0 12px rgba(255,224,102,0.5),0 0 0 1px rgba(255,224,102,0.3);
+}
+
+.cell-vp {
+  width:var(--cw); height:var(--ch);
+  border:1px solid var(--border); border-radius:3px 3px 0 0;
+  overflow:hidden; position:relative;
+  box-shadow:0 0 8px rgba(107,63,160,0.25);
+  background:#87CEEB;
+}
+.cell-vp.empty {
+  background:var(--surface); display:flex;
+  align-items:center; justify-content:center;
+  border-style:dashed; border-color:rgba(107,63,160,0.35);
+}
+.cell-loading {
+  position:absolute; inset:0; display:flex;
+  align-items:center; justify-content:center;
+  flex-direction:column; gap:6px;
+  font-size:9px; color:var(--muted); letter-spacing:1px;
+  background:rgba(135,206,235,0.9);
+}
+.cell-loading-spinner {
+  width:16px; height:16px; border:2px solid var(--border);
+  border-top-color:var(--cyan); border-radius:50%;
+  animation:spin 0.8s linear infinite;
+}
+@keyframes spin { to { transform:rotate(360deg); } }
+
+.cell-empty-icon { font-size:1.4rem; opacity:0.18; }
+.cell-canvas { width:100%; height:100%; image-rendering:pixelated; image-rendering:crisp-edges; display:block; }
+
+.cell-plate {
+  width:var(--cw); height:var(--np);
+  background:var(--surface); border:1px solid var(--border);
+  border-top:none; border-radius:0 0 3px 3px;
+  display:flex; align-items:center; padding:0 6px; gap:4px; overflow:hidden;
+}
+.cell-name { font-family:'Pixelify Sans',monospace; font-size:0.6rem; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; flex:1; }
+.cell-pts  { font-size:0.55rem; color:var(--yellow); white-space:nowrap; flex-shrink:0; }
+.cell-dot  { width:5px; height:5px; border-radius:50%; background:var(--green); box-shadow:0 0 3px var(--green); flex-shrink:0; transition:all 0.3s; }
+.cell-dot.flash    { background:var(--cyan); box-shadow:0 0 6px var(--cyan); }
+.cell-dot.inactive { background:var(--muted); box-shadow:none; }
+
+/* Overlays */
+.overlay { display:none; position:fixed; inset:0; z-index:100; background:rgba(10,4,20,0.82); backdrop-filter:blur(3px); align-items:center; justify-content:center; }
+.overlay.open { display:flex; }
+
+.panel {
+  background:var(--surface); border:1px solid var(--border);
+  border-radius:8px; padding:20px 24px;
+  min-width:320px; max-width:420px;
+  box-shadow:0 12px 48px rgba(0,0,0,0.6);
+  display:flex; flex-direction:column; gap:14px;
+}
+.panel-head   { font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--muted); padding-bottom:8px; border-bottom:1px solid rgba(107,63,160,0.3); }
+.panel-title  { font-family:'Pixelify Sans',monospace; font-size:1.1rem; color:var(--accent); letter-spacing:1px; }
+
+.student-info { display:flex; flex-direction:column; gap:10px; align-items:center; }
+.student-name-big { font-family:'Pixelify Sans',monospace; font-size:1.4rem; color:var(--text); }
+.student-pts-big  { font-size:0.8rem; color:var(--yellow); }
+
+.award-row { display:flex; gap:8px; width:100%; }
+.award-input {
+  flex:1; background:var(--bg); border:1px solid var(--border);
+  color:var(--text); font-family:'DM Mono',monospace; font-size:13px;
+  padding:6px 10px; border-radius:3px; outline:none; min-width:0;
+}
+.award-input:focus { border-color:var(--yellow); }
+
+.broadcast-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+
+.btn { padding:6px 12px; font-family:'DM Mono',monospace; font-size:10px; letter-spacing:1px; text-transform:uppercase; cursor:pointer; border-radius:3px; border:1px solid var(--border); background:transparent; color:var(--muted); transition:all 0.15s; white-space:nowrap; }
+.btn:hover    { border-color:var(--cyan); color:var(--cyan); background:rgba(78,240,216,.07); }
+.btn:disabled { opacity:0.35; cursor:not-allowed; }
+.btn.yellow   { border-color:var(--yellow); color:var(--yellow); }
+.btn.yellow:hover { background:rgba(255,224,102,.07); }
+.btn.red      { border-color:var(--red); color:var(--red); }
+.btn.red:hover    { background:rgba(255,107,107,.07); }
+.btn.pink     { border-color:var(--accent); color:var(--accent); }
+.btn.full     { width:100%; }
+.btn-row      { display:flex; gap:8px; width:100%; }
+
+.fab-group { position:fixed; bottom:16px; right:16px; display:flex; flex-direction:column; gap:8px; z-index:50; }
+.fab { padding:8px 14px; font-family:'DM Mono',monospace; font-size:10px; letter-spacing:1px; text-transform:uppercase; cursor:pointer; border-radius:4px; border:1px solid var(--border); background:var(--surface); color:var(--muted); transition:all 0.15s; box-shadow:0 4px 12px rgba(0,0,0,0.4); }
+.fab:hover  { border-color:var(--cyan); color:var(--cyan); }
+.fab.yellow { border-color:var(--yellow); color:var(--yellow); }
+.fab.yellow:hover { background:rgba(255,224,102,.1); }
+
+#toast { position:fixed; bottom:14px; left:50%; transform:translateX(-50%) translateY(40px); z-index:999; background:var(--cyan); color:var(--bg); padding:7px 18px; border-radius:4px; font-size:11px; letter-spacing:1px; opacity:0; transition:all 0.22s; pointer-events:none; white-space:nowrap; }
+#toast.show { transform:translateX(-50%) translateY(0); opacity:1; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="hdr-title">★ GOTCHIGARDEN</div>
+  <div class="hdr-meta" id="class-label">loading...</div>
+  <div class="hdr-btns">
+    <button class="btn pink" onclick="openOverlay('overlay-broadcast')">⚡ Broadcast</button>
+  </div>
+</header>
+
+<div class="grid-area">
+  <div class="classroom-grid" id="classroom-grid"></div>
+</div>
+
+<div class="fab-group">
+  <button class="fab yellow" onclick="openOverlay('overlay-award-all')">★ Award All</button>
+</div>
+
+<!-- Student overlay -->
+<div class="overlay" id="overlay-student" onclick="closeOnBackdrop(event,'overlay-student')">
+  <div class="panel">
+    <div class="panel-head">Student</div>
+    <div class="student-info">
+      <div class="student-name-big" id="sel-name">—</div>
+      <div class="student-pts-big"><span id="sel-pts">0</span> GotchiPts</div>
+    </div>
+    <div>
+      <div style="font-size:9px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:6px;">Amount</div>
+      <input type="number" class="award-input" id="award-amount" value="10" min="1" max="999">
+    </div>
+    <div class="btn-row">
+      <button class="btn yellow full" id="btn-award-one">★ Award</button>
+      <button class="btn red full"    id="btn-deduct-one">− Deduct</button>
+    </div>
+    <button class="btn full" onclick="closeOverlay('overlay-student')">Close</button>
+  </div>
+</div>
+
+<!-- Award all overlay -->
+<div class="overlay" id="overlay-award-all" onclick="closeOnBackdrop(event,'overlay-award-all')">
+  <div class="panel">
+    <div class="panel-title">Award All Students</div>
+    <div class="panel-head">Points awarded to every student</div>
+    <input type="number" class="award-input" id="award-all-amount" value="10" min="1" max="999">
+    <div class="btn-row">
+      <button class="btn yellow full" id="btn-do-award-all">★ Award All</button>
+      <button class="btn full" onclick="closeOverlay('overlay-award-all')">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- Broadcast overlay -->
+<div class="overlay" id="overlay-broadcast" onclick="closeOnBackdrop(event,'overlay-broadcast')">
+  <div class="panel">
+    <div class="panel-title">Broadcast Animation</div>
+    <div class="panel-head">Plays for all students simultaneously</div>
+    <div class="broadcast-grid">
+      <button class="btn full" data-anim="null">🐾 Wander</button>
+      <button class="btn full" data-anim="idle">😐 Idle</button>
+      <button class="btn full" data-anim="wave">👋 Wave</button>
+      <button class="btn full" data-anim="crying_stand">😢 Crying</button>
+    </div>
+    <button class="btn full" onclick="closeOverlay('overlay-broadcast')">Close</button>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+'use strict';
+
+// ─── CONFIG ───────────────────────────────────────────────────────────────
+// Update REPO_BASE to match your GitHub Pages URL once enabled
+// e.g. 'https://daewoomarigold.github.io/gotchigarden'
+// For raw asset fetching we use the raw.githubusercontent.com URL
+const GITHUB_USER   = 'daewoomarigold';
+const GITHUB_REPO   = 'gotchigarden';
+const GITHUB_BRANCH = 'main';
+
+const RAW_BASE   = `https://raw.githubusercontent.com/${GITHUB_USER}/${GITHUB_REPO}/${GITHUB_BRANCH}`;
+const TAMA_PATH  = 'sprites/tamas';    // folder containing JSONs + PNGs
+const BG_PATH    = 'sprites/backgrounds'; // folder containing background tiles
+
+function rawUrl(folder, filename) {
+  // encodeURIComponent encodes spaces as %20 for filenames with spaces
+  return `${RAW_BASE}/${folder}/${encodeURIComponent(filename)}`;
+}
+
+// ─── ROSTER ───────────────────────────────────────────────────────────────
+// Each student has:
+//   id        — unique number (used for DOM ids)
+//   name      — display name
+//   charId    — TAM-XXX-XXX-XXX id matching a JSON filename in the repo
+//   bgFile    — background PNG filename in sprites/backgrounds/
+//   gotchiPoints
+//   petCount  — how many pets to spawn in their cell
+const STUDENTS = [
+  { id:1,  name:'Alice',   charId:'TAM-002-001-000', bgFile:'bg_tile_00.png', gotchiPoints:120, petCount:1 },
+  { id:2,  name:'Ben',     charId:'TAM-002-002-000', bgFile:'bg_tile_00.png', gotchiPoints:85,  petCount:1 },
+  { id:3,  name:'Chloe',   charId:'TAM-002-003-000', bgFile:'bg_tile_00.png', gotchiPoints:210, petCount:1 },
+  { id:4,  name:'Dylan',   charId:'TAM-002-001-000', bgFile:'bg_tile_00.png', gotchiPoints:55,  petCount:2 },
+  { id:5,  name:'Eva',     charId:'TAM-002-002-000', bgFile:'bg_tile_00.png', gotchiPoints:175, petCount:1 },
+  { id:6,  name:'Finn',    charId:'TAM-002-003-000', bgFile:'bg_tile_00.png', gotchiPoints:90,  petCount:1 },
+  { id:7,  name:'Grace',   charId:'TAM-002-001-000', bgFile:'bg_tile_00.png', gotchiPoints:140, petCount:1 },
+  { id:8,  name:'Henry',   charId:'TAM-002-002-000', bgFile:'bg_tile_00.png', gotchiPoints:30,  petCount:1 },
+  { id:9,  name:'Iris',    charId:'TAM-002-003-000', bgFile:'bg_tile_00.png', gotchiPoints:200, petCount:1 },
+  { id:10, name:'Jake',    charId:'TAM-002-001-000', bgFile:'bg_tile_00.png', gotchiPoints:65,  petCount:1 },
+  { id:11, name:'Kira',    charId:'TAM-002-002-000', bgFile:'bg_tile_00.png', gotchiPoints:155, petCount:1 },
+  { id:12, name:'Luca',    charId:'TAM-002-003-000', bgFile:'bg_tile_00.png', gotchiPoints:110, petCount:1 },
+  { id:13, name:'Maya',    charId:'TAM-002-001-000', bgFile:'bg_tile_00.png', gotchiPoints:240, petCount:1 },
+  { id:14, name:'Noah',    charId:'TAM-002-002-000', bgFile:'bg_tile_00.png', gotchiPoints:45,  petCount:1 },
+  { id:15, name:'Olivia',  charId:'TAM-002-003-000', bgFile:'bg_tile_00.png', gotchiPoints:185, petCount:1 },
+  { id:16, name:'Pierce',  charId:'TAM-002-001-000', bgFile:'bg_tile_00.png', gotchiPoints:75,  petCount:2 },
+];
+
+// ─── ANIMATION DEFS ───────────────────────────────────────────────────────
+const ANIMATION_DEFS = {
+  idle: {
+    adult:{fps:4,loop:true,frames:[{body:'stand',face:'normal',hold:1}]},
+    baby: {fps:4,loop:true,frames:[{body:'normal',hold:1}]},
+  },
+  walk: {
+    adult:{fps:3,loop:true,frames:[{body:'walk_1',face:'normal_2',hold:1},{body:'walk_2',face:'normal_2',hold:1}]},
+    baby: {fps:3,loop:true,frames:[{body:'walk_1',hold:1},{body:'walk_2',hold:1}]},
+  },
+  wave: {
+    adult:{fps:6,loop:true,frames:[{body:'stand',face:'happy',hold:1},{body:'hand_up',face:'happy',hold:4}]},
+    baby: {fps:6,loop:true,frames:[{body:'normal',hold:1},{body:'happy',hold:4}]},
+  },
+  crying_stand: {
+    adult:{fps:1,loop:true,frames:[{body:'annoyed',face:'sad_crying',hold:1}]},
+    baby: {fps:2,loop:true,frames:[{body:'normal',hold:2},{body:'sad',hold:2}]},
+  },
+};
+
+const CW = 225, CH = 225;
+
+// ─── ASSET CACHE ──────────────────────────────────────────────────────────
+// Cache fetched JSONs and images so shared characters don't re-download
+const jsonCache  = {};  // charId → parsed JSON
+const imageCache = {};  // filename → HTMLImageElement
+
+async function fetchJSON(charId) {
+  if (jsonCache[charId]) return jsonCache[charId];
+  const url  = rawUrl(TAMA_PATH, `${charId}.json`);
+  const resp = await fetch(url);
+  if (!resp.ok) throw new Error(`${resp.status} fetching ${charId}.json`);
+  const data = await resp.json();
+  jsonCache[charId] = data;
+  return data;
+}
+
+async function fetchImage(folder, filename) {
+  const key = `${folder}/${filename}`;
+  if (imageCache[key]) return imageCache[key];
+  const url = rawUrl(folder, filename);
+  const img = await new Promise((resolve, reject) => {
+    const i = new Image();
+    i.crossOrigin = 'anonymous';
+    i.onload  = () => resolve(i);
+    i.onerror = () => reject(new Error(`Failed to load ${filename}`));
+    i.src = url;
+  });
+  imageCache[key] = img;
+  return img;
+}
+
+// ─── GOTCHI CELL ──────────────────────────────────────────────────────────
+class GotchiCell {
+  constructor(container, student) {
+    this.student  = student;
+    this.charJSON = null;
+    this.bgCanvas = null;
+    this._body    = {}; this._face = {}; this._anch = {};
+    this.gen      = 'adult'; this.isBaby = false;
+    this._forced  = null;
+    this.pets     = [];
+    this._lastTick = 0;
+    this.off      = null;
+
+    this._buildDOM(container);
+    this._load(); // async — shows spinner until ready
+  }
+
+  _buildDOM(container) {
+    this.wrap = document.createElement('div');
+    this.wrap.className = 'gotchi-cell';
+    this.wrap.dataset.id = this.student.id;
+
+    const vp = document.createElement('div');
+    vp.className = 'cell-vp';
+    this.vp = vp;
+
+    // Loading spinner shown until assets arrive
+    this.loadingEl = document.createElement('div');
+    this.loadingEl.className = 'cell-loading';
+    this.loadingEl.innerHTML = `<div class="cell-loading-spinner"></div>`;
+    vp.appendChild(this.loadingEl);
+
+    this.canvas = document.createElement('canvas');
+    this.canvas.className = 'cell-canvas';
+    this.canvas.width = CW; this.canvas.height = CH;
+    this.canvas.style.display = 'none';
+    this.ctx = this.canvas.getContext('2d');
+    this.ctx.imageSmoothingEnabled = false;
+    vp.appendChild(this.canvas);
+
+    const plate = document.createElement('div');
+    plate.className = 'cell-plate';
+    plate.innerHTML = `
+      <div class="cell-name">${this.student.name}</div>
+      <div class="cell-pts" id="pts-${this.student.id}">${this.student.gotchiPoints} pts</div>
+      <div class="cell-dot" id="dot-${this.student.id}"></div>`;
+
+    this.wrap.appendChild(vp);
+    this.wrap.appendChild(plate);
+    this.wrap.addEventListener('click', () => selectStudent(this.student.id));
+    container.appendChild(this.wrap);
+  }
+
+  async _load() {
+    try {
+      // Fetch JSON and images in parallel
+      const [charJSON, sheetImg, bgImg] = await Promise.all([
+        fetchJSON(this.student.charId),
+        // sheet filename comes from the JSON's sheet field once we have it
+        // but we need JSON first — fetch bg in parallel, sheet after
+        null, // placeholder
+        fetchImage(BG_PATH, this.student.bgFile),
+      ]);
+
+      // Now fetch the sprite sheet using the sheet field from the JSON
+      const json = await fetchJSON(this.student.charId);
+      const sheet = await fetchImage(TAMA_PATH, json.sheet);
+
+      this._init(json, sheet, bgImg);
+    } catch(e) {
+      console.error(`Failed to load cell for ${this.student.name}:`, e);
+      this.loadingEl.innerHTML = `<span style="color:var(--red);font-size:9px;">⚠ ${e.message}</span>`;
+    }
+  }
+
+  _init(charJSON, sheetImg, bgImg) {
+    this.charJSON = charJSON;
+    this.gen      = charJSON.generation || 'adult';
+    this.isBaby   = this.gen === 'baby';
+
+    // Build offscreen sprite sheet canvas
+    this.off = document.createElement('canvas');
+    this.off.width  = sheetImg.naturalWidth  || sheetImg.width;
+    this.off.height = sheetImg.naturalHeight || sheetImg.height;
+    const oc = this.off.getContext('2d');
+    oc.imageSmoothingEnabled = false;
+    oc.drawImage(sheetImg, 0, 0);
+
+    // Build background canvas
+    this.bgCanvas = document.createElement('canvas');
+    this.bgCanvas.width  = bgImg.naturalWidth  || bgImg.width;
+    this.bgCanvas.height = bgImg.naturalHeight || bgImg.height;
+    this.bgCanvas.getContext('2d').drawImage(bgImg, 0, 0);
+
+    // Build lookup maps
+    const bb = charJSON.bands.find(b => b.role === 'body_anim');
+    const fb = charJSON.bands.find(b => b.role === 'face_small');
+    if (bb) bb.sprites.forEach(s => this._body[s.label] = s);
+    if (fb) fb.sprites.forEach(s => this._face[s.label] = s);
+    if (charJSON.bodyAnimAnchors && bb) {
+      bb.sprites.forEach((s, i) => {
+        this._anch[s.label] = charJSON.bodyAnimAnchors[i] || { offsetX:0, offsetY:0, useFace:true };
+      });
+    }
+
+    // Spawn pets
+    this._spawn(this.student.petCount || 1);
+
+    // Hide spinner, show canvas
+    this.loadingEl.style.display = 'none';
+    this.canvas.style.display    = 'block';
+
+    // Start loop
+    requestAnimationFrame(t => this._loop(t));
+  }
+
+  _spawn(count) {
+    const sp = Object.values(this._body)[0];
+    const sw = sp?sp.w:36, sh = sp?sp.h:46;
+    const minY = Math.floor(CH * 0.35), maxY = CH - sh - 2;
+    for (let i = 0; i < count; i++) {
+      const dx = (Math.random() > .5 ? 1 : -1) * (.3 + Math.random() * .4);
+      this.pets.push({
+        x: Math.random() * (CW - sw),
+        y: minY + Math.random() * (maxY - minY),
+        dx, facingRight: dx > 0, moving: true,
+        frameIdx: Math.floor(Math.random() * 2),
+        holdCounter: 0,
+        wanderTimer: 40 + Math.floor(Math.random() * 100),
+        pauseTimer:  0,
+      });
+    }
+  }
+
+  _def(key)  { return ANIMATION_DEFS[key]?.[this.gen] || null; }
+  _key(pet)  { return this._forced || (pet.moving ? 'walk' : 'idle'); }
+
+  _update(pet) {
+    const key = this._key(pet), def = this._def(key); if (!def) return;
+    pet.holdCounter++;
+    const fd = def.frames[pet.frameIdx % def.frames.length];
+    if (pet.holdCounter >= (fd.hold || 1)) { pet.holdCounter = 0; pet.frameIdx = (pet.frameIdx + 1) % def.frames.length; }
+    if (!this._forced) {
+      if (pet.moving) {
+        pet.x += pet.dx; pet.wanderTimer--;
+        const sp = this._body[fd.body] || Object.values(this._body)[0], sw = sp ? sp.w : 36;
+        if (pet.x <= 0)       { pet.x = 0;       pet.dx =  Math.abs(pet.dx); pet.facingRight = true;  }
+        if (pet.x >= CW - sw) { pet.x = CW - sw;  pet.dx = -Math.abs(pet.dx); pet.facingRight = false; }
+        if (pet.wanderTimer <= 0) {
+          if (Math.random() < .4) { pet.moving = false; pet.dx = 0; pet.pauseTimer = 40 + Math.floor(Math.random() * 80); pet.frameIdx = 0; pet.holdCounter = 0; }
+          else { pet.dx = (Math.random() > .5 ? 1 : -1) * (.3 + Math.random() * .4); pet.facingRight = pet.dx > 0; pet.wanderTimer = 40 + Math.floor(Math.random() * 100); }
+        }
+      } else {
+        pet.pauseTimer--;
+        if (pet.pauseTimer <= 0) { pet.moving = true; pet.dx = (Math.random() > .5 ? 1 : -1) * (.3 + Math.random() * .4); pet.facingRight = pet.dx > 0; pet.wanderTimer = 40 + Math.floor(Math.random() * 100); pet.frameIdx = 0; pet.holdCounter = 0; }
+      }
+    }
+  }
+
+  _draw(pet) {
+    const ctx = this.ctx, key = this._key(pet), def = this._def(key); if (!def) return;
+    const fd = def.frames[pet.frameIdx % def.frames.length];
+    const bs = this._body[fd.body]; if (!bs) return;
+    const fs = (!this.isBaby && fd.face) ? this._face[fd.face] || null : null;
+    const an = (!this.isBaby && fd.face) ? this._anch[fd.body] || { offsetX:0, offsetY:0, useFace:true } : { offsetX:0, offsetY:0, useFace:false };
+    const px = Math.round(pet.x), py = Math.round(pet.y);
+    ctx.save();
+    if (pet.facingRight) { ctx.translate(px + bs.w/2, 0); ctx.scale(-1, 1); ctx.translate(-(px + bs.w/2), 0); }
+    ctx.drawImage(this.off, bs.x, bs.y, bs.w, bs.h, px, py, bs.w, bs.h);
+    if (!this.isBaby && an.useFace && fs)
+      ctx.drawImage(this.off, fs.x, fs.y, fs.w, fs.h, px + an.offsetX, py + an.offsetY, fs.w, fs.h);
+    ctx.restore();
+  }
+
+  _render() {
+    if (!this.off || !this.bgCanvas) return;
+    const ctx = this.ctx; ctx.imageSmoothingEnabled = false;
+    ctx.fillStyle = '#87CEEB';
+    ctx.fillRect(0, 0, CW, CH);
+    ctx.drawImage(this.bgCanvas, 0, 0, CW, CH);
+    this.pets.forEach(p => this._draw(p));
+  }
+
+  _loop(ts) {
+    const def = this._def(this._forced || 'walk'), fps = def ? def.fps : 4;
+    if (ts - this._lastTick >= 1000 / fps) {
+      this._lastTick = ts;
+      this.pets.forEach(p => this._update(p));
+      this._render();
+    }
+    requestAnimationFrame(t => this._loop(t));
+  }
+
+  forceAnimation(key) {
+    this._forced = key || null;
+    this.pets.forEach(p => { p.frameIdx = 0; p.holdCounter = 0; });
+  }
+
+  awardPoints(n) {
+    this.student.gotchiPoints = Math.max(0, this.student.gotchiPoints + n);
+    const el  = document.getElementById('pts-' + this.student.id);
+    const dot = document.getElementById('dot-' + this.student.id);
+    if (el)  el.textContent = this.student.gotchiPoints + ' pts';
+    if (dot) { dot.classList.add('flash'); setTimeout(() => dot.classList.remove('flash'), 600); }
+    if (selected === this.student.id) refreshStudentPanel();
+    updateHeader();
+  }
+}
+
+// ─── GRID ─────────────────────────────────────────────────────────────────
+let cells    = [];
+let selected = null;
+
+function buildGrid() {
+  const grid = document.getElementById('classroom-grid');
+  grid.innerHTML = '';
+  cells = STUDENTS.map(s => new GotchiCell(grid, s));
+  updateHeader();
+}
+
+// ─── SELECTION ────────────────────────────────────────────────────────────
+function selectStudent(id) {
+  if (selected === id) { selected = null; closeOverlay('overlay-student'); }
+  else { selected = id; refreshStudentPanel(); openOverlay('overlay-student'); }
+  document.querySelectorAll('.gotchi-cell').forEach(el =>
+    el.classList.toggle('selected', parseInt(el.dataset.id) === selected));
+}
+
+function refreshStudentPanel() {
+  const s = STUDENTS.find(s => s.id === selected); if (!s) return;
+  document.getElementById('sel-name').textContent = s.name;
+  document.getElementById('sel-pts').textContent  = s.gotchiPoints;
+}
+
+function updateHeader() {
+  const top = STUDENTS.reduce((a, b) => a.gotchiPoints > b.gotchiPoints ? a : b);
+  document.getElementById('class-label').textContent =
+    `${STUDENTS.length} students · top: ${top.name} (${top.gotchiPoints} pts)`;
+}
+
+// ─── OVERLAYS ─────────────────────────────────────────────────────────────
+function openOverlay(id)  { document.getElementById(id).classList.add('open'); }
+function closeOverlay(id) {
+  document.getElementById(id).classList.remove('open');
+  if (id === 'overlay-student') {
+    selected = null;
+    document.querySelectorAll('.gotchi-cell').forEach(el => el.classList.remove('selected'));
+  }
+}
+function closeOnBackdrop(e, id) { if (e.target === document.getElementById(id)) closeOverlay(id); }
+
+// ─── TOAST ────────────────────────────────────────────────────────────────
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg; el.classList.add('show');
+  clearTimeout(el._t); el._t = setTimeout(() => el.classList.remove('show'), 2200);
+}
+
+// ─── AWARD / DEDUCT ───────────────────────────────────────────────────────
+document.getElementById('btn-award-one').addEventListener('click', () => {
+  if (!selected || !cells.length) return;
+  const amt = parseInt(document.getElementById('award-amount').value) || 10;
+  cells.find(c => c.student.id === selected)?.awardPoints(amt);
+});
+
+document.getElementById('btn-deduct-one').addEventListener('click', () => {
+  if (!selected || !cells.length) return;
+  const amt = parseInt(document.getElementById('award-amount').value) || 10;
+  cells.find(c => c.student.id === selected)?.awardPoints(-amt);
+});
+
+document.getElementById('btn-do-award-all').addEventListener('click', () => {
+  const amt = parseInt(document.getElementById('award-all-amount').value) || 10;
+  cells.forEach(c => c.awardPoints(amt));
+  closeOverlay('overlay-award-all');
+  toast(`★ +${amt} pts awarded to all`);
+});
+
+// ─── BROADCAST ────────────────────────────────────────────────────────────
+document.querySelectorAll('[data-anim]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const key = btn.dataset.anim, forced = key === 'null' ? null : key;
+    cells.forEach(c => c.forceAnimation(forced));
+    closeOverlay('overlay-broadcast');
+    toast(forced ? `⚡ ${forced}` : '🐾 wandering');
+  });
+});
+
+// ─── INIT ─────────────────────────────────────────────────────────────────
+buildGrid();
+</script>
+</body>
+</html>
