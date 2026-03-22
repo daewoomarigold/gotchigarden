@@ -273,23 +273,22 @@ async function assignTamas() {
 }
 
 // ─── ANIMATION DEFS ───────────────────────────────────────────────────────
-// Now uses small_anim band — pre-assembled sprites, no face compositing needed
 const ANIMATION_DEFS = {
   idle: {
-    adult: { fps:4, loop:true, frames:[{ spr:'stand', hold:1 }] },
-    baby:  { fps:4, loop:true, frames:[{ spr:'normal', hold:1 }] },
+    adult:{fps:4,loop:true,frames:[{body:'stand',face:'normal',hold:1}]},
+    baby: {fps:4,loop:true,frames:[{body:'normal',hold:1}]},
   },
   walk: {
-    adult: { fps:6, loop:true, frames:[{ spr:'walk', hold:1 }, { spr:'stand', hold:1 }] },
-    baby:  { fps:3, loop:true, frames:[{ spr:'walk_1', hold:1 }, { spr:'walk_2', hold:1 }] },
+    adult:{fps:3,loop:true,frames:[{body:'walk_1',face:'normal_2',hold:1},{body:'walk_2',face:'normal_2',hold:1}]},
+    baby: {fps:3,loop:true,frames:[{body:'walk_1',hold:1},{body:'walk_2',hold:1}]},
   },
   wave: {
-    adult: { fps:6, loop:true, frames:[{ spr:'stand', hold:1 }, { spr:'happy', hold:4 }] },
-    baby:  { fps:6, loop:true, frames:[{ spr:'normal', hold:1 }, { spr:'happy', hold:4 }] },
+    adult:{fps:6,loop:true,frames:[{body:'stand',face:'happy',hold:1},{body:'hand_up',face:'happy',hold:4}]},
+    baby: {fps:6,loop:true,frames:[{body:'normal',hold:1},{body:'happy',hold:4}]},
   },
   crying_stand: {
-    adult: { fps:1, loop:true, frames:[{ spr:'sad', hold:1 }] },
-    baby:  { fps:2, loop:true, frames:[{ spr:'normal', hold:2 }, { spr:'sad', hold:2 }] },
+    adult:{fps:1,loop:true,frames:[{body:'annoyed',face:'sad_crying',hold:1}]},
+    baby: {fps:2,loop:true,frames:[{body:'normal',hold:2},{body:'sad',hold:2}]},
   },
 };
 
@@ -333,7 +332,7 @@ class GotchiCell {
     this.student  = student;
     this.charJSON = null;
     this.bgCanvas = null;
-    this._smap    = {};   // small_anim label → sprite
+    this._body    = {}; this._face = {}; this._anch = {};
     this.gen      = 'adult'; this.isBaby = false;
     this._forced  = null;
     this.pets     = [];
@@ -420,19 +419,16 @@ class GotchiCell {
     this.bgCanvas.height = bgImg.naturalHeight || bgImg.height;
     this.bgCanvas.getContext('2d').drawImage(bgImg, 0, 0);
 
-    // Use exact sprite coordinates from JSON — small_anim band
-    // This avoids re-detection issues where bands merge incorrectly
-    this._smap = {};
-    const sb = charJSON.bands.find(b => b.role === 'small_anim');
-    if (sb) sb.sprites.forEach(s => { if (s.label) this._smap[s.label] = s; });
-
-    // Baby fallback: body_anim (already pre-assembled for babies)
-    if (!Object.keys(this._smap).length) {
-      const bb = charJSON.bands.find(b => b.role === 'body_anim');
-      if (bb) bb.sprites.forEach(s => { if (s.label) this._smap[s.label] = s; });
+    // Build lookup maps from body_anim, face_small, and anchors
+    const bb = charJSON.bands.find(b => b.role === 'body_anim');
+    const fb = charJSON.bands.find(b => b.role === 'face_small');
+    if (bb) bb.sprites.forEach(s => this._body[s.label] = s);
+    if (fb) fb.sprites.forEach(s => this._face[s.label] = s);
+    if (charJSON.bodyAnimAnchors && bb) {
+      bb.sprites.forEach((s, i) => {
+        this._anch[s.label] = charJSON.bodyAnimAnchors[i] || { offsetX:0, offsetY:0, useFace:true };
+      });
     }
-
-    console.log(`${charJSON.displayName}: small_anim sprites loaded:`, Object.keys(this._smap));
 
     // Spawn pets
     this._spawn(this.student.petCount || 1);
@@ -446,11 +442,9 @@ class GotchiCell {
   }
 
   _spawn(count) {
-    const SCALE = 3;
-    const sp = Object.values(this._smap)[0];
-    const sw = (sp ? sp.w : 26) * SCALE;
-    const sh = (sp ? sp.h : 32) * SCALE;
-    const minY = Math.floor(CH * 0.45), maxY = CH - sh - 2;
+    const sp = Object.values(this._body)[0];
+    const sw = sp?sp.w:36, sh = sp?sp.h:46;
+    const minY = Math.floor(CH * 0.35), maxY = CH - sh - 2;
     for (let i = 0; i < count; i++) {
       const dx = (Math.random() > .5 ? 1 : -1) * (.3 + Math.random() * .4);
       this.pets.push({
@@ -469,7 +463,6 @@ class GotchiCell {
   _key(pet)  { return this._forced || (pet.moving ? 'walk' : 'idle'); }
 
   _update(pet) {
-    const SCALE = 3;
     const key = this._key(pet), def = this._def(key); if (!def) return;
     pet.holdCounter++;
     const fd = def.frames[pet.frameIdx % def.frames.length];
@@ -477,8 +470,7 @@ class GotchiCell {
     if (!this._forced) {
       if (pet.moving) {
         pet.x += pet.dx; pet.wanderTimer--;
-        const sp = this._smap[fd.spr] || Object.values(this._smap)[0];
-        const sw = (sp ? sp.w : 26) * SCALE;
+        const sp = this._body[fd.body] || Object.values(this._body)[0], sw = sp ? sp.w : 36;
         if (pet.x <= 0)       { pet.x = 0;       pet.dx =  Math.abs(pet.dx); pet.facingRight = true;  }
         if (pet.x >= CW - sw) { pet.x = CW - sw;  pet.dx = -Math.abs(pet.dx); pet.facingRight = false; }
         if (pet.wanderTimer <= 0) {
@@ -493,16 +485,17 @@ class GotchiCell {
   }
 
   _draw(pet) {
-    const SCALE = 3;
     const ctx = this.ctx, key = this._key(pet), def = this._def(key); if (!def) return;
     const fd = def.frames[pet.frameIdx % def.frames.length];
-    const sp = this._smap[fd.spr]; if (!sp) return;
+    const bs = this._body[fd.body]; if (!bs) return;
+    const fs = (!this.isBaby && fd.face) ? this._face[fd.face] || null : null;
+    const an = (!this.isBaby && fd.face) ? this._anch[fd.body] || { offsetX:0, offsetY:0, useFace:true } : { offsetX:0, offsetY:0, useFace:false };
     const px = Math.round(pet.x), py = Math.round(pet.y);
-    const dw = sp.w * SCALE, dh = sp.h * SCALE;
     ctx.save();
-    // Sprites face left by default — mirror for right
-    if (pet.facingRight) { ctx.translate(px + dw/2, 0); ctx.scale(-1, 1); ctx.translate(-(px + dw/2), 0); }
-    ctx.drawImage(this.off, sp.x, sp.y, sp.w, sp.h, px, py, dw, dh);
+    if (pet.facingRight) { ctx.translate(px + bs.w/2, 0); ctx.scale(-1, 1); ctx.translate(-(px + bs.w/2), 0); }
+    ctx.drawImage(this.off, bs.x, bs.y, bs.w, bs.h, px, py, bs.w, bs.h);
+    if (!this.isBaby && an.useFace && fs)
+      ctx.drawImage(this.off, fs.x, fs.y, fs.w, fs.h, px + an.offsetX, py + an.offsetY, fs.w, fs.h);
     ctx.restore();
   }
 
