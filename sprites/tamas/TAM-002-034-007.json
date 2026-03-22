@@ -1,0 +1,371 @@
+{
+  "id": "TAM-002-034-007",
+  "displayName": "Mametchi",
+  "generation": "adult",
+  "layoutType": "adult",
+  "sheet": "LCD Handhelds - Tamagotchi Smart - Characters - Mametchi (Woody Mametchi).png",
+  "bands": [
+    {
+      "index": 0,
+      "role": "base",
+      "rowStart": 20,
+      "rowEnd": 65,
+      "frameCount": 2,
+      "sprites": [
+        {
+          "index": 0,
+          "x": 10,
+          "y": 20,
+          "w": 49,
+          "h": 46,
+          "label": "neutral"
+        },
+        {
+          "index": 1,
+          "x": 76,
+          "y": 20,
+          "w": 49,
+          "h": 46,
+          "label": "sad"
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "role": "body_anim",
+      "rowStart": 87,
+      "rowEnd": 133,
+      "frameCount": 9,
+      "sprites": [
+        {
+          "index": 0,
+          "x": 10,
+          "y": 87,
+          "w": 49,
+          "h": 47,
+          "label": "stand"
+        },
+        {
+          "index": 1,
+          "x": 76,
+          "y": 87,
+          "w": 49,
+          "h": 47,
+          "label": "hand_up"
+        },
+        {
+          "index": 2,
+          "x": 142,
+          "y": 87,
+          "w": 49,
+          "h": 47,
+          "label": "annoyed"
+        },
+        {
+          "index": 3,
+          "x": 208,
+          "y": 87,
+          "w": 49,
+          "h": 47,
+          "label": "jump"
+        },
+        {
+          "index": 4,
+          "x": 273,
+          "y": 87,
+          "w": 49,
+          "h": 47,
+          "label": "walk_1"
+        },
+        {
+          "index": 5,
+          "x": 339,
+          "y": 87,
+          "w": 49,
+          "h": 47,
+          "label": "walk_2"
+        },
+        {
+          "index": 6,
+          "x": 405,
+          "y": 87,
+          "w": 49,
+          "h": 47,
+          "label": "sit"
+        },
+        {
+          "index": 7,
+          "x": 474,
+          "y": 87,
+          "w": 39,
+          "h": 47,
+          "label": "kiss"
+        },
+        {
+          "index": 8,
+          "x": 537,
+          "y": 87,
+          "w": 49,
+          "h": 47,
+          "label": "march"
+        }
+      ],
+      "compositesWith": "face_small"
+    },
+    {
+      "index": 2,
+      "role": "small_anim",
+      "rowStart": 138,
+      "rowEnd": 169,
+      "frameCount": 1,
+      "sprites": [
+        {
+          "index": 0,
+          "x": 2,
+          "y": 138,
+          "w": 236,
+          "h": 32,
+          "label": "stand"
+        }
+      ]
+    },
+    {
+      "index": 3,
+      "role": "body_zoom",
+      "rowStart": 182,
+      "rowEnd": 301,
+      "frameCount": 1,
+      "sprites": [
+        {
+          "index": 0,
+          "x": 2,
+          "y": 182,
+          "w": 258,
+          "h": 120,
+          "label": "neutral"
+        }
+      ],
+      "compositesWith": "face_zoom"
+    },
+    {
+      "index": 4,
+      "role": "face_small",
+      "rowStart": 314,
+      "rowEnd": 329,
+      "frameCount": 16,
+      "sprites": [
+        {
+          "index": 0,
+          "x": 20,
+          "y": 314,
+          "w": 28,
+          "h": 16,
+          "label": "normal"
+        },
+        {
+          "index": 1,
+          "x": 86,
+          "y": 314,
+          "w": 28,
+          "h": 16,
+          "label": "blush"
+        },
+        {
+          "index": 2,
+          "x": 152,
+          "y": 314,
+          "w": 28,
+          "h": 16,
+          "label": "happy"
+        },
+        {
+          "index": 3,
+          "x": 219,
+          "y": 314,
+          "w": 26,
+          "h": 16,
+          "label": "annoyed"
+        },
+        {
+          "index": 4,
+          "x": 284,
+          "y": 314,
+          "w": 28,
+          "h": 16,
+          "label": "normal_2"
+        },
+        {
+          "index": 5,
+          "x": 350,
+          "y": 314,
+          "w": 28,
+          "h": 16,
+          "label": "wowed"
+        },
+        {
+          "index": 6,
+          "x": 417,
+          "y": 314,
+          "w": 26,
+          "h": 16,
+          "label": "neutral_eyes_closed"
+        },
+        {
+          "index": 7,
+          "x": 483,
+          "y": 314,
+          "w": 26,
+          "h": 16,
+          "label": "smile_eyes_closed"
+        },
+        {
+          "index": 8,
+          "x": 548,
+          "y": 314,
+          "w": 33,
+          "h": 16,
+          "label": "eyes_open_happy"
+        },
+        {
+          "index": 9,
+          "x": 614,
+          "y": 314,
+          "w": 29,
+          "h": 16,
+          "label": "eyes_closed_happy"
+        },
+        {
+          "index": 10,
+          "x": 680,
+          "y": 314,
+          "w": 28,
+          "h": 16,
+          "label": "sad_crying"
+        },
+        {
+          "index": 11,
+          "x": 745,
+          "y": 314,
+          "w": 30,
+          "h": 16,
+          "label": "disappointed"
+        },
+        {
+          "index": 12,
+          "x": 812,
+          "y": 314,
+          "w": 28,
+          "h": 16,
+          "label": "fever"
+        },
+        {
+          "index": 13,
+          "x": 877,
+          "y": 314,
+          "w": 26,
+          "h": 16,
+          "label": "surprised"
+        },
+        {
+          "index": 14,
+          "x": 943,
+          "y": 314,
+          "w": 26,
+          "h": 16,
+          "label": "worried"
+        },
+        {
+          "index": 15,
+          "x": 1009,
+          "y": 314,
+          "w": 26,
+          "h": 16,
+          "label": "contemplating"
+        }
+      ]
+    },
+    {
+      "index": 5,
+      "role": "face_zoom",
+      "rowStart": 354,
+      "rowEnd": 397,
+      "frameCount": 9,
+      "sprites": [
+        {
+          "index": 0,
+          "x": 22,
+          "y": 354,
+          "w": 88,
+          "h": 44,
+          "label": "normal"
+        },
+        {
+          "index": 1,
+          "x": 152,
+          "y": 354,
+          "w": 88,
+          "h": 44,
+          "label": "eyes_closed"
+        },
+        {
+          "index": 2,
+          "x": 284,
+          "y": 354,
+          "w": 84,
+          "h": 44,
+          "label": "happy"
+        },
+        {
+          "index": 3,
+          "x": 412,
+          "y": 354,
+          "w": 88,
+          "h": 44,
+          "label": "crying"
+        },
+        {
+          "index": 4,
+          "x": 541,
+          "y": 354,
+          "w": 90,
+          "h": 44,
+          "label": "annoyed"
+        },
+        {
+          "index": 5,
+          "x": 674,
+          "y": 354,
+          "w": 84,
+          "h": 44,
+          "label": "blush_angry"
+        },
+        {
+          "index": 6,
+          "x": 802,
+          "y": 354,
+          "w": 102,
+          "h": 44,
+          "label": "worried"
+        },
+        {
+          "index": 7,
+          "x": 932,
+          "y": 354,
+          "w": 88,
+          "h": 44,
+          "label": "blush_happy"
+        },
+        {
+          "index": 8,
+          "x": 1062,
+          "y": 354,
+          "w": 88,
+          "h": 44,
+          "label": "somber"
+        }
+      ]
+    }
+  ],
+  "animations": [],
+  "variant": "Woody Mametchi"
+}

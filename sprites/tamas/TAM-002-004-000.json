@@ -1,0 +1,426 @@
+{
+  "id": "TAM-002-004-000",
+  "displayName": "Chamametchi",
+  "generation": "adult",
+  "layoutType": "adult",
+  "sheet": "LCD Handhelds - Tamagotchi Smart - Characters - Chamametchi.png",
+  "bands": [
+    {
+      "index": 0,
+      "role": "base",
+      "rowStart": 29,
+      "rowEnd": 67,
+      "frameCount": 2,
+      "sprites": [
+        {
+          "index": 0,
+          "x": 19,
+          "y": 29,
+          "w": 34,
+          "h": 39,
+          "label": "neutral"
+        },
+        {
+          "index": 1,
+          "x": 84,
+          "y": 29,
+          "w": 40,
+          "h": 39,
+          "label": "sad"
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "role": "body_anim",
+      "rowStart": 99,
+      "rowEnd": 139,
+      "frameCount": 9,
+      "sprites": [
+        {
+          "index": 0,
+          "x": 19,
+          "y": 99,
+          "w": 34,
+          "h": 41,
+          "label": "stand"
+        },
+        {
+          "index": 1,
+          "x": 87,
+          "y": 99,
+          "w": 34,
+          "h": 41,
+          "label": "hand_up"
+        },
+        {
+          "index": 2,
+          "x": 155,
+          "y": 99,
+          "w": 34,
+          "h": 41,
+          "label": "annoyed"
+        },
+        {
+          "index": 3,
+          "x": 223,
+          "y": 99,
+          "w": 34,
+          "h": 41,
+          "label": "jump"
+        },
+        {
+          "index": 4,
+          "x": 292,
+          "y": 99,
+          "w": 33,
+          "h": 41,
+          "label": "walk_1"
+        },
+        {
+          "index": 5,
+          "x": 360,
+          "y": 99,
+          "w": 33,
+          "h": 41,
+          "label": "walk_2"
+        },
+        {
+          "index": 6,
+          "x": 428,
+          "y": 99,
+          "w": 33,
+          "h": 41,
+          "label": "sit"
+        },
+        {
+          "index": 7,
+          "x": 490,
+          "y": 99,
+          "w": 35,
+          "h": 41,
+          "label": "kiss"
+        },
+        {
+          "index": 8,
+          "x": 563,
+          "y": 99,
+          "w": 35,
+          "h": 41,
+          "label": "march"
+        }
+      ],
+      "compositesWith": "face_small"
+    },
+    {
+      "index": 2,
+      "role": "small_anim",
+      "rowStart": 151,
+      "rowEnd": 179,
+      "frameCount": 7,
+      "sprites": [
+        {
+          "index": 0,
+          "x": 8,
+          "y": 151,
+          "w": 24,
+          "h": 29,
+          "label": "stand"
+        },
+        {
+          "index": 1,
+          "x": 44,
+          "y": 151,
+          "w": 24,
+          "h": 29,
+          "label": "happy"
+        },
+        {
+          "index": 2,
+          "x": 77,
+          "y": 151,
+          "w": 30,
+          "h": 29,
+          "label": "sad"
+        },
+        {
+          "index": 3,
+          "x": 116,
+          "y": 151,
+          "w": 24,
+          "h": 29,
+          "label": "angry"
+        },
+        {
+          "index": 4,
+          "x": 152,
+          "y": 151,
+          "w": 24,
+          "h": 29,
+          "label": "walk"
+        },
+        {
+          "index": 5,
+          "x": 188,
+          "y": 151,
+          "w": 24,
+          "h": 29,
+          "label": "sit"
+        },
+        {
+          "index": 6,
+          "x": 224,
+          "y": 151,
+          "w": 24,
+          "h": 29,
+          "label": "march"
+        }
+      ]
+    },
+    {
+      "index": 3,
+      "role": "body_zoom",
+      "rowStart": 213,
+      "rowEnd": 315,
+      "frameCount": 2,
+      "sprites": [
+        {
+          "index": 0,
+          "x": 14,
+          "y": 213,
+          "w": 108,
+          "h": 103,
+          "label": "neutral"
+        },
+        {
+          "index": 1,
+          "x": 146,
+          "y": 213,
+          "w": 108,
+          "h": 103,
+          "label": "arms_raised"
+        }
+      ],
+      "compositesWith": "face_zoom"
+    },
+    {
+      "index": 4,
+      "role": "face_small",
+      "rowStart": 334,
+      "rowEnd": 347,
+      "frameCount": 16,
+      "sprites": [
+        {
+          "index": 0,
+          "x": 24,
+          "y": 334,
+          "w": 23,
+          "h": 14,
+          "label": "normal"
+        },
+        {
+          "index": 1,
+          "x": 92,
+          "y": 334,
+          "w": 23,
+          "h": 14,
+          "label": "blush"
+        },
+        {
+          "index": 2,
+          "x": 160,
+          "y": 334,
+          "w": 23,
+          "h": 14,
+          "label": "happy"
+        },
+        {
+          "index": 3,
+          "x": 228,
+          "y": 334,
+          "w": 23,
+          "h": 14,
+          "label": "annoyed"
+        },
+        {
+          "index": 4,
+          "x": 288,
+          "y": 334,
+          "w": 40,
+          "h": 14,
+          "label": "normal_2"
+        },
+        {
+          "index": 5,
+          "x": 363,
+          "y": 334,
+          "w": 25,
+          "h": 14,
+          "label": "wowed"
+        },
+        {
+          "index": 6,
+          "x": 430,
+          "y": 334,
+          "w": 27,
+          "h": 14,
+          "label": "neutral_eyes_closed"
+        },
+        {
+          "index": 7,
+          "x": 499,
+          "y": 334,
+          "w": 25,
+          "h": 14,
+          "label": "smile_eyes_closed"
+        },
+        {
+          "index": 8,
+          "x": 567,
+          "y": 334,
+          "w": 30,
+          "h": 14,
+          "label": "eyes_open_happy"
+        },
+        {
+          "index": 9,
+          "x": 635,
+          "y": 334,
+          "w": 27,
+          "h": 14,
+          "label": "eyes_closed_happy"
+        },
+        {
+          "index": 10,
+          "x": 703,
+          "y": 334,
+          "w": 25,
+          "h": 14,
+          "label": "sad_crying"
+        },
+        {
+          "index": 11,
+          "x": 770,
+          "y": 334,
+          "w": 27,
+          "h": 14,
+          "label": "disappointed"
+        },
+        {
+          "index": 12,
+          "x": 840,
+          "y": 334,
+          "w": 24,
+          "h": 14,
+          "label": "fever"
+        },
+        {
+          "index": 13,
+          "x": 907,
+          "y": 334,
+          "w": 22,
+          "h": 14,
+          "label": "surprised"
+        },
+        {
+          "index": 14,
+          "x": 975,
+          "y": 334,
+          "w": 22,
+          "h": 14,
+          "label": "worried"
+        },
+        {
+          "index": 15,
+          "x": 1043,
+          "y": 334,
+          "w": 22,
+          "h": 14,
+          "label": "contemplating"
+        }
+      ]
+    },
+    {
+      "index": 5,
+      "role": "face_zoom",
+      "rowStart": 376,
+      "rowEnd": 423,
+      "frameCount": 9,
+      "sprites": [
+        {
+          "index": 0,
+          "x": 31,
+          "y": 376,
+          "w": 73,
+          "h": 48,
+          "label": "normal"
+        },
+        {
+          "index": 1,
+          "x": 163,
+          "y": 376,
+          "w": 73,
+          "h": 48,
+          "label": "eyes_closed"
+        },
+        {
+          "index": 2,
+          "x": 295,
+          "y": 376,
+          "w": 73,
+          "h": 48,
+          "label": "happy"
+        },
+        {
+          "index": 3,
+          "x": 401,
+          "y": 376,
+          "w": 126,
+          "h": 48,
+          "label": "crying"
+        },
+        {
+          "index": 4,
+          "x": 556,
+          "y": 376,
+          "w": 78,
+          "h": 48,
+          "label": "annoyed"
+        },
+        {
+          "index": 5,
+          "x": 686,
+          "y": 376,
+          "w": 83,
+          "h": 48,
+          "label": "blush_angry"
+        },
+        {
+          "index": 6,
+          "x": 821,
+          "y": 376,
+          "w": 91,
+          "h": 48,
+          "label": "worried"
+        },
+        {
+          "index": 7,
+          "x": 950,
+          "y": 376,
+          "w": 83,
+          "h": 48,
+          "label": "blush_happy"
+        },
+        {
+          "index": 8,
+          "x": 1087,
+          "y": 376,
+          "w": 73,
+          "h": 48,
+          "label": "somber"
+        }
+      ]
+    }
+  ],
+  "animations": []
+}
