@@ -1,0 +1,191 @@
+{
+  "id": "TAM-001-002-000",
+  "displayName": "Puchiotchi",
+  "generation": "baby",
+  "layoutType": "baby",
+  "sheet": "LCD Handhelds - Tamagotchi Smart - Characters - Puchiotchi.png",
+  "bands": [
+    {
+      "index": 0,
+      "role": "body_anim",
+      "rowStart": 31,
+      "rowEnd": 65,
+      "frameCount": 9,
+      "sprites": [
+        {
+          "index": 0,
+          "x": 21,
+          "y": 31,
+          "w": 28,
+          "h": 35,
+          "label": "normal"
+        },
+        {
+          "index": 1,
+          "x": 87,
+          "y": 31,
+          "w": 28,
+          "h": 35,
+          "label": "happy"
+        },
+        {
+          "index": 2,
+          "x": 153,
+          "y": 31,
+          "w": 28,
+          "h": 35,
+          "label": "sad"
+        },
+        {
+          "index": 3,
+          "x": 219,
+          "y": 31,
+          "w": 28,
+          "h": 35,
+          "label": "confused"
+        },
+        {
+          "index": 4,
+          "x": 285,
+          "y": 31,
+          "w": 28,
+          "h": 35,
+          "label": "walk_1"
+        },
+        {
+          "index": 5,
+          "x": 351,
+          "y": 31,
+          "w": 28,
+          "h": 35,
+          "label": "walk_2"
+        },
+        {
+          "index": 6,
+          "x": 417,
+          "y": 31,
+          "w": 28,
+          "h": 35,
+          "label": "smile"
+        },
+        {
+          "index": 7,
+          "x": 483,
+          "y": 31,
+          "w": 28,
+          "h": 35,
+          "label": "eyes_closed"
+        },
+        {
+          "index": 8,
+          "x": 549,
+          "y": 31,
+          "w": 28,
+          "h": 35,
+          "label": "jump"
+        }
+      ],
+      "compositesWith": "face_small"
+    },
+    {
+      "index": 1,
+      "role": "small_anim",
+      "rowStart": 79,
+      "rowEnd": 101,
+      "frameCount": 7,
+      "sprites": [
+        {
+          "index": 0,
+          "x": 8,
+          "y": 79,
+          "w": 21,
+          "h": 23,
+          "label": "normal"
+        },
+        {
+          "index": 1,
+          "x": 42,
+          "y": 79,
+          "w": 21,
+          "h": 23,
+          "label": "happy"
+        },
+        {
+          "index": 2,
+          "x": 76,
+          "y": 79,
+          "w": 21,
+          "h": 23,
+          "label": "sad"
+        },
+        {
+          "index": 3,
+          "x": 110,
+          "y": 79,
+          "w": 21,
+          "h": 23,
+          "label": "angry"
+        },
+        {
+          "index": 4,
+          "x": 144,
+          "y": 79,
+          "w": 21,
+          "h": 23,
+          "label": "walk_1"
+        },
+        {
+          "index": 5,
+          "x": 178,
+          "y": 79,
+          "w": 21,
+          "h": 23,
+          "label": "walk_2"
+        },
+        {
+          "index": 6,
+          "x": 212,
+          "y": 79,
+          "w": 21,
+          "h": 23,
+          "label": "jump"
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "role": "body_zoom",
+      "rowStart": 136,
+      "rowEnd": 235,
+      "frameCount": 3,
+      "sprites": [
+        {
+          "index": 0,
+          "x": 22,
+          "y": 136,
+          "w": 90,
+          "h": 100,
+          "label": "normal"
+        },
+        {
+          "index": 1,
+          "x": 152,
+          "y": 136,
+          "w": 90,
+          "h": 100,
+          "label": "happy"
+        },
+        {
+          "index": 2,
+          "x": 282,
+          "y": 136,
+          "w": 90,
+          "h": 100,
+          "label": "sleep"
+        }
+      ],
+      "compositesWith": "face_zoom"
+    }
+  ],
+  "animations": []
+}
