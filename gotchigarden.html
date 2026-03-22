@@ -217,20 +217,17 @@ header {
 'use strict';
 
 // ─── CONFIG ───────────────────────────────────────────────────────────────
-// Update REPO_BASE to match your GitHub Pages URL once enabled
-// e.g. 'https://daewoomarigold.github.io/gotchigarden'
-// For raw asset fetching we use the raw.githubusercontent.com URL
 const GITHUB_USER   = 'daewoomarigold';
 const GITHUB_REPO   = 'gotchigarden';
-const GITHUB_BRANCH = 'main';
 
-const RAW_BASE   = `https://raw.githubusercontent.com/${GITHUB_USER}/${GITHUB_REPO}/${GITHUB_BRANCH}`;
-const TAMA_PATH  = 'sprites/tamas';    // folder containing JSONs + PNGs
-const BG_PATH    = 'sprites/backgrounds'; // folder containing background tiles
+// GitHub Pages base URL — assets served from here allow cross-origin requests
+const PAGES_BASE = `https://${GITHUB_USER}.github.io/${GITHUB_REPO}`;
+
+const TAMA_PATH = 'sprites/tamas';       // folder containing JSONs + PNGs
+const BG_PATH   = 'sprites/backgrounds'; // folder containing background tiles
 
 function rawUrl(folder, filename) {
-  // encodeURIComponent encodes spaces as %20 for filenames with spaces
-  return `${RAW_BASE}/${folder}/${encodeURIComponent(filename)}`;
+  return `${PAGES_BASE}/${folder}/${encodeURIComponent(filename)}`;
 }
 
 // ─── ROSTER ───────────────────────────────────────────────────────────────
