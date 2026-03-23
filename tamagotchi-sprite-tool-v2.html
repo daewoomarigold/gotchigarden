@@ -608,8 +608,9 @@ header h1 {
           <input type="number" id="egg-idle-count" value="6" min="1" max="16">
         </div>
         <div style="font-size:9px;color:var(--muted);line-height:1.6;">
-          Hatch frames are auto-detected:<br>
-          crack (x=207, 18px) → burst (x=213, 18px)
+          Hatch frames (fixed):<br>
+          crack: x=207, 30px wide<br>
+          burst: x=207, 30px wide (full explosion)
         </div>
         <button class="btn btn-primary btn-full" id="btn-egg-analyze">▶ Analyze Grid</button>
 
@@ -1986,12 +1987,13 @@ document.getElementById('btn-egg-analyze').addEventListener('click', () => {
   const rowCount = Math.floor(EGG.bitmap.height / ch);
   EGG.variants   = [];
 
-  // Hatch frames — fixed coords, both sized to the larger burst frame (18px)
-  // so animations are consistent between crack and burst
-  const BURST_W = 18;
+  // Hatch frames — fixed coords based on pixel analysis
+  // Crack: seg 7 only (x=207, 5px) — padded to 30px for consistent sizing
+  // Burst: segs 7+8+9 combined (x=207–236, 30px) — full explosion
+  const HATCH_W = 30;
   const HATCH_FRAMES = [
-    { x: 207, label: 'crack' },  // small crack — padded to BURST_W
-    { x: 213, label: 'burst' },  // full burst
+    { x: 207, label: 'crack' },  // small crack lines only
+    { x: 207, label: 'burst' },  // full burst — spans all 3 sub-elements
   ];
 
   for (let r = 0; r < rowCount; r++) {
@@ -2005,7 +2007,7 @@ document.getElementById('btn-egg-analyze').addEventListener('click', () => {
     }
 
     const hatchFrames = HATCH_FRAMES.map(hf => ({
-      x: hf.x, y, w: BURST_W, h: ch, label: hf.label,
+      x: hf.x, y, w: HATCH_W, h: ch, label: hf.label,
     }));
 
     EGG.variants.push({ id, name: `Variant ${r+1}`, idleFrames, hatchFrames });
