@@ -2,706 +2,1837 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>★ GotchiGarden</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TAM SPRITE TOOL v2</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@400;700&family=DM+Mono:wght@400;500&display=swap');
 
 :root {
-  --bg:      #1a0a2e;
-  --surface: #2d1b4e;
-  --border:  #6b3fa0;
-  --text:    #e8d5ff;
-  --muted:   #9b7cc8;
-  --accent:  #ff6eb4;
+  --bg:      #0e0e1a;
+  --surface: #1a1a2e;
+  --raised:  #22223a;
+  --border:  #2e2e4e;
+  --border2: #4a4a7a;
+  --text:    #e0e0f0;
+  --muted:   #7070a0;
+  --pink:    #ff6eb4;
   --cyan:    #4ef0d8;
   --yellow:  #ffe066;
   --green:   #6bffb8;
   --red:     #ff6b6b;
-  --cw: 300px; --ch: 300px; --np: 22px; --gap: 10px;
+  --purple:  #a78bfa;
+  --orange:  #ff9f6b;
 }
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; overflow: hidden; }
+
 body {
-  background: var(--bg); color: var(--text);
+  background: var(--bg);
+  color: var(--text);
   font-family: 'DM Mono', monospace;
-  width: 100vw; height: 100vh; overflow: hidden;
-  display: flex; flex-direction: column;
+  font-size: 12px;
+  display: flex;
+  flex-direction: column;
 }
 
+/* ── Header ── */
 header {
-  height: 44px; background: var(--surface);
+  height: 46px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border2);
+  display: flex;
+  align-items: center;
+  padding: 0 16px;
+  gap: 16px;
+  flex-shrink: 0;
+  z-index: 50;
+}
+
+header h1 {
+  font-family: 'Pixelify Sans', monospace;
+  font-size: 1rem;
+  color: var(--pink);
+  letter-spacing: 2px;
+  white-space: nowrap;
+  margin-right: 4px;
+}
+
+.version-badge {
+  font-size: 9px;
+  color: var(--muted);
+  border: 1px solid var(--border2);
+  border-radius: 3px;
+  padding: 1px 5px;
+  letter-spacing: 1px;
+}
+
+.header-sep { flex: 1; }
+
+.header-status {
+  font-size: 10px;
+  color: var(--muted);
+  letter-spacing: 1px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 400px;
+}
+
+/* ── Layout ── */
+.workspace {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+/* ── Character list sidebar ── */
+.char-list {
+  width: 240px;
+  background: var(--surface);
+  border-right: 1px solid var(--border2);
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+.char-list-head {
+  padding: 10px 12px 6px;
   border-bottom: 1px solid var(--border);
-  display: flex; align-items: center;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.char-list-title {
+  font-size: 9px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--muted);
+  display: flex;
   justify-content: space-between;
-  padding: 0 20px; flex-shrink: 0; z-index: 10;
-}
-.hdr-title { font-family:'Pixelify Sans',monospace; font-size:1.1rem; color:var(--accent); letter-spacing:2px; }
-.hdr-meta  { font-size:10px; color:var(--muted); letter-spacing:1px; text-transform:uppercase; }
-.hdr-btns  { display:flex; gap:8px; }
-
-.grid-area { flex:1; display:flex; align-items:center; justify-content:center; overflow:hidden; }
-
-.classroom-grid {
-  display: grid;
-  grid-template-columns: repeat(5, var(--cw));
-  grid-template-rows: repeat(3, calc(var(--ch) + var(--np)));
-  gap: var(--gap);
+  align-items: center;
 }
 
-.gotchi-cell { display:flex; flex-direction:column; cursor:pointer; transition:transform 0.12s; }
-.gotchi-cell:hover { transform:scale(1.02); }
-.gotchi-cell.selected .cell-vp {
-  border-color:var(--yellow);
-  box-shadow:0 0 12px rgba(255,224,102,0.5),0 0 0 1px rgba(255,224,102,0.3);
+.char-count { color: var(--cyan); }
+
+.char-search {
+  background: var(--raised);
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  padding: 4px 8px;
+  border-radius: 3px;
+  outline: none;
+  width: 100%;
+}
+.char-search:focus { border-color: var(--cyan); }
+.char-search::placeholder { color: var(--muted); }
+
+.char-list-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 4px 0;
 }
 
-.cell-vp {
-  width:var(--cw); height:var(--ch);
-  border:1px solid var(--border); border-radius:3px 3px 0 0;
-  overflow:hidden; position:relative;
-  box-shadow:0 0 8px rgba(107,63,160,0.25);
-  background:#87CEEB;
+.char-list-body::-webkit-scrollbar { width: 4px; }
+.char-list-body::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+
+.char-item {
+  display: flex;
+  align-items: center;
+  padding: 7px 12px;
+  cursor: pointer;
+  gap: 8px;
+  transition: background 0.1s;
+  border-left: 2px solid transparent;
 }
-.cell-vp.empty {
-  background:var(--surface); display:flex;
-  align-items:center; justify-content:center;
-  border-style:dashed; border-color:rgba(107,63,160,0.35);
+.char-item:hover { background: var(--raised); }
+.char-item.active {
+  background: var(--raised);
+  border-left-color: var(--cyan);
 }
-.cell-loading {
-  position:absolute; inset:0; display:flex;
-  align-items:center; justify-content:center;
-  flex-direction:column; gap:6px;
-  font-size:9px; color:var(--muted); letter-spacing:1px;
-  background:rgba(135,206,235,0.9);
+
+.char-item-info { flex: 1; min-width: 0; }
+
+.char-item-name {
+  font-family: 'Pixelify Sans', monospace;
+  font-size: 0.75rem;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
-.cell-loading-spinner {
-  width:16px; height:16px; border:2px solid var(--border);
-  border-top-color:var(--cyan); border-radius:50%;
-  animation:spin 0.8s linear infinite;
+
+.char-item-id {
+  font-size: 9px;
+  color: var(--muted);
+  letter-spacing: 0.5px;
+  margin-top: 1px;
 }
-@keyframes spin { to { transform:rotate(360deg); } }
 
-.cell-empty-icon { font-size:1.4rem; opacity:0.18; }
-.cell-canvas { width:100%; height:100%; image-rendering:pixelated; image-rendering:crisp-edges; display:block; }
+.char-item-id .gen-baby  { color: var(--pink); }
+.char-item-id .gen-adult { color: var(--cyan); }
 
-.cell-plate {
-  width:var(--cw); height:var(--np);
-  background:var(--surface); border:1px solid var(--border);
-  border-top:none; border-radius:0 0 3px 3px;
-  display:flex; align-items:center; padding:0 6px; gap:4px; overflow:hidden;
+.dirty-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--yellow);
+  box-shadow: 0 0 5px var(--yellow);
+  flex-shrink: 0;
+  display: none;
 }
-.cell-name { font-family:'Pixelify Sans',monospace; font-size:0.6rem; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; flex:1; }
-.cell-pts  { font-size:0.55rem; color:var(--yellow); white-space:nowrap; flex-shrink:0; }
-.cell-dot  { width:5px; height:5px; border-radius:50%; background:var(--green); box-shadow:0 0 3px var(--green); flex-shrink:0; transition:all 0.3s; }
-.cell-dot.flash    { background:var(--cyan); box-shadow:0 0 6px var(--cyan); }
-.cell-dot.inactive { background:var(--muted); box-shadow:none; }
+.char-item.dirty .dirty-dot { display: block; }
 
-/* Overlays */
-.overlay { display:none; position:fixed; inset:0; z-index:100; background:rgba(10,4,20,0.82); backdrop-filter:blur(3px); align-items:center; justify-content:center; }
-.overlay.open { display:flex; }
-
-.panel {
-  background:var(--surface); border:1px solid var(--border);
-  border-radius:8px; padding:20px 24px;
-  min-width:320px; max-width:420px;
-  box-shadow:0 12px 48px rgba(0,0,0,0.6);
-  display:flex; flex-direction:column; gap:14px;
+.char-list-footer {
+  padding: 8px 10px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex-shrink: 0;
 }
-.panel-head   { font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--muted); padding-bottom:8px; border-bottom:1px solid rgba(107,63,160,0.3); }
-.panel-title  { font-family:'Pixelify Sans',monospace; font-size:1.1rem; color:var(--accent); letter-spacing:1px; }
 
-.student-info { display:flex; flex-direction:column; gap:10px; align-items:center; }
-.student-name-big { font-family:'Pixelify Sans',monospace; font-size:1.4rem; color:var(--text); }
-.student-pts-big  { font-size:0.8rem; color:var(--yellow); }
-
-.award-row { display:flex; gap:8px; width:100%; }
-.award-input {
-  flex:1; background:var(--bg); border:1px solid var(--border);
-  color:var(--text); font-family:'DM Mono',monospace; font-size:13px;
-  padding:6px 10px; border-radius:3px; outline:none; min-width:0;
+/* ── Main editor area ── */
+.editor-area {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
-.award-input:focus { border-color:var(--yellow); }
 
-.broadcast-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+/* Empty state */
+.editor-empty {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  color: var(--muted);
+}
+.editor-empty .ei { font-size: 3rem; opacity: 0.15; }
+.editor-empty p { font-size: 11px; letter-spacing: 1px; }
 
-.btn { padding:6px 12px; font-family:'DM Mono',monospace; font-size:10px; letter-spacing:1px; text-transform:uppercase; cursor:pointer; border-radius:3px; border:1px solid var(--border); background:transparent; color:var(--muted); transition:all 0.15s; white-space:nowrap; }
-.btn:hover    { border-color:var(--cyan); color:var(--cyan); background:rgba(78,240,216,.07); }
-.btn:disabled { opacity:0.35; cursor:not-allowed; }
-.btn.yellow   { border-color:var(--yellow); color:var(--yellow); }
-.btn.yellow:hover { background:rgba(255,224,102,.07); }
-.btn.red      { border-color:var(--red); color:var(--red); }
-.btn.red:hover    { background:rgba(255,107,107,.07); }
-.btn.pink     { border-color:var(--accent); color:var(--accent); }
-.btn.full     { width:100%; }
-.btn-row      { display:flex; gap:8px; width:100%; }
+/* Editor tabs */
+.editor-tabs {
+  display: flex;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border2);
+  padding: 0 12px;
+  gap: 2px;
+  flex-shrink: 0;
+}
 
-.fab-group { position:fixed; bottom:16px; right:16px; display:flex; flex-direction:column; gap:8px; z-index:50; }
-.fab { padding:8px 14px; font-family:'DM Mono',monospace; font-size:10px; letter-spacing:1px; text-transform:uppercase; cursor:pointer; border-radius:4px; border:1px solid var(--border); background:var(--surface); color:var(--muted); transition:all 0.15s; box-shadow:0 4px 12px rgba(0,0,0,0.4); }
-.fab:hover  { border-color:var(--cyan); color:var(--cyan); }
-.fab.yellow { border-color:var(--yellow); color:var(--yellow); }
-.fab.yellow:hover { background:rgba(255,224,102,.1); }
+.etab {
+  padding: 9px 14px;
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  cursor: pointer;
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  border-bottom: 2px solid transparent;
+  transition: all 0.15s;
+  margin-bottom: -1px;
+}
+.etab:hover  { color: var(--text); }
+.etab.active { color: var(--cyan); border-bottom-color: var(--cyan); }
 
-#toast { position:fixed; bottom:14px; left:50%; transform:translateX(-50%) translateY(40px); z-index:999; background:var(--cyan); color:var(--bg); padding:7px 18px; border-radius:4px; font-size:11px; letter-spacing:1px; opacity:0; transition:all 0.22s; pointer-events:none; white-space:nowrap; }
-#toast.show { transform:translateX(-50%) translateY(0); opacity:1; }
+.editor-content {
+  flex: 1;
+  overflow: auto;
+  padding: 16px;
+}
+
+/* ── Character header bar ── */
+.char-header {
+  display: flex;
+  align-items: center;
+  padding: 8px 16px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+.char-header-name {
+  font-family: 'Pixelify Sans', monospace;
+  font-size: 1rem;
+  color: var(--text);
+}
+
+.char-header-id {
+  font-size: 10px;
+  color: var(--muted);
+  letter-spacing: 1px;
+}
+
+.char-header-variant {
+  font-size: 10px;
+  color: var(--purple);
+  letter-spacing: 1px;
+}
+
+.char-header-sep { flex: 1; }
+
+/* ── Sheet view ── */
+.sheet-wrap {
+  position: relative;
+  display: inline-block;
+  cursor: crosshair;
+}
+
+.sheet-wrap canvas { display: block; image-rendering: pixelated; }
+
+/* ── Sprites grid ── */
+.sprites-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.band-section { display: flex; flex-direction: column; gap: 8px; }
+
+.band-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 10px;
+  background: var(--raised);
+  border-radius: 4px;
+  border-left: 3px solid var(--border2);
+}
+
+.band-role-label {
+  font-size: 10px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  font-weight: 500;
+}
+
+.band-count {
+  font-size: 10px;
+  color: var(--muted);
+}
+
+.band-count.ok    { color: var(--green); }
+.band-count.warn  { color: var(--yellow); }
+
+.band-role-select {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  padding: 3px 6px;
+  border-radius: 3px;
+  outline: none;
+  margin-left: auto;
+}
+
+.sprites-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding-left: 12px;
+}
+
+.sprite-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+}
+
+.sprite-canvas {
+  image-rendering: pixelated;
+  border: 1px solid var(--border);
+  border-radius: 2px;
+  background: #1a1a2e;
+}
+
+.sprite-label {
+  font-size: 9px;
+  color: var(--muted);
+  text-align: center;
+  max-width: 80px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ── Anchor editor ── */
+.anc-layout {
+  display: flex;
+  gap: 20px;
+  align-items: flex-start;
+  flex-wrap: wrap;
+}
+
+.anc-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 200px;
+}
+
+.anc-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+
+.anc-strip-item {
+  cursor: pointer;
+  border: 2px solid var(--border);
+  border-radius: 3px;
+  padding: 2px;
+  transition: border-color 0.1s;
+}
+.anc-strip-item.active { border-color: var(--cyan); }
+.anc-strip-item canvas { display: block; image-rendering: pixelated; }
+
+.anc-preview-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.anc-canvas-wrap {
+  background: var(--raised);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 12px;
+  display: inline-block;
+}
+
+/* ── Commit button states ── */
+.btn-commit { border-color: var(--yellow) !important; color: var(--yellow) !important; }
+.btn-commit:hover { background: rgba(255,224,102,.08) !important; }
+.btn-commit-all { border-color: var(--green) !important; color: var(--green) !important; }
+.btn-commit-all:hover { background: rgba(107,255,184,.08) !important; }
+
+/* ── Shared components ── */
+.section-head {
+  font-size: 9px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--muted);
+  padding-bottom: 4px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 8px;
+}
+
+.param { display: flex; flex-direction: column; gap: 3px; }
+.param label { font-size: 10px; color: var(--muted); }
+.param input[type=range] { width: 100%; accent-color: var(--cyan); }
+
+.field { display: flex; flex-direction: column; gap: 3px; }
+.field label { font-size: 10px; color: var(--muted); }
+.field input, .field select {
+  background: var(--raised);
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  padding: 5px 8px;
+  border-radius: 3px;
+  outline: none;
+}
+.field input:focus, .field select:focus { border-color: var(--cyan); }
+
+.id-preview {
+  font-size: 10px;
+  color: var(--pink);
+  margin-top: 2px;
+  letter-spacing: 1px;
+}
+
+.btn {
+  padding: 5px 12px;
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  cursor: pointer;
+  border-radius: 3px;
+  border: 1px solid var(--border2);
+  background: transparent;
+  color: var(--muted);
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+.btn:hover   { border-color: var(--cyan); color: var(--cyan); background: rgba(78,240,216,.06); }
+.btn:disabled { opacity: 0.35; cursor: not-allowed; }
+.btn-primary { border-color: var(--cyan);   color: var(--cyan); }
+.btn-pink    { border-color: var(--pink);   color: var(--pink); }
+.btn-pink:hover { background: rgba(255,110,180,.06); }
+.btn-full    { width: 100%; }
+
+/* ── Toast ── */
+#toast {
+  position: fixed; bottom: 16px; right: 16px; z-index: 999;
+  background: var(--cyan); color: var(--bg);
+  padding: 8px 16px; border-radius: 4px;
+  font-size: 11px; letter-spacing: 1px;
+  transform: translateY(50px); opacity: 0;
+  transition: all 0.22s; pointer-events: none;
+}
+
+/* ── Loading overlay ── */
+#loading {
+  display: none;
+  position: fixed; inset: 0; z-index: 900;
+  background: rgba(10,10,26,0.85);
+  backdrop-filter: blur(4px);
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 12px;
+  font-size: 11px;
+  color: var(--muted);
+  letter-spacing: 1px;
+}
+#loading.show { display: flex; }
+#loading-msg { color: var(--cyan); }
 </style>
 </head>
 <body>
 
+<!-- ── Header ── -->
 <header>
-  <div class="hdr-title">★ GOTCHIGARDEN</div>
-  <div class="hdr-meta" id="class-label">loading...</div>
-  <div class="hdr-btns">
-    <button class="btn pink" onclick="openOverlay('overlay-broadcast')">⚡ Broadcast</button>
-  </div>
+  <h1>★ TAM SPRITE TOOL</h1>
+  <span class="version-badge">v2</span>
+  <button class="btn btn-primary" id="btn-open-folder">↑ Open Folder</button>
+  <button class="btn btn-commit-all" id="btn-commit-all" disabled>↓ Commit All</button>
+  <button class="btn" id="btn-export-dex" disabled style="border-color:var(--purple);color:var(--purple);">★ Export TamaDex</button>
+  <div class="header-sep"></div>
+  <div class="header-status" id="header-status">Open a folder containing sprite sheet PNGs and character JSONs</div>
 </header>
 
-<div class="grid-area">
-  <div class="classroom-grid" id="classroom-grid"></div>
-</div>
+<!-- ── Workspace ── -->
+<div class="workspace">
 
-<div class="fab-group">
-  <button class="fab yellow" onclick="openOverlay('overlay-award-all')">★ Award All</button>
-</div>
-
-<!-- Student overlay -->
-<div class="overlay" id="overlay-student" onclick="closeOnBackdrop(event,'overlay-student')">
-  <div class="panel">
-    <div class="panel-head">Student</div>
-    <div class="student-info">
-      <div class="student-name-big" id="sel-name">—</div>
-      <div class="student-pts-big"><span id="sel-pts">0</span> GotchiPts</div>
+  <!-- ── Character list ── -->
+  <div class="char-list">
+    <div class="char-list-head">
+      <div class="char-list-title">
+        <span>Characters</span>
+        <span class="char-count" id="char-count">0</span>
+      </div>
+      <input type="text" class="char-search" id="char-search" placeholder="Search...">
     </div>
-    <div>
-      <div style="font-size:9px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:6px;">Amount</div>
-      <input type="number" class="award-input" id="award-amount" value="10" min="1" max="999">
+    <div class="char-list-body" id="char-list-body">
+      <!-- populated by JS -->
     </div>
-    <div class="btn-row">
-      <button class="btn yellow full" id="btn-award-one">★ Award</button>
-      <button class="btn red full"    id="btn-deduct-one">− Deduct</button>
-    </div>
-    <button class="btn full" onclick="closeOverlay('overlay-student')">Close</button>
-  </div>
-</div>
-
-<!-- Award all overlay -->
-<div class="overlay" id="overlay-award-all" onclick="closeOnBackdrop(event,'overlay-award-all')">
-  <div class="panel">
-    <div class="panel-title">Award All Students</div>
-    <div class="panel-head">Points awarded to every student</div>
-    <input type="number" class="award-input" id="award-all-amount" value="10" min="1" max="999">
-    <div class="btn-row">
-      <button class="btn yellow full" id="btn-do-award-all">★ Award All</button>
-      <button class="btn full" onclick="closeOverlay('overlay-award-all')">Cancel</button>
+    <div class="char-list-footer">
+      <div style="font-size:9px;color:var(--muted);display:flex;gap:10px;align-items:center;">
+        <span>● unsaved</span>
+        <span style="color:var(--muted);">○ saved</span>
+      </div>
     </div>
   </div>
-</div>
 
-<!-- Broadcast overlay -->
-<div class="overlay" id="overlay-broadcast" onclick="closeOnBackdrop(event,'overlay-broadcast')">
-  <div class="panel">
-    <div class="panel-title">Broadcast Animation</div>
-    <div class="panel-head">Plays for all students simultaneously</div>
-    <div class="broadcast-grid">
-      <button class="btn full" data-anim="null">🐾 Wander</button>
-      <button class="btn full" data-anim="idle">😐 Idle</button>
-      <button class="btn full" data-anim="wave">👋 Wave</button>
-      <button class="btn full" data-anim="crying_stand">😢 Crying</button>
+  <!-- ── Editor ── -->
+  <div class="editor-area" id="editor-area">
+    <div class="editor-empty" id="editor-empty">
+      <span class="ei">🥚</span>
+      <p>Open a folder to begin</p>
     </div>
-    <button class="btn full" onclick="closeOverlay('overlay-broadcast')">Close</button>
-  </div>
-</div>
+
+    <div id="editor-main" style="display:none;flex:1;flex-direction:column;overflow:hidden;">
+      <!-- Character header -->
+      <div class="char-header" id="char-header">
+        <div class="char-header-name" id="ch-name">—</div>
+        <div class="char-header-variant" id="ch-variant" style="display:none;"></div>
+        <div class="char-header-id" id="ch-id">—</div>
+        <div class="char-header-sep"></div>
+        <button class="btn" id="btn-reanalyze">↺ Re-analyze</button>
+        <button class="btn btn-commit" id="btn-commit" disabled>↓ Commit Changes</button>
+      </div>
+
+      <!-- Tabs -->
+      <div class="editor-tabs">
+        <button class="etab active" data-tab="sheet">Sheet View</button>
+        <button class="etab" data-tab="sprites">Extracted Sprites</button>
+        <button class="etab" data-tab="anchor">Anchor Editor</button>
+        <button class="etab" data-tab="info">Character Info</button>
+      </div>
+
+      <!-- Tab panels -->
+      <div class="editor-content" id="editor-content">
+
+        <!-- Sheet view -->
+        <div id="tab-sheet">
+          <div style="display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap;">
+            <div>
+              <div class="section-head" style="margin-bottom:10px;">Detection Settings</div>
+              <div style="display:flex;flex-direction:column;gap:8px;width:200px;">
+                <div class="param">
+                  <label>Row gap min <span id="v-rowgap">4</span>px</label>
+                  <input type="range" id="p-rowgap" min="1" max="20" value="4">
+                </div>
+                <div class="param">
+                  <label>Face gap <span id="v-facegap">8</span>px</label>
+                  <input type="range" id="p-facegap" min="3" max="20" value="8">
+                </div>
+                <div class="param">
+                  <label>Display scale <span id="v-scale">2</span>×</label>
+                  <input type="range" id="p-scale" min="1" max="8" value="2">
+                </div>
+                <div id="sheet-stats" style="margin-top:8px;font-size:10px;color:var(--muted);line-height:1.8;"></div>
+              </div>
+            </div>
+            <div id="sheet-canvas-wrap">
+              <div class="sheet-wrap" id="sheet-wrap">
+                <canvas id="sheet-canvas"></canvas>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Sprites -->
+        <div id="tab-sprites" style="display:none;">
+          <div class="sprites-grid" id="sprites-grid"></div>
+        </div>
+
+        <!-- Anchor editor -->
+        <div id="tab-anchor" style="display:none;">
+          <div class="anc-layout">
+            <div class="anc-controls">
+              <div class="section-head">Body Sprite</div>
+              <div class="anc-strip" id="anc-strip"></div>
+
+              <div class="section-head" style="margin-top:8px;">Offset</div>
+              <div style="display:flex;gap:8px;align-items:center;">
+                <span style="font-size:10px;color:var(--muted);">X</span>
+                <input type="number" id="anc-ox" value="0" style="width:60px;background:var(--raised);border:1px solid var(--border);color:var(--text);font-family:'DM Mono',monospace;font-size:11px;padding:4px 6px;border-radius:3px;outline:none;">
+                <span style="font-size:10px;color:var(--muted);">Y</span>
+                <input type="number" id="anc-oy" value="0" style="width:60px;background:var(--raised);border:1px solid var(--border);color:var(--text);font-family:'DM Mono',monospace;font-size:11px;padding:4px 6px;border-radius:3px;outline:none;">
+              </div>
+              <label style="font-size:10px;color:var(--muted);display:flex;gap:6px;align-items:center;cursor:pointer;margin-top:4px;">
+                <input type="checkbox" id="anc-use-face" checked style="accent-color:var(--cyan);">
+                Use face overlay
+              </label>
+
+              <div style="font-size:10px;color:var(--muted);margin-top:8px;">
+                Arrow keys nudge · Click strip to select
+              </div>
+
+              <button class="btn btn-full btn-primary" id="btn-lock-anchors" style="margin-top:8px;">⚓ Lock Anchors</button>
+              <div id="anc-locked-badge" style="display:none;font-size:9px;color:var(--green);letter-spacing:1px;text-align:center;">✓ ANCHORS LOCKED</div>
+            </div>
+
+            <div class="anc-preview-wrap">
+              <div class="section-head">Preview</div>
+              <div class="anc-canvas-wrap">
+                <canvas id="anc-canvas" style="image-rendering:pixelated;display:block;"></canvas>
+              </div>
+              <div style="font-size:9px;color:var(--muted);text-align:center;line-height:1.7;">
+                Drag to move · Arrow keys nudge · Enter = next sprite
+              </div>
+              <div id="anc-label" style="font-size:10px;color:var(--muted);text-align:center;"></div>
+            </div>
+
+            <div>
+              <div class="section-head">All Sprites</div>
+              <div id="anc-preview-grid" style="display:flex;flex-wrap:wrap;gap:6px;max-width:500px;"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Character info -->
+        <div id="tab-info" style="display:none;">
+          <div style="display:flex;flex-direction:column;gap:12px;max-width:320px;">
+            <div class="section-head">Identity</div>
+            <div class="field">
+              <label>Display Name</label>
+              <input type="text" id="l-name" placeholder="e.g. Mametchi">
+            </div>
+            <div class="field">
+              <label>Variant Name</label>
+              <input type="text" id="l-variant" placeholder="e.g. Chopper Milktchi (optional)">
+            </div>
+            <div class="field">
+              <label>Generation</label>
+              <select id="l-gen">
+                <option value="baby">Baby (TAM-001)</option>
+                <option value="adult" selected>Adult (TAM-002)</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Character #</label>
+              <input type="number" id="l-num" min="1" max="999" value="1">
+            </div>
+            <div class="field">
+              <label>Variant #</label>
+              <input type="number" id="l-var-num" min="0" max="999" value="0">
+              <div class="id-preview" id="id-preview">ID: TAM-002-001-000</div>
+            </div>
+            <button class="btn btn-primary btn-full" id="btn-apply-info">Apply Info Changes</button>
+            <div style="margin-top:8px;padding:10px;background:var(--raised);border-radius:4px;border:1px solid var(--border);">
+              <label style="font-size:10px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;display:flex;align-items:center;gap:8px;cursor:pointer;">
+                <input type="checkbox" id="l-enabled" style="accent-color:var(--purple);width:14px;height:14px;">
+                <span>Enabled — available for student selection</span>
+              </label>
+              <div style="font-size:9px;color:var(--muted);margin-top:4px;padding-left:22px;">Flagged in tamadex.json export</div>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /editor-content -->
+    </div><!-- /editor-main -->
+  </div><!-- /editor-area -->
+
+</div><!-- /workspace -->
 
 <div id="toast"></div>
+<div id="loading"><div id="loading-msg">Loading...</div><div id="loading-sub"></div></div>
 
 <script>
 'use strict';
 
-// ─── CONFIG ───────────────────────────────────────────────────────────────
-const GITHUB_USER   = 'daewoomarigold';
-const GITHUB_REPO   = 'gotchigarden';
+// ═══════════════════════════════════════════════════════════════════════════
+// CORE CONSTANTS (ported from v1)
+// ═══════════════════════════════════════════════════════════════════════════
 
-// GitHub Pages base URL — assets served from here allow cross-origin requests
-const PAGES_BASE = `https://${GITHUB_USER}.github.io/${GITHUB_REPO}`;
+const ROLE_META = {
+  base:       { label:'Base (assembled)', color:'#ff6eb4', expected:{adult:2,  baby:null} },
+  body_anim:  { label:'Body Animation',   color:'#4ef0d8', expected:{adult:9,  baby:9   } },
+  small_anim: { label:'Small Animation',  color:'#ffe066', expected:{adult:7,  baby:7   } },
+  body_zoom:  { label:'Body Zoomed',      color:'#a78bfa', expected:{adult:2,  baby:3   } },
+  face_small: { label:'Face Small',       color:'#ff9f6b', expected:{adult:16, baby:null} },
+  face_zoom:  { label:'Face Zoomed',      color:'#6bffb8', expected:{adult:9,  baby:null} },
+  unknown:    { label:'Unknown',          color:'#606082', expected:{adult:null,baby:null} },
+};
 
-const TAMA_PATH = 'sprites/tamas';
-const BG_PATH   = 'sprites/background';
+const ADULT_ROLES = ['base','body_anim','small_anim','body_zoom','face_small','face_zoom'];
+const BABY_ROLES  = ['body_anim','small_anim','body_zoom'];
+const GEN_PREFIX  = { baby:'001', adult:'002' };
 
-const DEFAULT_BG = 'LCD Handhelds - Tamagotchi Smart - Backgrounds - Base_tile_00.png';
-
-function rawUrl(folder, filename) {
-  return `${PAGES_BASE}/${folder}/${encodeURIComponent(filename)}`;
-}
-
-// ─── ROSTER ───────────────────────────────────────────────────────────────
-// charId is assigned randomly from enabled tamas on load
-const STUDENTS = [
-  { id:1,  name:'Alice',   charId:null, bgFile:DEFAULT_BG, gotchiPoints:120, petCount:1 },
-  { id:2,  name:'Ben',     charId:null, bgFile:DEFAULT_BG, gotchiPoints:85,  petCount:1 },
-  { id:3,  name:'Chloe',   charId:null, bgFile:DEFAULT_BG, gotchiPoints:210, petCount:1 },
-  { id:4,  name:'Dylan',   charId:null, bgFile:DEFAULT_BG, gotchiPoints:55,  petCount:1 },
-  { id:5,  name:'Eva',     charId:null, bgFile:DEFAULT_BG, gotchiPoints:175, petCount:1 },
-  { id:6,  name:'Finn',    charId:null, bgFile:DEFAULT_BG, gotchiPoints:90,  petCount:1 },
-  { id:7,  name:'Grace',   charId:null, bgFile:DEFAULT_BG, gotchiPoints:140, petCount:1 },
-  { id:8,  name:'Henry',   charId:null, bgFile:DEFAULT_BG, gotchiPoints:30,  petCount:1 },
-  { id:9,  name:'Iris',    charId:null, bgFile:DEFAULT_BG, gotchiPoints:200, petCount:1 },
-  { id:10, name:'Jake',    charId:null, bgFile:DEFAULT_BG, gotchiPoints:65,  petCount:1 },
-  { id:11, name:'Kira',    charId:null, bgFile:DEFAULT_BG, gotchiPoints:155, petCount:1 },
-  { id:12, name:'Luca',    charId:null, bgFile:DEFAULT_BG, gotchiPoints:110, petCount:1 },
-  { id:13, name:'Maya',    charId:null, bgFile:DEFAULT_BG, gotchiPoints:240, petCount:1 },
-  { id:14, name:'Noah',    charId:null, bgFile:DEFAULT_BG, gotchiPoints:45,  petCount:1 },
-  { id:15, name:'Olivia',  charId:null, bgFile:DEFAULT_BG, gotchiPoints:185, petCount:1 },
-];
-
-// Assign random enabled tama to each student from tamadex
-async function assignTamas() {
-  const url  = `${PAGES_BASE}/tamadex.json`;
-  const resp = await fetch(url);
-  if (!resp.ok) throw new Error(`Could not load tamadex.json (${resp.status})`);
-  const dex  = await resp.json();
-
-  const pool = dex.characters.filter(c => c.enabled);
-  if (!pool.length) throw new Error('No enabled characters in tamadex');
-
-  // Assign randomly, cycling through pool so all get used if pool < students
-  const shuffled = [...pool].sort(() => Math.random() - 0.5);
-  STUDENTS.forEach((s, i) => {
-    s.charId = shuffled[i % shuffled.length].id;
-  });
-
-  console.log('Tama assignments:', STUDENTS.map(s => `${s.name}→${s.charId}`));
-}
-
-// ─── ANIMATION DEFS ───────────────────────────────────────────────────────
-const ANIMATION_DEFS = {
-  idle: {
-    adult:{fps:4,loop:true,frames:[{body:'stand',face:'normal',hold:1}]},
-    baby: {fps:4,loop:true,frames:[{body:'normal',hold:1}]},
+const FRAME_LABELS = {
+  adult: {
+    base:       ['neutral','sad'],
+    body_anim:  ['stand','hand_up','annoyed','jump','walk_1','walk_2','sit','kiss','march'],
+    small_anim: ['stand','happy','sad','angry','walk','sit','march'],
+    body_zoom:  ['neutral','arms_raised'],
+    face_small: ['normal','blush','happy','annoyed','normal_2','wowed','neutral_eyes_closed',
+                 'smile_eyes_closed','eyes_open_happy','eyes_closed_happy','sad_crying',
+                 'disappointed','fever','surprised','worried','contemplating'],
+    face_zoom:  ['normal','eyes_closed','happy','crying','annoyed','blush_angry','worried','blush_happy','somber'],
   },
-  walk: {
-    adult:{fps:3,loop:true,frames:[{body:'walk_1',face:'normal',hold:1},{body:'walk_2',face:'normal',hold:1}]},
-    baby: {fps:3,loop:true,frames:[{body:'walk_1',hold:1},{body:'walk_2',hold:1}]},
-  },
-  wave: {
-    adult:{fps:6,loop:true,frames:[{body:'stand',face:'happy',hold:1},{body:'hand_up',face:'happy',hold:4}]},
-    baby: {fps:6,loop:true,frames:[{body:'normal',hold:1},{body:'happy',hold:4}]},
-  },
-  crying_stand: {
-    adult:{fps:1,loop:true,frames:[{body:'annoyed',face:'sad_crying',hold:1}]},
-    baby: {fps:2,loop:true,frames:[{body:'normal',hold:2},{body:'sad',hold:2}]},
+  baby: {
+    body_anim:  ['normal','happy','sad','confused','walk_1','walk_2','smile','eyes_closed','jump'],
+    small_anim: ['normal','happy','sad','angry','walk_1','walk_2','jump'],
+    body_zoom:  ['normal','happy','sleep'],
   },
 };
 
-const CW = 300, CH = 300;
+const COMPOSITE = { body_anim:'face_small', body_zoom:'face_zoom' };
+const BG_THRESH = 3.0;
+const NO_FACE   = new Set(['kiss', 'march']); // pre-assembled frames — no face overlay
 
-// ─── ASSET CACHE ──────────────────────────────────────────────────────────
-// Cache fetched JSONs and images so shared characters don't re-download
-const jsonCache  = {};  // charId → parsed JSON
-const imageCache = {};  // filename → HTMLImageElement
+// ═══════════════════════════════════════════════════════════════════════════
+// DETECTION ENGINE (ported from v1)
+// ═══════════════════════════════════════════════════════════════════════════
 
-async function fetchJSON(charId) {
-  if (jsonCache[charId]) return jsonCache[charId];
-  const url  = rawUrl(TAMA_PATH, `${charId}.json`);
-  console.log('Fetching JSON:', url);
-  const resp = await fetch(url);
-  if (!resp.ok) throw new Error(`${resp.status} ${resp.statusText} — ${url}`);
-  const data = await resp.json();
-  jsonCache[charId] = data;
-  return data;
+function lum(pixels, i) {
+  return (pixels[i]*0.299 + pixels[i+1]*0.587 + pixels[i+2]*0.114) * (pixels[i+3]/255);
 }
 
-async function fetchImage(folder, filename) {
-  const key = `${folder}/${filename}`;
-  if (imageCache[key]) return imageCache[key];
-  const url = rawUrl(folder, filename);
-  console.log('Fetching image:', url);
-  const img = await new Promise((resolve, reject) => {
-    const i = new Image();
-    i.crossOrigin = 'anonymous';
-    i.onload  = () => resolve(i);
-    i.onerror = () => reject(new Error(`Failed to load image — ${url}`));
-    i.src = url;
+function detectBands(pixels, w, h, rowGapMin) {
+  const rowMax = new Float32Array(h);
+  for (let y=0;y<h;y++) {
+    let mx=0;
+    for (let x=0;x<w;x++) { const v=lum(pixels,(y*w+x)*4); if(v>mx)mx=v; }
+    rowMax[y]=mx;
+  }
+  const active=[];
+  for (let y=0;y<h;y++) if(rowMax[y]>BG_THRESH) active.push(y);
+  if (!active.length) return [];
+  const bands=[]; let bs=active[0];
+  for (let i=1;i<active.length;i++) {
+    if (active[i]-active[i-1]>rowGapMin) { bands.push([bs,active[i-1]]); bs=active[i]; }
+  }
+  bands.push([bs,active[active.length-1]]);
+
+  // Pass 2: re-split tall bands using threshold=8.0
+  // Higher threshold cuts through JPEG noise that prevents clean splits
+  const SPLIT_THRESH = 8.0;
+  const refined = [];
+  for (const [r1,r2] of bands) {
+    if (r2-r1+1 <= 80) { refined.push([r1,r2]); continue; }
+    const sub=[]; let sbs=-1;
+    for (let y=r1;y<=r2;y++) {
+      if (rowMax[y]>SPLIT_THRESH) { if(sbs===-1) sbs=y; }
+      else { if(sbs!==-1){sub.push([sbs,y-1]);sbs=-1;} }
+    }
+    if (sbs!==-1) sub.push([sbs,r2]);
+    const valid=sub.filter(([a,b])=>b-a+1>=5);
+    if (valid.length>1) refined.push(...valid);
+    else refined.push([r1,r2]);
+  }
+
+  return refined.filter(([r1,r2])=>r2-r1+1>=5);
+}
+
+function detectSprites(pixels, w, bandRow1, bandRow2, colGapMin, prevBandEnd=0) {
+  const colMax=new Float32Array(w);
+  for (let x=0;x<w;x++) {
+    let mx=0;
+    for (let y=bandRow1;y<=bandRow2;y++) { const v=lum(pixels,(y*w+x)*4); if(v>mx)mx=v; }
+    colMax[x]=mx;
+  }
+  const active=[];
+  for (let x=0;x<w;x++) if(colMax[x]>BG_THRESH) active.push(x);
+  if (!active.length) return [];
+  const segs=[]; let cs=active[0];
+  for (let i=1;i<active.length;i++) {
+    if (active[i]-active[i-1]>colGapMin) { segs.push([cs,active[i-1]]); cs=active[i]; }
+  }
+  segs.push([cs,active[active.length-1]]);
+  const lookUp=prevBandEnd+1;
+  return segs.map(([x1,x2])=>{
+    let top=bandRow1;
+    for (let y=lookUp;y<bandRow1;y++) {
+      let found=false;
+      for (let x=x1;x<=x2;x++) { if(lum(pixels,(y*w+x)*4)>BG_THRESH){found=true;break;} }
+      if (found){top=y;break;}
+    }
+    return {x:x1,y:top,w:x2-x1+1,h:bandRow2-top+1};
   });
-  imageCache[key] = img;
-  return img;
 }
 
-// ─── GOTCHI CELL ──────────────────────────────────────────────────────────
-class GotchiCell {
-  constructor(container, student) {
-    this.student  = student;
-    this.charJSON = null;
-    this.bgCanvas = null;
-    this._body    = {}; this._face = {}; this._anch = {};
-    this.gen      = 'adult'; this.isBaby = false;
-    this._forced  = null;
-    this.pets     = [];
-    this._lastTick = 0;
-    this.off      = null;
+function detectGeneration(bands, width, height) {
+  const votes=[
+    bands.length<=3?'baby':'adult',
+    width <800?'baby':'adult',
+    height<300?'baby':'adult',
+  ];
+  return votes.filter(v=>v==='adult').length>=2?'adult':'baby';
+}
 
-    this._buildDOM(container);
-    this._load(); // async — shows spinner until ready
+function guessRoles(bands, gen) {
+  const list=gen==='baby'?BABY_ROLES:ADULT_ROLES;
+  return bands.map((_,i)=>list[i]||'unknown');
+}
+
+function analyzeSheet(bitmap, rowGap=4, faceGap=8) {
+  const off=document.createElement('canvas');
+  off.width=bitmap.width; off.height=bitmap.height;
+  off.getContext('2d').drawImage(bitmap,0,0);
+  const pixels=off.getContext('2d').getImageData(0,0,off.width,off.height).data;
+
+  const rawBands=detectBands(pixels,bitmap.width,bitmap.height,rowGap);
+  if (!rawBands.length) return null;
+
+  const gen=detectGeneration(rawBands,bitmap.width,bitmap.height);
+  const roles=guessRoles(rawBands,gen);
+
+  const bands=rawBands.map(([r1,r2],i)=>{
+    const role=roles[i];
+    const isFace=role==='face_small'||role==='face_zoom';
+    const colGap=isFace?faceGap:3;
+    const prev=i>0?rawBands[i-1][1]:0;
+    const sprites=detectSprites(pixels,bitmap.width,r1,r2,colGap,prev);
+    // Apply frame labels
+    const labels=FRAME_LABELS[gen]?.[role]||[];
+    sprites.forEach((sp,si)=>{ if(labels[si]) sp.label=labels[si]; });
+    return {rowStart:r1,rowEnd:r2,role,sprites};
+  });
+
+  return {gen, bands, pixels, w:bitmap.width, h:bitmap.height};
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// TRANSPARENT PNG GENERATOR (ported from v1)
+// ═══════════════════════════════════════════════════════════════════════════
+
+function makeTransparentBlob(bitmap, bands) {
+  return new Promise(resolve => {
+    const off=document.createElement('canvas');
+    off.width=bitmap.width; off.height=bitmap.height;
+    const ctx=off.getContext('2d');
+    ctx.drawImage(bitmap,0,0);
+    const imgData=ctx.getImageData(0,0,off.width,off.height);
+    const d=imgData.data; const w=off.width,h=off.height;
+
+    // Protected zones from bbox
+    const prot=new Uint8Array(w*h);
+    bands.forEach(band=>{
+      band.sprites.forEach(sp=>{
+        const x1=Math.max(0,sp.x),y1=Math.max(0,sp.y);
+        const x2=Math.min(w,sp.x+sp.w),y2=Math.min(h,sp.y+sp.h);
+        for(let py=y1;py<y2;py++) for(let px=x1;px<x2;px++) prot[py*w+px]=1;
+      });
+    });
+
+    // Brightness mask
+    const bright=new Float32Array(w*h);
+    const isFg=new Uint8Array(w*h);
+    for(let i=0;i<w*h;i++){
+      bright[i]=d[i*4]*0.299+d[i*4+1]*0.587+d[i*4+2]*0.114;
+      isFg[i]=bright[i]>=3.0?1:0;
+    }
+
+    // Blob labeling
+    const labels=new Int32Array(w*h).fill(-1);
+    const sizes=[]; let next=0;
+    const q=[];
+    for(let y=0;y<h;y++) for(let x=0;x<w;x++){
+      const idx=y*w+x;
+      if(isFg[idx]&&labels[idx]===-1){
+        const lbl=next++; sizes.push(0); q.push(idx); labels[idx]=lbl;
+        while(q.length){
+          const cur=q.pop(); sizes[lbl]++;
+          const cy=Math.floor(cur/w),cx=cur%w;
+          for(const[nx,ny]of[[cx-1,cy],[cx+1,cy],[cx,cy-1],[cx,cy+1]]){
+            if(nx>=0&&nx<w&&ny>=0&&ny<h){const ni=ny*w+nx;if(isFg[ni]&&labels[ni]===-1){labels[ni]=lbl;q.push(ni);}}
+          }
+        }
+      }
+    }
+
+    for(let i=0;i<w*h;i++){
+      if(!isFg[i]) d[i*4+3]=0;
+      else if(prot[i]) d[i*4+3]=255;
+      else { const lbl=labels[i]; d[i*4+3]=(lbl!==-1&&sizes[lbl]>=10)?255:0; }
+    }
+    ctx.putImageData(imgData,0,0);
+    off.toBlob(resolve,'image/png');
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// COLLECTION STATE
+// ═══════════════════════════════════════════════════════════════════════════
+
+let dirHandle    = null;   // FileSystemDirectoryHandle
+let collection   = [];     // array of CharEntry
+let activeId     = null;   // currently selected char id
+
+class CharEntry {
+  constructor(jsonHandle, json, pngHandle, bitmap) {
+    this.jsonHandle = jsonHandle;  // FileSystemFileHandle
+    this.pngHandle  = pngHandle;   // FileSystemFileHandle (may be null if not found)
+    this.json       = json;        // current in-memory JSON
+    this.bitmap     = bitmap;      // ImageBitmap (may be null)
+    this.dirty      = false;
+
+    // Analysis results (computed on first view)
+    this.analysis   = null;        // {gen, bands, pixels, w, h}
+    this.userRoles  = [];          // user-overridden band roles
+
+    // Anchor state
+    this.anchors    = json.bodyAnimAnchors
+      ? JSON.parse(JSON.stringify(json.bodyAnimAnchors))
+      : null;
+    this.anchorsLocked = !!json.bodyAnimAnchors;
+
+    // Settings
+    this.rowGap   = 4;
+    this.faceGap  = 8;
+    this.dispScale = 2;
   }
 
-  _buildDOM(container) {
-    this.wrap = document.createElement('div');
-    this.wrap.className = 'gotchi-cell';
-    this.wrap.dataset.id = this.student.id;
+  get id()   { return this.json.id;          }
+  get name() { return this.json.displayName; }
+  get gen()  { return this.json.generation || 'adult'; }
 
-    const vp = document.createElement('div');
-    vp.className = 'cell-vp';
-    this.vp = vp;
-
-    // Loading spinner shown until assets arrive
-    this.loadingEl = document.createElement('div');
-    this.loadingEl.className = 'cell-loading';
-    this.loadingEl.innerHTML = `<div class="cell-loading-spinner"></div>`;
-    vp.appendChild(this.loadingEl);
-
-    this.canvas = document.createElement('canvas');
-    this.canvas.className = 'cell-canvas';
-    this.canvas.width = CW; this.canvas.height = CH;
-    this.canvas.style.display = 'none';
-    this.ctx = this.canvas.getContext('2d');
-    this.ctx.imageSmoothingEnabled = false;
-    vp.appendChild(this.canvas);
-
-    const plate = document.createElement('div');
-    plate.className = 'cell-plate';
-    plate.innerHTML = `
-      <div class="cell-name">${this.student.name}</div>
-      <div class="cell-pts" id="pts-${this.student.id}">${this.student.gotchiPoints} pts</div>
-      <div class="cell-dot" id="dot-${this.student.id}"></div>`;
-
-    this.wrap.appendChild(vp);
-    this.wrap.appendChild(plate);
-    this.wrap.addEventListener('click', () => selectStudent(this.student.id));
-    container.appendChild(this.wrap);
+  markDirty() {
+    this.dirty = true;
+    refreshListItem(this.id);
+    document.getElementById('btn-commit').disabled    = false;
+    document.getElementById('btn-commit-all').disabled = false;
   }
 
-  async _load() {
+  buildJSON() {
+    // Rebuild JSON from current analysis + anchors + info fields
+    const analysis = this.analysis;
+    if (!analysis) return this.json;
+
+    const labelTable = FRAME_LABELS[analysis.gen] || FRAME_LABELS.adult;
+    const bands = analysis.bands.map((band, i) => {
+      const role   = this.userRoles[i] || band.role;
+      const labels = labelTable[role] || [];
+      const entry  = {
+        index:      i,
+        role,
+        rowStart:   band.rowStart,
+        rowEnd:     band.rowEnd,
+        frameCount: band.sprites.length,
+        sprites:    band.sprites.map((sp, si) => ({
+          index: si, x:sp.x, y:sp.y, w:sp.w, h:sp.h,
+          ...(sp.label ? {label:sp.label} : labels[si] ? {label:labels[si]} : {}),
+        })),
+      };
+      if (COMPOSITE[role]) entry.compositesWith = COMPOSITE[role];
+      return entry;
+    });
+
+    return {
+      ...this.json,
+      bands,
+      ...(this.anchorsLocked && this.anchors ? {bodyAnimAnchors: this.anchors} : {}),
+    };
+  }
+
+  async ensureAnalysis() {
+    if (this.analysis) return;
+    if (!this.bitmap)  return;
+    this.analysis = analyzeSheet(this.bitmap, this.rowGap, this.faceGap);
+    if (this.analysis && !this.userRoles.length) {
+      this.userRoles = this.analysis.bands.map(b=>b.role);
+    }
+    // Initialize anchors from JSON if available, else blank
+    // kiss and march are pre-assembled — always useFace:false
+    if (!this.anchors) {
+      const bb = this.analysis.bands.find(b=>b.role==='body_anim');
+      if (bb) {
+        this.anchors = bb.sprites.map((sp,i) => ({
+          offsetX: 0, offsetY: 0,
+          useFace: !NO_FACE.has(sp.label || FRAME_LABELS[this.analysis.gen]?.body_anim?.[i] || ''),
+        }));
+      }
+    }
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// FOLDER LOADING
+// ═══════════════════════════════════════════════════════════════════════════
+
+async function openFolder() {
+  try {
+    dirHandle = await window.showDirectoryPicker({ mode:'readwrite' });
+  } catch(e) {
+    if (e.name!=='AbortError') toast('❌ Could not open folder');
+    return;
+  }
+
+  showLoading('Scanning folder...');
+
+  // Collect all files
+  const jsonHandles = [];
+  const pngHandles  = {};   // key: lowercase filename → handle
+
+  for await (const [name, handle] of dirHandle.entries()) {
+    if (handle.kind !== 'file') continue;
+    const lo = name.toLowerCase();
+    if (lo.endsWith('.json'))     jsonHandles.push(handle);
+    else if (lo.endsWith('.png')) pngHandles[lo] = handle;
+  }
+
+  console.log('JSONs found:', jsonHandles.map(h=>h.name));
+  console.log('PNGs found:', Object.keys(pngHandles));
+
+  if (!jsonHandles.length) {
+    hideLoading();
+    toast('No JSON files found in folder');
+    return;
+  }
+
+  jsonHandles.sort((a,b)=>a.name.localeCompare(b.name));
+
+  collection = [];
+  let loaded = 0;
+
+  for (const jh of jsonHandles) {
+    setLoadingMsg(`Loading ${jh.name}...`, `${loaded}/${jsonHandles.length}`);
     try {
-      // Step 1: fetch the character JSON
-      const charJSON = await fetchJSON(this.student.charId);
+      const text = await (await jh.getFile()).text();
+      const json = JSON.parse(text);
 
-      // Step 2: fetch sprite sheet using the sheet field from JSON
-      const sheetImg = await fetchImage(TAMA_PATH, charJSON.sheet);
+      // Fuzzy PNG match — try several normalizations against lowercase keys
+      const sheetName = (json.sheet || '').toLowerCase();
+      const candidates = [
+        sheetName,
+        sheetName.replace(/ /g, '_'),
+        sheetName.replace(/_/g, ' '),
+        // also try stripping path separators if any
+        sheetName.split(/[\\/]/).pop(),
+      ];
 
-      // Step 3: fetch background
-      const bgImg = await fetchImage(BG_PATH, this.student.bgFile);
+      let ph = null;
+      for (const c of candidates) {
+        if (pngHandles[c]) { ph = pngHandles[c]; break; }
+      }
 
-      this._init(charJSON, sheetImg, bgImg);
+      // Last resort: if sheet name ends with character name, try partial match
+      if (!ph && sheetName) {
+        const sheetBase = sheetName.replace(/\.png$/,'');
+        for (const [key, handle] of Object.entries(pngHandles)) {
+          if (key.replace(/\.png$/,'') === sheetBase) { ph = handle; break; }
+        }
+      }
+
+      console.log(`${jh.name}: sheet="${json.sheet}" → PNG ${ph ? ph.name : 'NOT FOUND'}`);
+
+      let bitmap = null;
+      if (ph) {
+        try {
+          bitmap = await loadBitmapFromHandle(ph);
+        } catch(e) {
+          console.warn(`Failed to load bitmap for ${jh.name}:`, e);
+        }
+      }
+
+      collection.push(new CharEntry(jh, json, ph, bitmap));
+      loaded++;
     } catch(e) {
-      console.error(`Failed to load cell for ${this.student.name}:`, e);
-      this.loadingEl.innerHTML = `
-        <div style="color:var(--red);font-size:8px;padding:6px;text-align:center;line-height:1.6;word-break:break-all;">
-          ⚠ ${e.message}
-        </div>`;
+      console.warn('Failed to load', jh.name, e);
     }
   }
 
-  _init(charJSON, sheetImg, bgImg) {
-    this.charJSON = charJSON;
-    this.gen      = charJSON.generation || 'adult';
-    this.isBaby   = this.gen === 'baby';
+  hideLoading();
+  buildCharList();
+  updateHeaderStatus();
+  document.getElementById('btn-export-dex').disabled = false;
+  await tryLoadExistingDex();
 
-    // Build offscreen sprite sheet canvas
-    this.off = document.createElement('canvas');
-    this.off.width  = sheetImg.naturalWidth  || sheetImg.width;
-    this.off.height = sheetImg.naturalHeight || sheetImg.height;
-    const oc = this.off.getContext('2d');
-    oc.imageSmoothingEnabled = false;
-    oc.drawImage(sheetImg, 0, 0);
+  if (collection.length) {
+    selectChar(collection[0].id);
+    const missing = collection.filter(c=>!c.bitmap).length;
+    toast(`Loaded ${collection.length} characters${missing ? ` · ${missing} missing PNGs` : ''}`);
+  }
+}
 
-    // Build background canvas
-    this.bgCanvas = document.createElement('canvas');
-    this.bgCanvas.width  = bgImg.naturalWidth  || bgImg.width;
-    this.bgCanvas.height = bgImg.naturalHeight || bgImg.height;
-    this.bgCanvas.getContext('2d').drawImage(bgImg, 0, 0);
+async function loadBitmapFromHandle(handle) {
+  const file = await handle.getFile();
+  const url  = URL.createObjectURL(file);
+  try {
+    const img = await new Promise((resolve, reject) => {
+      const i  = new Image();
+      i.onload  = () => resolve(i);
+      i.onerror = reject;
+      i.src = url;
+    });
+    return await createImageBitmap(img);
+  } finally {
+    URL.revokeObjectURL(url);
+  }
+}
 
-    // Build lookup maps from body_anim, face_small, and anchors
-    const bb = charJSON.bands.find(b => b.role === 'body_anim');
-    const fb = charJSON.bands.find(b => b.role === 'face_small');
-    if (bb) bb.sprites.forEach(s => this._body[s.label] = s);
-    if (fb) fb.sprites.forEach(s => this._face[s.label] = s);
-    if (charJSON.bodyAnimAnchors && bb) {
-      bb.sprites.forEach((s, i) => {
-        this._anch[s.label] = charJSON.bodyAnimAnchors[i] || { offsetX:0, offsetY:0, useFace:true };
-      });
-    }
+// ═══════════════════════════════════════════════════════════════════════════
+// CHARACTER LIST UI
+// ═══════════════════════════════════════════════════════════════════════════
 
-    // Spawn pets
-    this._spawn(this.student.petCount || 1);
+function buildCharList(filter='') {
+  const body    = document.getElementById('char-list-body');
+  const lo      = filter.toLowerCase();
+  const visible = filter
+    ? collection.filter(c=>c.name.toLowerCase().includes(lo)||c.id.toLowerCase().includes(lo))
+    : collection;
 
-    // Hide spinner, show canvas
-    this.loadingEl.style.display = 'none';
-    this.canvas.style.display    = 'block';
+  document.getElementById('char-count').textContent = `${visible.length}/${collection.length}`;
+  body.innerHTML = '';
 
-    // Start loop
-    requestAnimationFrame(t => this._loop(t));
+  visible.forEach(entry => {
+    const item = document.createElement('div');
+    item.className = 'char-item' + (entry.id===activeId?' active':'') + (entry.dirty?' dirty':'');
+    item.dataset.id = entry.id;
+
+    const genColor = entry.gen==='baby' ? 'gen-baby' : 'gen-adult';
+    const dexEntry = (window._loadedDex?.characters||[]).find(c=>c.id===entry.id);
+    const isEnabled   = dexEntry?.enabled || entry.json.enabled || false;
+    item.innerHTML = `
+      <div class="char-item-info">
+        <div class="char-item-name">${entry.name}${entry.json.variant ? ` <span style="color:var(--purple);font-size:0.65rem;">(${entry.json.variant})</span>` : ''}${isEnabled ? ` <span style="color:var(--purple);font-size:0.6rem;">★</span>` : ''}</div>
+        <div class="char-item-id"><span class="${genColor}">${entry.id}</span></div>
+      </div>
+      <div class="dirty-dot" title="Unsaved changes"></div>`;
+
+    item.addEventListener('click', ()=>selectChar(entry.id));
+    body.appendChild(item);
+  });
+}
+
+function refreshListItem(id) {
+  const entry = collection.find(c=>c.id===id);
+  if (!entry) return;
+  const item = document.querySelector(`.char-item[data-id="${id}"]`);
+  if (!item)  return;
+  item.classList.toggle('dirty', entry.dirty);
+  item.classList.toggle('active', id===activeId);
+}
+
+document.getElementById('char-search').addEventListener('input', e => {
+  buildCharList(e.target.value);
+});
+
+// ═══════════════════════════════════════════════════════════════════════════
+// CHARACTER SELECTION & RENDERING
+// ═══════════════════════════════════════════════════════════════════════════
+
+async function selectChar(id) {
+  const entry = collection.find(c=>c.id===id);
+  if (!entry) return;
+  activeId = id;
+
+  // Update list highlight
+  document.querySelectorAll('.char-item').forEach(el=>{
+    el.classList.toggle('active', el.dataset.id===id);
+  });
+
+  // Show editor
+  document.getElementById('editor-empty').style.display = 'none';
+  const main = document.getElementById('editor-main');
+  main.style.display = 'flex';
+
+  // Update header
+  document.getElementById('ch-name').textContent = entry.name;
+  document.getElementById('ch-id').textContent   = entry.id;
+  const vEl = document.getElementById('ch-variant');
+  if (entry.json.variant) {
+    vEl.textContent = `(${entry.json.variant})`;
+    vEl.style.display = '';
+  } else {
+    vEl.style.display = 'none';
   }
 
-  _spawn(count) {
-    const sp = Object.values(this._body)[0];
-    const sw = sp?sp.w:36, sh = sp?sp.h:46;
-    // Bottom 35% boundary
-    const minY = Math.floor(CH * 0.65); // sprite top: 65% down
-    const maxY = CH - sh - 4;           // sprite bottom stays within cell
-    for (let i = 0; i < count; i++) {
-      // Bias starting angle toward horizontal so motion looks natural immediately
-      const angle = (Math.random() > 0.5 ? 0 : Math.PI) + (Math.random() - 0.5) * 0.6;
-      const speed = 2.0 + Math.random() * 1.5;
-      this.pets.push({
-        x: 10 + Math.random() * (CW - sw - 20),
-        y: minY + Math.random() * Math.max(0, maxY - minY),
-        vx: Math.cos(angle) * speed,
-        vy: 0,
-        angle, speed,
-        facingRight: Math.cos(angle) > 0,
-        moving: true,
-        frameIdx: Math.floor(Math.random() * 2),
-        holdCounter: 0,
-        steerTimer: 30 + Math.floor(Math.random() * 60),
-        pauseTimer: 0,
-        sw, sh, minY, maxY,
-      });
-    }
+  document.getElementById('btn-commit').disabled = !entry.dirty;
+
+  // Ensure analysis
+  if (!entry.analysis && entry.bitmap) {
+    showLoading(`Analyzing ${entry.name}...`);
+    await entry.ensureAnalysis();
+    hideLoading();
   }
 
-  _def(key)  { return ANIMATION_DEFS[key]?.[this.gen] || null; }
-  _key(pet)  { return this._forced || (pet.moving ? 'walk' : 'idle'); }
+  // Populate info tab
+  populateInfoTab(entry);
 
-  // Position update — runs every RAF frame at ~60fps for smooth movement
-  _moveStep(pet, dt) {
-    if (!pet.moving || this._forced) return;
+  // Render active tab
+  renderActiveTab(entry);
+}
 
-    // Steer timer — counts down in real frames (dt*60 ≈ 1 per frame at 60fps)
-    pet.steerTimer -= dt * 60;
-    if (pet.steerTimer <= 0) {
-      if (Math.random() < 0.2) {
-        // Pause briefly
-        pet.moving     = false;
-        pet.pauseTimer = 40 + Math.random() * 60;
-        pet.vx = 0; pet.vy = 0;
-        return;
-      }
-      // Turn up to ±70° — produces clear visible curves between direction changes
-      const turn     = (Math.random() - 0.5) * Math.PI * 0.78;
-      pet.angle     += turn;
-      pet.speed      = 2.0 + Math.random() * 1.5;
-      pet.steerTimer = 30 + Math.random() * 60;
-    }
+function renderActiveTab(entry) {
+  const active = document.querySelector('.etab.active')?.dataset.tab || 'sheet';
+  if      (active==='sheet')   renderSheetTab(entry);
+  else if (active==='sprites') renderSpritesTab(entry);
+  else if (active==='anchor')  renderAnchorTab(entry);
+  else if (active==='info')    populateInfoTab(entry);
+}
 
-    // steer=0.08 means ~12 frames to reach new direction — visibly curved arc
-    const steer    = 0.08;
-    const targetVx = Math.cos(pet.angle) * pet.speed;
-    const targetVy = Math.sin(pet.angle) * pet.speed * 0.25; // flatten vertical
-    pet.vx += (targetVx - pet.vx) * steer;
-    pet.vy += (targetVy - pet.vy) * steer;
+// ── Tab switching ──────────────────────────────────────────────────────────
+document.querySelectorAll('.etab').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    document.querySelectorAll('.etab').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    ['sheet','sprites','anchor','info'].forEach(t=>{
+      document.getElementById('tab-'+t).style.display = t===btn.dataset.tab?'block':'none';
+    });
+    const entry=collection.find(c=>c.id===activeId);
+    if (entry) renderActiveTab(entry);
+  });
+});
 
-    pet.x += pet.vx * dt * 60;
-    pet.y += pet.vy * dt * 60;
+// ═══════════════════════════════════════════════════════════════════════════
+// SHEET VIEW TAB
+// ═══════════════════════════════════════════════════════════════════════════
 
-    // Wall bouncing — reflect and update angle
-    if (pet.x <= 0)           { pet.x = 0;           pet.vx =  Math.abs(pet.vx); pet.angle = Math.atan2(pet.vy,  Math.abs(pet.vx)); }
-    if (pet.x >= CW - pet.sw) { pet.x = CW - pet.sw; pet.vx = -Math.abs(pet.vx); pet.angle = Math.atan2(pet.vy, -Math.abs(pet.vx)); }
-    if (pet.y <= pet.minY)    { pet.y = pet.minY;     pet.vy =  Math.abs(pet.vy); pet.angle = Math.atan2( Math.abs(pet.vy), pet.vx); }
-    if (pet.y >= pet.maxY)    { pet.y = pet.maxY;     pet.vy = -Math.abs(pet.vy); pet.angle = Math.atan2(-Math.abs(pet.vy), pet.vx); }
-
-    if (Math.abs(pet.vx) > 0.05) pet.facingRight = pet.vx > 0;
+function renderSheetTab(entry) {
+  if (!entry.bitmap || !entry.analysis) {
+    document.getElementById('sheet-canvas-wrap').innerHTML =
+      `<div style="color:var(--muted);font-size:11px;padding:20px;line-height:2;">
+        ${!entry.bitmap
+          ? `⚠ Sprite sheet PNG not found in folder<br>
+             <span style="color:var(--border2)">Expected filename:</span><br>
+             <span style="color:var(--yellow);font-size:10px;">${entry.json.sheet || '(no sheet field in JSON)'}</span>`
+          : 'Run analysis to view sheet'}
+      </div>`;
+    return;
   }
 
-  // Sprite frame update — runs at animation fps (3fps for walk)
-  _updateFrame(pet) {
-    const key = this._key(pet), def = this._def(key); if (!def) return;
-    pet.holdCounter++;
-    const fd = def.frames[pet.frameIdx % def.frames.length];
-    if (pet.holdCounter >= (fd.hold || 1)) {
-      pet.holdCounter = 0;
-      pet.frameIdx = (pet.frameIdx + 1) % def.frames.length;
-    }
-    // Resume from pause
-    if (!pet.moving && !this._forced) {
-      pet.pauseTimer--;
-      if (pet.pauseTimer <= 0) {
-        pet.moving    = true;
-        pet.angle     = Math.random() * Math.PI * 2;
-        pet.speed     = 0.8 + Math.random() * 0.7;
-        pet.steerTimer = 60 + Math.random() * 120;
-        pet.frameIdx  = 0;
-        pet.holdCounter = 0;
-      }
-    }
+  const s      = entry.dispScale;
+  const bmp    = entry.bitmap;
+  const canvas = document.getElementById('sheet-canvas');
+  canvas.width  = bmp.width  * s;
+  canvas.height = bmp.height * s;
+  const ctx = canvas.getContext('2d');
+  ctx.imageSmoothingEnabled = false;
+  ctx.drawImage(bmp, 0,0, bmp.width*s, bmp.height*s);
+
+  // Draw band overlays
+  entry.analysis.bands.forEach((band, i) => {
+    const role = entry.userRoles[i] || band.role;
+    const meta = ROLE_META[role] || ROLE_META.unknown;
+    ctx.strokeStyle = meta.color;
+    ctx.lineWidth   = 1;
+    ctx.globalAlpha = 0.6;
+    band.sprites.forEach(sp => {
+      ctx.strokeRect(sp.x*s, sp.y*s, sp.w*s, sp.h*s);
+    });
+  });
+  ctx.globalAlpha = 1;
+
+  // Stats
+  const total = entry.analysis.bands.reduce((n,b)=>n+b.sprites.length,0);
+  document.getElementById('sheet-stats').innerHTML =
+    `<div>${bmp.width}×${bmp.height}px</div>
+     <div>Bands: <span style="color:var(--cyan)">${entry.analysis.bands.length}</span></div>
+     <div>Sprites: <span style="color:var(--cyan)">${total}</span></div>
+     <div>Generation: <span style="color:var(--${entry.gen==='baby'?'pink':'cyan'}">${entry.gen}</span></div>`;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// SPRITES TAB
+// ═══════════════════════════════════════════════════════════════════════════
+
+function renderSpritesTab(entry) {
+  const grid = document.getElementById('sprites-grid');
+  grid.innerHTML = '';
+  if (!entry.bitmap || !entry.analysis) {
+    grid.innerHTML = `<div style="color:var(--muted);font-size:11px;">No analysis available</div>`;
+    return;
   }
 
-  _draw(pet) {
-    const ctx = this.ctx, key = this._key(pet), def = this._def(key); if (!def) return;
-    const fd = def.frames[pet.frameIdx % def.frames.length];
-    const bs = this._body[fd.body]; if (!bs) return;
-    const fs = (!this.isBaby && fd.face) ? this._face[fd.face] || null : null;
-    const an = (!this.isBaby && fd.face) ? this._anch[fd.body] || { offsetX:0, offsetY:0, useFace:true } : { offsetX:0, offsetY:0, useFace:false };
-    // Round to nearest pixel for crisp pixel art — no sub-pixel blur
-    const px = Math.round(pet.x), py = Math.round(pet.y);
-    ctx.save();
-    if (pet.facingRight) { ctx.translate(px + bs.w/2, 0); ctx.scale(-1, 1); ctx.translate(-(px + bs.w/2), 0); }
-    ctx.drawImage(this.off, bs.x, bs.y, bs.w, bs.h, px, py, bs.w, bs.h);
-    if (!this.isBaby && an.useFace && fs)
-      ctx.drawImage(this.off, fs.x, fs.y, fs.w, fs.h, px + an.offsetX, py + an.offsetY, fs.w, fs.h);
-    ctx.restore();
+  const S = 3; // display scale for sprite cards
+
+  // Build offscreen
+  const off = document.createElement('canvas');
+  off.width=entry.bitmap.width; off.height=entry.bitmap.height;
+  const oc=off.getContext('2d'); oc.imageSmoothingEnabled=false;
+  oc.drawImage(entry.bitmap,0,0);
+
+  entry.analysis.bands.forEach((band, bi) => {
+    const role = entry.userRoles[bi] || band.role;
+    const meta = ROLE_META[role] || ROLE_META.unknown;
+    const labels = FRAME_LABELS[entry.analysis.gen]?.[role] || [];
+    const expected = meta.expected[entry.analysis.gen];
+
+    const section = document.createElement('div');
+    section.className = 'band-section';
+
+    // Band header
+    const head = document.createElement('div');
+    head.className = 'band-head';
+    head.style.borderLeftColor = meta.color;
+
+    const countClass = expected===null ? '' : band.sprites.length===expected ? 'ok' : 'warn';
+    head.innerHTML = `
+      <span class="band-role-label" style="color:${meta.color}">${meta.label}</span>
+      <span class="band-count ${countClass}">${band.sprites.length}${expected!==null?' / '+expected:''} sprites</span>
+      <select class="band-role-select" data-band="${bi}">
+        ${Object.entries(ROLE_META).map(([k,v])=>`<option value="${k}" ${k===role?'selected':''}>${v.label}</option>`).join('')}
+      </select>`;
+
+    head.querySelector('select').addEventListener('change', e => {
+      entry.userRoles[bi] = e.target.value;
+      entry.markDirty();
+      renderSpritesTab(entry);
+    });
+
+    section.appendChild(head);
+
+    // Sprites row
+    const row = document.createElement('div');
+    row.className = 'sprites-row';
+
+    band.sprites.forEach((sp, si) => {
+      const label = sp.label || labels[si] || `#${si}`;
+      const card  = document.createElement('div');
+      card.className = 'sprite-card';
+
+      const c = document.createElement('canvas');
+      c.className = 'sprite-canvas';
+      c.width  = sp.w * S; c.height = sp.h * S;
+      const ctx2 = c.getContext('2d');
+      ctx2.imageSmoothingEnabled = false;
+      ctx2.drawImage(off, sp.x,sp.y,sp.w,sp.h, 0,0,sp.w*S,sp.h*S);
+
+      const lbl = document.createElement('div');
+      lbl.className = 'sprite-label';
+      lbl.textContent = label;
+
+      card.appendChild(c); card.appendChild(lbl);
+      row.appendChild(card);
+    });
+
+    section.appendChild(row);
+    grid.appendChild(section);
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// ANCHOR EDITOR TAB
+// ═══════════════════════════════════════════════════════════════════════════
+
+let ancBodyIdx = 0;
+
+function renderAnchorTab(entry) {
+  if (!entry.bitmap || !entry.analysis) {
+    document.getElementById('anc-strip').innerHTML =
+      `<div style="color:var(--muted);font-size:11px;">No analysis available</div>`;
+    return;
   }
 
-  _render() {
-    if (!this.off || !this.bgCanvas) return;
-    const ctx = this.ctx; ctx.imageSmoothingEnabled = false;
-    ctx.fillStyle = '#87CEEB';
-    ctx.fillRect(0, 0, CW, CH);
-    ctx.drawImage(this.bgCanvas, 0, 0, CW, CH);
-    this.pets.forEach(p => this._draw(p));
+  const bodyBand = entry.analysis.bands.find(b=>b.role==='body_anim');
+  const faceBand = entry.analysis.bands.find(b=>b.role==='face_small');
+  if (!bodyBand) {
+    document.getElementById('anc-strip').innerHTML =
+      `<div style="color:var(--muted);font-size:11px;">No body_anim band found</div>`;
+    return;
   }
 
-  _loop(ts) {
-    // dt — time since last frame in seconds, capped to avoid jumps after tab switch
-    const dt = Math.min((ts - (this._lastRaf || ts)) / 1000, 0.05);
-    this._lastRaf = ts;
+  // Build offscreen
+  const off=document.createElement('canvas');
+  off.width=entry.bitmap.width; off.height=entry.bitmap.height;
+  const oc=off.getContext('2d'); oc.imageSmoothingEnabled=false;
+  oc.drawImage(entry.bitmap,0,0);
 
-    // Position updates every RAF (~60fps) for smooth movement
-    if (!this._forced) this.pets.forEach(p => this._moveStep(p, dt));
-
-    // Sprite frame updates at animation fps
-    const def = this._def(this._forced || 'walk'), fps = def ? def.fps : 4;
-    if (ts - this._lastTick >= 1000 / fps) {
-      this._lastTick = ts;
-      this.pets.forEach(p => this._updateFrame(p));
-    }
-
-    // Render every frame
-    this._render();
-    requestAnimationFrame(t => this._loop(t));
-  }
-
-  forceAnimation(key) {
-    this._forced = key || null;
-    this.pets.forEach(p => {
-      p.frameIdx = 0; p.holdCounter = 0;
-      if (!key) {
-        // Resume wander with a fresh random direction
-        p.moving = true;
-        p.angle  = Math.random() * Math.PI * 2;
-        p.speed  = 0.8 + Math.random() * 0.7;
-        p.steerTimer = 60 + Math.random() * 120;
-      }
+  // Ensure anchors array — rebuild if missing or wrong length
+  if (!entry.anchors || entry.anchors.length !== bodyBand.sprites.length) {
+    const labels = FRAME_LABELS[entry.analysis.gen]?.body_anim || [];
+    entry.anchors = bodyBand.sprites.map((sp, i) => ({
+      offsetX: 0, offsetY: 0,
+      useFace: !NO_FACE.has(sp.label || labels[i] || ''),
+    }));
+  } else {
+    // Enforce useFace=false on kiss/march even if loaded from JSON
+    const labels = FRAME_LABELS[entry.analysis.gen]?.body_anim || [];
+    bodyBand.sprites.forEach((sp, i) => {
+      const label = sp.label || labels[i] || '';
+      if (NO_FACE.has(label)) entry.anchors[i].useFace = false;
     });
   }
 
-  awardPoints(n) {
-    this.student.gotchiPoints = Math.max(0, this.student.gotchiPoints + n);
-    const el  = document.getElementById('pts-' + this.student.id);
-    const dot = document.getElementById('dot-' + this.student.id);
-    if (el)  el.textContent = this.student.gotchiPoints + ' pts';
-    if (dot) { dot.classList.add('flash'); setTimeout(() => dot.classList.remove('flash'), 600); }
-    if (selected === this.student.id) refreshStudentPanel();
-    updateHeader();
+  // Clamp bodyIdx
+  if (ancBodyIdx>=bodyBand.sprites.length) ancBodyIdx=0;
+
+  // Build strip
+  const strip=document.getElementById('anc-strip');
+  strip.innerHTML='';
+  bodyBand.sprites.forEach((sp,i)=>{
+    const item=document.createElement('div');
+    item.className='anc-strip-item'+(i===ancBodyIdx?' active':'');
+    const c=document.createElement('canvas');
+    const S=2; c.width=sp.w*S; c.height=sp.h*S;
+    const ctx=c.getContext('2d'); ctx.imageSmoothingEnabled=false;
+    ctx.drawImage(off,sp.x,sp.y,sp.w,sp.h,0,0,sp.w*S,sp.h*S);
+    item.appendChild(c);
+    item.addEventListener('click',()=>{ ancBodyIdx=i; renderAnchorTab(entry); });
+    strip.appendChild(item);
+  });
+
+  // Sync offset inputs — disable controls for no-face frames
+  const anc = entry.anchors[ancBodyIdx];
+  const labels = FRAME_LABELS[entry.analysis.gen]?.body_anim || [];
+  const frameLabel = bodyBand.sprites[ancBodyIdx]?.label || labels[ancBodyIdx] || '';
+  const isNoFace = NO_FACE.has(frameLabel);
+
+  document.getElementById('anc-ox').value = anc.offsetX;
+  document.getElementById('anc-oy').value = anc.offsetY;
+  document.getElementById('anc-use-face').checked  = anc.useFace !== false;
+  document.getElementById('anc-use-face').disabled = isNoFace;
+  document.getElementById('anc-ox').disabled        = isNoFace;
+  document.getElementById('anc-oy').disabled        = isNoFace;
+
+  const hint = isNoFace
+    ? `<span style="color:var(--muted);font-size:9px;">pre-assembled — no face overlay</span>`
+    : (labels[ancBodyIdx] || `Sprite ${ancBodyIdx}`);
+  document.getElementById('anc-label').innerHTML = hint;
+
+  document.getElementById('anc-locked-badge').style.display =
+    entry.anchorsLocked ? 'block' : 'none';
+
+  // Draw composite preview
+  drawAnchorPreview(entry, off, bodyBand, faceBand);
+
+  // Build full preview grid
+  buildAnchorPreviewGrid(entry, off, bodyBand, faceBand);
+}
+
+function drawAnchorPreview(entry, off, bodyBand, faceBand) {
+  const S=4;
+  const bodySp=bodyBand.sprites[ancBodyIdx];
+  const anc=entry.anchors[ancBodyIdx];
+  const faceSp=faceBand&&anc.useFace!==false?faceBand.sprites[0]:null;
+
+  const canvas=document.getElementById('anc-canvas');
+  canvas.width=bodySp.w*S; canvas.height=bodySp.h*S;
+  const ctx=canvas.getContext('2d'); ctx.imageSmoothingEnabled=false;
+
+  // Checker bg
+  for(let y=0;y<canvas.height;y+=8) for(let x=0;x<canvas.width;x+=8){
+    ctx.fillStyle=((x/8+y/8)%2===0)?'#1a1a2e':'#0e0e1a';
+    ctx.fillRect(x,y,8,8);
+  }
+  ctx.drawImage(off,bodySp.x,bodySp.y,bodySp.w,bodySp.h,0,0,bodySp.w*S,bodySp.h*S);
+  if(faceSp&&anc.useFace!==false){
+    ctx.drawImage(off,faceSp.x,faceSp.y,faceSp.w,faceSp.h,
+      anc.offsetX*S,anc.offsetY*S,faceSp.w*S,faceSp.h*S);
   }
 }
 
-// ─── GRID ─────────────────────────────────────────────────────────────────
-let cells    = [];
-let selected = null;
-
-function buildGrid() {
-  const grid = document.getElementById('classroom-grid');
-  grid.innerHTML = '';
-  cells = STUDENTS.map(s => new GotchiCell(grid, s));
-  updateHeader();
+function buildAnchorPreviewGrid(entry, off, bodyBand, faceBand) {
+  const grid=document.getElementById('anc-preview-grid');
+  grid.innerHTML='';
+  const S=3;
+  bodyBand.sprites.forEach((bodySp,i)=>{
+    const anc=entry.anchors[i];
+    const faceSp=faceBand&&anc.useFace!==false?faceBand.sprites[0]:null;
+    const c=document.createElement('canvas');
+    c.width=bodySp.w*S; c.height=bodySp.h*S;
+    c.style.cssText='image-rendering:pixelated;border:1px solid var(--border);border-radius:2px;';
+    const ctx=c.getContext('2d'); ctx.imageSmoothingEnabled=false;
+    for(let y=0;y<c.height;y+=6) for(let x=0;x<c.width;x+=6){
+      ctx.fillStyle=((x/6+y/6)%2===0)?'#1a1a2e':'#0e0e1a'; ctx.fillRect(x,y,6,6);
+    }
+    ctx.drawImage(off,bodySp.x,bodySp.y,bodySp.w,bodySp.h,0,0,bodySp.w*S,bodySp.h*S);
+    if(faceSp) ctx.drawImage(off,faceSp.x,faceSp.y,faceSp.w,faceSp.h,
+      anc.offsetX*S,anc.offsetY*S,faceSp.w*S,faceSp.h*S);
+    grid.appendChild(c);
+  });
 }
 
-async function init() {
-  try {
-    await assignTamas();
-  } catch(e) {
-    console.error('Failed to load tamadex:', e);
-    // Fallback: assign first enabled IDs we know about
-    const fallback = [
-      'TAM-002-034-000','TAM-002-038-000','TAM-002-041-000','TAM-002-022-000',
-      'TAM-002-029-000','TAM-002-023-000','TAM-002-011-000','TAM-002-052-000',
-      'TAM-002-058-000','TAM-002-062-000','TAM-002-063-000','TAM-002-067-000',
-      'TAM-001-001-000','TAM-001-002-000','TAM-002-034-000','TAM-002-038-000',
-    ];
-    STUDENTS.forEach((s,i) => s.charId = fallback[i % fallback.length]);
-    toast('⚠ tamadex.json not found — using fallback assignments');
-  }
-  buildGrid();
-}
-
-// ─── SELECTION ────────────────────────────────────────────────────────────
-function selectStudent(id) {
-  if (selected === id) { selected = null; closeOverlay('overlay-student'); }
-  else { selected = id; refreshStudentPanel(); openOverlay('overlay-student'); }
-  document.querySelectorAll('.gotchi-cell').forEach(el =>
-    el.classList.toggle('selected', parseInt(el.dataset.id) === selected));
-}
-
-function refreshStudentPanel() {
-  const s = STUDENTS.find(s => s.id === selected); if (!s) return;
-  document.getElementById('sel-name').textContent = s.name;
-  document.getElementById('sel-pts').textContent  = s.gotchiPoints;
-}
-
-function updateHeader() {
-  const top = STUDENTS.reduce((a, b) => a.gotchiPoints > b.gotchiPoints ? a : b);
-  document.getElementById('class-label').textContent =
-    `${STUDENTS.length} students · top: ${top.name} (${top.gotchiPoints} pts)`;
-}
-
-// ─── OVERLAYS ─────────────────────────────────────────────────────────────
-function openOverlay(id)  { document.getElementById(id).classList.add('open'); }
-function closeOverlay(id) {
-  document.getElementById(id).classList.remove('open');
-  if (id === 'overlay-student') {
-    selected = null;
-    document.querySelectorAll('.gotchi-cell').forEach(el => el.classList.remove('selected'));
+// Anchor input wiring
+function updateAnchorFromInputs() {
+  const entry=collection.find(c=>c.id===activeId); if(!entry||!entry.anchors)return;
+  entry.anchors[ancBodyIdx].offsetX  = parseInt(document.getElementById('anc-ox').value)||0;
+  entry.anchors[ancBodyIdx].offsetY  = parseInt(document.getElementById('anc-oy').value)||0;
+  entry.anchors[ancBodyIdx].useFace  = document.getElementById('anc-use-face').checked;
+  entry.markDirty();
+  const bodyBand=entry.analysis?.bands.find(b=>b.role==='body_anim');
+  const faceBand=entry.analysis?.bands.find(b=>b.role==='face_small');
+  if(bodyBand){
+    const off=document.createElement('canvas');
+    off.width=entry.bitmap.width; off.height=entry.bitmap.height;
+    off.getContext('2d').drawImage(entry.bitmap,0,0);
+    drawAnchorPreview(entry,off,bodyBand,faceBand);
+    buildAnchorPreviewGrid(entry,off,bodyBand,faceBand);
   }
 }
-function closeOnBackdrop(e, id) { if (e.target === document.getElementById(id)) closeOverlay(id); }
 
-// ─── TOAST ────────────────────────────────────────────────────────────────
-function toast(msg) {
-  const el = document.getElementById('toast');
-  el.textContent = msg; el.classList.add('show');
-  clearTimeout(el._t); el._t = setTimeout(() => el.classList.remove('show'), 2200);
+document.getElementById('anc-ox').addEventListener('input', updateAnchorFromInputs);
+document.getElementById('anc-oy').addEventListener('input', updateAnchorFromInputs);
+document.getElementById('anc-use-face').addEventListener('change', updateAnchorFromInputs);
+
+// Arrow key nudge + Enter to advance frame + mouse drag on anchor canvas
+{
+  const canvas = document.getElementById('anc-canvas');
+  canvas.tabIndex = 0;
+  canvas.style.cursor = 'move';
+  canvas.style.outline = 'none';
+  canvas.addEventListener('focus', () => canvas.style.outline = '2px solid var(--cyan)');
+  canvas.addEventListener('blur',  () => canvas.style.outline = 'none');
+
+  // ── Helper: redraw after anchor change ──────────────────────────────────
+  function redrawAfterAnchor(entry) {
+    document.getElementById('anc-ox').value = entry.anchors[ancBodyIdx].offsetX;
+    document.getElementById('anc-oy').value = entry.anchors[ancBodyIdx].offsetY;
+    updateAnchorFromInputs();
+  }
+
+  // ── Mouse drag ───────────────────────────────────────────────────────────
+  let dragging = false, dragX0 = 0, dragY0 = 0, ancX0 = 0, ancY0 = 0;
+  const SCALE = 4; // canvas drawn at 4× sprite pixels
+
+  canvas.addEventListener('mousedown', e => {
+    const entry = collection.find(c=>c.id===activeId);
+    if (!entry?.anchors) return;
+    dragging = true;
+    dragX0 = e.clientX; dragY0 = e.clientY;
+    ancX0  = entry.anchors[ancBodyIdx].offsetX;
+    ancY0  = entry.anchors[ancBodyIdx].offsetY;
+    canvas.focus();
+    e.preventDefault();
+  });
+
+  window.addEventListener('mousemove', e => {
+    if (!dragging) return;
+    const entry = collection.find(c=>c.id===activeId);
+    if (!entry?.anchors) return;
+    // Snap to whole sprite pixels — divide screen delta by canvas scale
+    entry.anchors[ancBodyIdx].offsetX = ancX0 + Math.round((e.clientX - dragX0) / SCALE);
+    entry.anchors[ancBodyIdx].offsetY = ancY0 + Math.round((e.clientY - dragY0) / SCALE);
+    redrawAfterAnchor(entry);
+  });
+
+  window.addEventListener('mouseup', () => { dragging = false; });
+
+  // ── Keyboard: arrows nudge, Enter advances to next sprite ────────────────
+  canvas.addEventListener('keydown', e => {
+    const entry = collection.find(c=>c.id===activeId);
+    if (!entry?.anchors) return;
+    const anc = entry.anchors[ancBodyIdx];
+
+    if (e.key === 'ArrowLeft')  { anc.offsetX--; e.preventDefault(); redrawAfterAnchor(entry); }
+    else if (e.key === 'ArrowRight') { anc.offsetX++; e.preventDefault(); redrawAfterAnchor(entry); }
+    else if (e.key === 'ArrowUp')    { anc.offsetY--; e.preventDefault(); redrawAfterAnchor(entry); }
+    else if (e.key === 'ArrowDown')  { anc.offsetY++; e.preventDefault(); redrawAfterAnchor(entry); }
+    else if (e.key === 'Enter') {
+      // Advance to next body sprite, wrapping around
+      const bodyBand = entry.analysis?.bands.find(b=>b.role==='body_anim');
+      if (bodyBand) {
+        ancBodyIdx = (ancBodyIdx + 1) % bodyBand.sprites.length;
+        e.preventDefault();
+        renderAnchorTab(entry);
+        canvas.focus(); // keep focus after re-render
+      }
+    }
+  }, { passive: false });
 }
 
-// ─── AWARD / DEDUCT ───────────────────────────────────────────────────────
-document.getElementById('btn-award-one').addEventListener('click', () => {
-  if (!selected || !cells.length) return;
-  const amt = parseInt(document.getElementById('award-amount').value) || 10;
-  cells.find(c => c.student.id === selected)?.awardPoints(amt);
+document.getElementById('btn-lock-anchors').addEventListener('click',()=>{
+  const entry=collection.find(c=>c.id===activeId); if(!entry)return;
+  entry.anchorsLocked=true;
+  document.getElementById('anc-locked-badge').style.display='block';
+  entry.markDirty();
+  toast('Anchors locked');
 });
 
-document.getElementById('btn-deduct-one').addEventListener('click', () => {
-  if (!selected || !cells.length) return;
-  const amt = parseInt(document.getElementById('award-amount').value) || 10;
-  cells.find(c => c.student.id === selected)?.awardPoints(-amt);
+// ═══════════════════════════════════════════════════════════════════════════
+// INFO TAB
+// ═══════════════════════════════════════════════════════════════════════════
+
+function populateInfoTab(entry) {
+  document.getElementById('l-name').value    = entry.json.displayName || '';
+  document.getElementById('l-variant').value = entry.json.variant     || '';
+  document.getElementById('l-gen').value     = entry.json.generation  || 'adult';
+  const parts=entry.id.split('-');
+  document.getElementById('l-num').value     = parseInt(parts[2])||1;
+  document.getElementById('l-var-num').value = parseInt(parts[3])||0;
+  // Beta flag — read from loaded dex if available
+  const dexEntry = (window._loadedDex?.characters||[]).find(c=>c.id===entry.id);
+  document.getElementById('l-enabled').checked  = dexEntry?.enabled || entry.json.enabled || false;
+  updateIdPreview();
+}
+
+function updateIdPreview() {
+  const gen    = document.getElementById('l-gen').value;
+  const num    = String(parseInt(document.getElementById('l-num').value)||1).padStart(3,'0');
+  const varNum = String(parseInt(document.getElementById('l-var-num').value)||0).padStart(3,'0');
+  document.getElementById('id-preview').textContent =
+    `ID: TAM-${GEN_PREFIX[gen]||'002'}-${num}-${varNum}`;
+}
+
+['l-gen','l-num','l-var-num'].forEach(id=>{
+  document.getElementById(id).addEventListener('input', updateIdPreview);
+  document.getElementById(id).addEventListener('change', updateIdPreview);
 });
 
-document.getElementById('btn-do-award-all').addEventListener('click', () => {
-  const amt = parseInt(document.getElementById('award-all-amount').value) || 10;
-  cells.forEach(c => c.awardPoints(amt));
-  closeOverlay('overlay-award-all');
-  toast(`★ +${amt} pts awarded to all`);
+document.getElementById('btn-apply-info').addEventListener('click',()=>{
+  const entry=collection.find(c=>c.id===activeId); if(!entry)return;
+  const gen    = document.getElementById('l-gen').value;
+  const num    = String(parseInt(document.getElementById('l-num').value)||1).padStart(3,'0');
+  const varNum = String(parseInt(document.getElementById('l-var-num').value)||0).padStart(3,'0');
+  const newId  = `TAM-${GEN_PREFIX[gen]||'002'}-${num}-${varNum}`;
+
+  entry.json.displayName = document.getElementById('l-name').value.trim()||'Unknown';
+  entry.json.variant     = document.getElementById('l-variant').value.trim()||undefined;
+  entry.json.generation  = gen;
+  entry.json.id          = newId;
+  entry.json.enabled        = document.getElementById('l-enabled').checked;
+
+  document.getElementById('ch-name').textContent = entry.json.displayName;
+  document.getElementById('ch-id').textContent   = newId;
+  const vEl=document.getElementById('ch-variant');
+  if(entry.json.variant){vEl.textContent=`(${entry.json.variant})`;vEl.style.display='';}
+  else vEl.style.display='none';
+
+  entry.markDirty();
+  buildCharList(document.getElementById('char-search').value);
+  toast('Info updated — commit to save');
 });
 
-// ─── BROADCAST ────────────────────────────────────────────────────────────
-document.querySelectorAll('[data-anim]').forEach(btn => {
-  btn.addEventListener('click', () => {
-    const key = btn.dataset.anim, forced = key === 'null' ? null : key;
-    cells.forEach(c => c.forceAnimation(forced));
-    closeOverlay('overlay-broadcast');
-    toast(forced ? `⚡ ${forced}` : '🐾 wandering');
+// ═══════════════════════════════════════════════════════════════════════════
+// DETECTION SETTINGS (sliders in sheet tab)
+// ═══════════════════════════════════════════════════════════════════════════
+
+['rowgap','facegap','scale'].forEach(p=>{
+  const slider=document.getElementById('p-'+p);
+  const label =document.getElementById('v-'+p);
+  slider.addEventListener('input',()=>{
+    label.textContent=slider.value;
+    const entry=collection.find(c=>c.id===activeId); if(!entry)return;
+    if(p==='scale'){ entry.dispScale=parseInt(slider.value); }
+    else if(p==='rowgap'){ entry.rowGap=parseInt(slider.value); entry.analysis=null; }
+    else if(p==='facegap'){ entry.faceGap=parseInt(slider.value); entry.analysis=null; }
+    renderSheetTab(entry);
   });
 });
 
-// ─── INIT ─────────────────────────────────────────────────────────────────
-init();
+document.getElementById('btn-reanalyze').addEventListener('click',async()=>{
+  const entry=collection.find(c=>c.id===activeId); if(!entry||!entry.bitmap)return;
+  entry.analysis=null; entry.userRoles=[];
+  showLoading(`Re-analyzing ${entry.name}...`);
+  await entry.ensureAnalysis();
+  hideLoading();
+  renderActiveTab(entry);
+  toast('Re-analyzed');
+});
+
+// ═══════════════════════════════════════════════════════════════════════════
+// COMMIT (write JSON back to disk)
+// ═══════════════════════════════════════════════════════════════════════════
+
+async function commitEntry(entry) {
+  const json    = entry.buildJSON();
+  const text    = JSON.stringify(json, null, 2);
+  try {
+    const writable = await entry.jsonHandle.createWritable();
+    await writable.write(text);
+    await writable.close();
+    entry.json  = json;
+    entry.dirty = false;
+    refreshListItem(entry.id);
+    return true;
+  } catch(e) {
+    toast(`❌ Failed to write ${entry.jsonHandle.name}: ${e.message}`);
+    return false;
+  }
+}
+
+document.getElementById('btn-commit').addEventListener('click',async()=>{
+  const entry=collection.find(c=>c.id===activeId); if(!entry)return;
+  showLoading('Committing...');
+  const ok=await commitEntry(entry);
+  hideLoading();
+  if(ok){
+    document.getElementById('btn-commit').disabled=true;
+    updateDirtyState();
+    toast(`✓ Committed ${entry.name}`);
+  }
+});
+
+document.getElementById('btn-commit-all').addEventListener('click',async()=>{
+  const dirty=collection.filter(c=>c.dirty);
+  if(!dirty.length){toast('Nothing to commit');return;}
+  showLoading(`Committing ${dirty.length} files...`);
+  let ok=0;
+  for(const entry of dirty){
+    setLoadingMsg(`Committing ${entry.name}...`,`${ok}/${dirty.length}`);
+    if(await commitEntry(entry)) ok++;
+  }
+  hideLoading();
+  updateDirtyState();
+  toast(`✓ Committed ${ok}/${dirty.length} files`);
+});
+
+function updateDirtyState() {
+  const anyDirty=collection.some(c=>c.dirty);
+  document.getElementById('btn-commit-all').disabled=!anyDirty;
+  const entry=collection.find(c=>c.id===activeId);
+  if(entry) document.getElementById('btn-commit').disabled=!entry.dirty;
+  buildCharList(document.getElementById('char-search').value);
+  updateHeaderStatus();
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// UTILITIES
+// ═══════════════════════════════════════════════════════════════════════════
+
+function updateHeaderStatus() {
+  const dirty = collection.filter(c=>c.dirty).length;
+  const total = collection.length;
+  document.getElementById('header-status').textContent =
+    total===0 ? 'Open a folder to begin'
+    : dirty>0  ? `${total} characters · ${dirty} unsaved`
+    : `${total} characters · all saved`;
+}
+
+function toast(msg) {
+  const el=document.getElementById('toast');
+  el.textContent=msg; el.style.transform='translateY(0)'; el.style.opacity='1';
+  clearTimeout(el._t);
+  el._t=setTimeout(()=>{el.style.transform='translateY(50px)';el.style.opacity='0';},2500);
+}
+
+function showLoading(msg='Loading...', sub='') {
+  document.getElementById('loading-msg').textContent = msg;
+  document.getElementById('loading-sub').textContent = sub;
+  document.getElementById('loading').classList.add('show');
+}
+
+function setLoadingMsg(msg, sub='') {
+  document.getElementById('loading-msg').textContent = msg;
+  document.getElementById('loading-sub').textContent = sub;
+}
+
+function hideLoading() {
+  document.getElementById('loading').classList.remove('show');
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════════════════════════════
+
+// ── Export TamaDex ─────────────────────────────────────────────────────────
+function exportTamaDex() {
+  if (!collection.length) return;
+
+  // Load existing dex to preserve beta flags if one was loaded
+  const existing = window._loadedDex || {};
+  const existingMap = {};
+  (existing.characters || []).forEach(c => existingMap[c.id] = c);
+
+  const characters = collection.map(entry => {
+    const prev = existingMap[entry.id] || {};
+    return {
+      id:          entry.id,
+      displayName: entry.json.displayName,
+      variant:     entry.json.variant || null,
+      generation:  entry.json.generation || 'adult',
+      sheet:       entry.json.sheet || '',
+      hasAnchors:  !!(entry.json.bodyAnimAnchors?.length),
+      enabled:        prev.enabled || false,  // preserve existing beta flag
+    };
+  });
+
+  // Sort: adults first, then babies; within each by id
+  characters.sort((a,b) => {
+    if (a.generation !== b.generation)
+      return a.generation === 'adult' ? -1 : 1;
+    return a.id.localeCompare(b.id);
+  });
+
+  const manifest = {
+    generated:  new Date().toISOString().split('T')[0],
+    total:      characters.length,
+    enabledCount:  characters.filter(c=>c.enabled).length,
+    characters,
+  };
+
+  const blob = new Blob([JSON.stringify(manifest, null, 2)], {type:'application/json'});
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href = url; a.download = 'tamadex.json'; a.click();
+  URL.revokeObjectURL(url);
+  toast('★ Exported tamadex.json');
+}
+
+document.getElementById('btn-export-dex').addEventListener('click', exportTamaDex);
+document.getElementById('btn-open-folder').addEventListener('click', openFolder);
+
+// ── Load TamaDex (to preserve beta flags when re-exporting) ──────────────
+// If a tamadex.json is in the folder, load it automatically
+async function tryLoadExistingDex() {
+  try {
+    const dexHandle = await dirHandle.getFileHandle('tamadex.json');
+    const text = await (await dexHandle.getFile()).text();
+    window._loadedDex = JSON.parse(text);
+    const enabledCount = window._loadedDex.characters?.filter(c=>c.enabled).length || 0;
+    if (enabledCount > 0) toast(`TamaDex loaded — ${enabledCount} enabled characters`);
+  } catch(e) {
+    window._loadedDex = null; // no existing dex, that's fine
+  }
+}
+
+// Check File System Access API support
+if (!('showDirectoryPicker' in window)) {
+  document.getElementById('header-status').textContent =
+    '⚠ File System Access API not supported — please use Chrome or Edge';
+  document.getElementById('btn-open-folder').disabled = true;
+}
 </script>
 </body>
 </html>
