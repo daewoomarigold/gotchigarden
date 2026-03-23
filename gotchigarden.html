@@ -147,6 +147,14 @@ header {
   gap: 8px;
 }
 
+.spotlight-header-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+  min-width: 0;
+}
+
 .spotlight-name {
   font-family: 'Pixelify Sans', monospace;
   font-size: 1.4rem;
@@ -308,9 +316,13 @@ header {
 
       <!-- Header -->
       <div class="spotlight-header">
-        <div>
-          <div class="spotlight-name" id="sel-name">—</div>
-          <div class="spotlight-tama" id="sel-tama-name">—</div>
+        <div class="spotlight-header-left">
+          <canvas id="spotlight-portrait" width="72" height="92"
+            style="image-rendering:pixelated;image-rendering:crisp-edges;border-radius:4px;background:#87CEEB;flex-shrink:0;"></canvas>
+          <div>
+            <div class="spotlight-name" id="sel-name">—</div>
+            <div class="spotlight-tama" id="sel-tama-name">—</div>
+          </div>
         </div>
         <button class="spotlight-close" onclick="closeOverlay('overlay-student')">✕</button>
       </div>
@@ -321,10 +333,6 @@ header {
         <div class="spotlight-stat-row">
           <span class="spotlight-stat-label">GotchiPts</span>
           <span class="spotlight-stat-value yellow" id="sel-pts">0</span>
-        </div>
-        <div class="spotlight-stat-row">
-          <span class="spotlight-stat-label">Tama ID</span>
-          <span class="spotlight-stat-value muted" id="sel-char-id">—</span>
         </div>
       </div>
 
@@ -868,14 +876,32 @@ function selectStudent(id) {
 }
 
 function refreshStudentPanel() {
-  const s = STUDENTS.find(s => s.id === selected); if (!s) return;
+  const s    = STUDENTS.find(s => s.id === selected); if (!s) return;
   const cell = cells.find(c => c.student.id === selected);
   const charName = cell?.charJSON?.displayName || '—';
 
   document.getElementById('sel-name').textContent      = s.name;
   document.getElementById('sel-tama-name').textContent = charName;
   document.getElementById('sel-pts').textContent       = s.gotchiPoints;
-  document.getElementById('sel-char-id').textContent   = s.charId || '—';
+
+  // Draw portrait — body_anim 'stand' sprite at 2×
+  const portrait = document.getElementById('spotlight-portrait');
+  const pCtx     = portrait.getContext('2d');
+  pCtx.clearRect(0, 0, portrait.width, portrait.height);
+  pCtx.imageSmoothingEnabled = false;
+
+  if (cell?.off) {
+    // Try body_anim stand first, fall back to small_anim stand
+    const sp = cell._body['stand'] || cell._body[Object.keys(cell._body)[0]]
+            || cell._smap?.['stand'];
+    if (sp) {
+      const SCALE = 2;
+      // Centre sprite within the 72×92 portrait canvas
+      const dx = Math.round((portrait.width  - sp.w * SCALE) / 2);
+      const dy = Math.round((portrait.height - sp.h * SCALE) / 2);
+      pCtx.drawImage(cell.off, sp.x, sp.y, sp.w, sp.h, dx, dy, sp.w * SCALE, sp.h * SCALE);
+    }
+  }
 }
 
 // Live mirror — copies the selected cell's canvas into the spotlight at 2×
