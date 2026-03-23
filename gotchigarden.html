@@ -966,6 +966,10 @@ function startMirror(id) {
   const ctx       = spotlight.getContext('2d');
   ctx.imageSmoothingEnabled = false;
 
+  // Wire tooltip to spotlight canvas at 2× scale
+  spotlight.addEventListener('mousemove', _spotlightMousemove);
+  spotlight.addEventListener('mouseleave', hideTooltip);
+
   function frame() {
     const cell = cells.find(c => c.student.id === id);
     if (cell?.canvas) {
@@ -976,8 +980,27 @@ function startMirror(id) {
   _mirrorRaf = requestAnimationFrame(frame);
 }
 
+function _spotlightMousemove(e) {
+  const cell = cells.find(c => c.student.id === selected);
+  if (!cell) return;
+  const rect  = e.currentTarget.getBoundingClientRect();
+  // Spotlight is 2× the source canvas — divide cursor pos by 2
+  const mx    = (e.clientX - rect.left)  / 2;
+  const my    = (e.clientY - rect.top)   / 2;
+  const hit   = cell.pets.some(p => {
+    const sp = cell._body?.['walk_1'] || Object.values(cell._body || {})[0];
+    const sw = sp ? sp.w : 36, sh = sp ? sp.h : 46;
+    return mx >= p.x && mx <= p.x + sw && my >= p.y && my <= p.y + sh;
+  });
+  if (hit && cell.charJSON?.displayName) showTooltip(e, cell.charJSON.displayName);
+  else hideTooltip();
+}
+
 function stopMirror() {
   if (_mirrorRaf) { cancelAnimationFrame(_mirrorRaf); _mirrorRaf = null; }
+  const spotlight = document.getElementById('spotlight-canvas');
+  spotlight.removeEventListener('mousemove',  _spotlightMousemove);
+  spotlight.removeEventListener('mouseleave', hideTooltip);
 }
 
 function updateHeader() {
