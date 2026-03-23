@@ -443,25 +443,24 @@ class GotchiCell {
   _spawn(count) {
     const sp = Object.values(this._body)[0];
     const sw = sp?sp.w:36, sh = sp?sp.h:46;
-    // Lower 40% boundary — sprite's bottom edge (y + sh) must stay within this zone
-    // minY/maxY are bounds for the sprite's TOP edge (y origin)
-    const boundTop = Math.floor(CH * 0.60); // top of walkable zone = 60% down
-    const minY = boundTop;
-    const maxY = CH - sh - 4;               // bottom edge can't exceed cell bottom
+    // Bottom 35% boundary
+    const minY = Math.floor(CH * 0.65); // sprite top: 65% down
+    const maxY = CH - sh - 4;           // sprite bottom stays within cell
     for (let i = 0; i < count; i++) {
-      const angle = Math.random() * Math.PI * 2;
-      const speed = 0.8 + Math.random() * 0.7;
+      // Bias starting angle toward horizontal so motion looks natural immediately
+      const angle = (Math.random() > 0.5 ? 0 : Math.PI) + (Math.random() - 0.5) * 0.6;
+      const speed = 2.0 + Math.random() * 1.5;
       this.pets.push({
         x: 10 + Math.random() * (CW - sw - 20),
         y: minY + Math.random() * Math.max(0, maxY - minY),
         vx: Math.cos(angle) * speed,
-        vy: Math.sin(angle) * speed * 0.3,
+        vy: 0,
         angle, speed,
         facingRight: Math.cos(angle) > 0,
         moving: true,
         frameIdx: Math.floor(Math.random() * 2),
         holdCounter: 0,
-        steerTimer: 60 + Math.floor(Math.random() * 120),
+        steerTimer: 30 + Math.floor(Math.random() * 60),
         pauseTimer: 0,
         sw, sh, minY, maxY,
       });
@@ -475,42 +474,39 @@ class GotchiCell {
   _moveStep(pet, dt) {
     if (!pet.moving || this._forced) return;
 
-    // Gradually steer toward a drifting target angle (curved path)
+    // Steer timer — counts down in real frames (dt*60 ≈ 1 per frame at 60fps)
     pet.steerTimer -= dt * 60;
     if (pet.steerTimer <= 0) {
-      if (Math.random() < 0.25) {
-        // Pause
-        pet.moving   = false;
-        pet.pauseTimer = 60 + Math.random() * 90;
+      if (Math.random() < 0.2) {
+        // Pause briefly
+        pet.moving     = false;
+        pet.pauseTimer = 40 + Math.random() * 60;
         pet.vx = 0; pet.vy = 0;
         return;
       }
-      // Pick a new target angle — bias toward continuing forward to avoid U-turns
-      const turn = (Math.random() - 0.5) * Math.PI * 0.8;
-      pet.angle  += turn;
-      pet.speed   = 0.8 + Math.random() * 0.7;
-      pet.steerTimer = 60 + Math.random() * 120;
+      // Turn up to ±70° — produces clear visible curves between direction changes
+      const turn     = (Math.random() - 0.5) * Math.PI * 0.78;
+      pet.angle     += turn;
+      pet.speed      = 2.0 + Math.random() * 1.5;
+      pet.steerTimer = 30 + Math.random() * 60;
     }
 
-    // Smoothly steer velocity toward target angle
+    // steer=0.08 means ~12 frames to reach new direction — visibly curved arc
+    const steer    = 0.08;
     const targetVx = Math.cos(pet.angle) * pet.speed;
-    const targetVy = Math.sin(pet.angle) * pet.speed * 0.3;
-    const steer    = 0.04;
+    const targetVy = Math.sin(pet.angle) * pet.speed * 0.25; // flatten vertical
     pet.vx += (targetVx - pet.vx) * steer;
     pet.vy += (targetVy - pet.vy) * steer;
 
-    // Move
     pet.x += pet.vx * dt * 60;
     pet.y += pet.vy * dt * 60;
 
-    // Wall bouncing — reflect velocity and update angle
-    if (pet.x <= 0)           { pet.x = 0;             pet.vx =  Math.abs(pet.vx); pet.angle = Math.atan2(pet.vy,  Math.abs(pet.vx)); }
-    if (pet.x >= CW - pet.sw) { pet.x = CW - pet.sw;   pet.vx = -Math.abs(pet.vx); pet.angle = Math.atan2(pet.vy, -Math.abs(pet.vx)); }
-    // Vertical bounds — clamp strictly to walkable zone
-    if (pet.y <= pet.minY)    { pet.y = pet.minY;       pet.vy =  Math.abs(pet.vy); pet.angle = Math.atan2( Math.abs(pet.vy), pet.vx); }
-    if (pet.y >= pet.maxY)    { pet.y = pet.maxY;       pet.vy = -Math.abs(pet.vy); pet.angle = Math.atan2(-Math.abs(pet.vy), pet.vx); }
+    // Wall bouncing — reflect and update angle
+    if (pet.x <= 0)           { pet.x = 0;           pet.vx =  Math.abs(pet.vx); pet.angle = Math.atan2(pet.vy,  Math.abs(pet.vx)); }
+    if (pet.x >= CW - pet.sw) { pet.x = CW - pet.sw; pet.vx = -Math.abs(pet.vx); pet.angle = Math.atan2(pet.vy, -Math.abs(pet.vx)); }
+    if (pet.y <= pet.minY)    { pet.y = pet.minY;     pet.vy =  Math.abs(pet.vy); pet.angle = Math.atan2( Math.abs(pet.vy), pet.vx); }
+    if (pet.y >= pet.maxY)    { pet.y = pet.maxY;     pet.vy = -Math.abs(pet.vy); pet.angle = Math.atan2(-Math.abs(pet.vy), pet.vx); }
 
-    // Facing direction follows horizontal velocity
     if (Math.abs(pet.vx) > 0.05) pet.facingRight = pet.vx > 0;
   }
 
