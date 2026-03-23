@@ -514,6 +514,7 @@ header h1 {
   <button class="btn btn-primary" id="btn-open-folder">↑ Open Folder</button>
   <button class="btn btn-commit-all" id="btn-commit-all" disabled>↓ Commit All</button>
   <button class="btn" id="btn-export-dex" disabled style="border-color:var(--purple);color:var(--purple);">★ Export TamaDex</button>
+  <button class="btn" id="btn-eggs-mode" style="border-color:var(--orange);color:var(--orange);">🥚 Egg Editor</button>
   <div class="header-sep"></div>
   <div class="header-status" id="header-status">Open a folder containing sprite sheet PNGs and character JSONs</div>
 </header>
@@ -537,6 +538,106 @@ header h1 {
       <div style="font-size:9px;color:var(--muted);display:flex;gap:10px;align-items:center;">
         <span>● unsaved</span>
         <span style="color:var(--muted);">○ saved</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Egg Editor (full-area overlay within workspace) ── -->
+  <div id="egg-editor" style="display:none;flex:1;flex-direction:column;overflow:hidden;">
+    <div style="padding:12px 16px;background:var(--surface);border-bottom:1px solid var(--border2);display:flex;align-items:center;gap:12px;flex-shrink:0;">
+      <span style="font-family:'Pixelify Sans',monospace;font-size:1rem;color:var(--orange);">🥚 Egg Editor</span>
+      <span style="font-size:9px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;">TAM-000 series</span>
+      <div style="flex:1;"></div>
+      <button class="btn" id="btn-egg-load">↑ Load Egg Sheet PNG</button>
+      <input type="file" id="egg-sheet-input" accept="image/*" style="display:none;">
+      <button class="btn" id="btn-egg-export" disabled style="border-color:var(--orange);color:var(--orange);">↓ Export eggs.json</button>
+      <button class="btn" id="btn-eggs-close">✕ Close</button>
+    </div>
+
+    <div style="display:flex;flex:1;overflow:hidden;">
+
+      <!-- Left: sheet preview + grid -->
+      <div style="flex:1;overflow:auto;padding:16px;display:flex;flex-direction:column;gap:16px;">
+
+        <div id="egg-empty" style="color:var(--muted);font-size:11px;padding:20px;">
+          Load an egg sprite sheet PNG to begin. Expected format: black background, 3 rows × 6 idle frames + 2 hatch frames per row.
+        </div>
+
+        <!-- Sheet canvas -->
+        <div id="egg-sheet-wrap" style="display:none;">
+          <div class="section-head">Sheet Preview</div>
+          <div style="margin-top:8px;display:inline-block;border:1px solid var(--border);border-radius:3px;background:#000;padding:4px;">
+            <canvas id="egg-sheet-canvas" style="display:block;image-rendering:pixelated;"></canvas>
+          </div>
+        </div>
+
+        <!-- Variant strips -->
+        <div id="egg-variants-wrap" style="display:none;">
+          <div class="section-head" style="margin-bottom:12px;">Variants</div>
+          <div id="egg-variants-grid" style="display:flex;flex-direction:column;gap:20px;"></div>
+        </div>
+
+      </div>
+
+      <!-- Right: settings -->
+      <div style="width:220px;background:var(--surface);border-left:1px solid var(--border2);padding:16px;display:flex;flex-direction:column;gap:12px;overflow-y:auto;flex-shrink:0;">
+
+        <div class="section-head">Egg Set Info</div>
+
+        <div class="field">
+          <label>Set Name</label>
+          <input type="text" id="egg-set-name" placeholder="e.g. Rainbow Eggs" value="Rainbow Eggs">
+        </div>
+        <div class="field">
+          <label>Set Number</label>
+          <input type="number" id="egg-set-num" value="1" min="1" max="999">
+          <div class="id-preview" id="egg-id-preview">TAM-000-001-000 … 002</div>
+        </div>
+
+        <div class="section-head" style="margin-top:8px;">Grid Settings</div>
+        <div class="field">
+          <label>Cell width (px)</label>
+          <input type="number" id="egg-cell-w" value="34" min="8" max="128">
+        </div>
+        <div class="field">
+          <label>Cell height (px)</label>
+          <input type="number" id="egg-cell-h" value="36" min="8" max="128">
+        </div>
+        <div class="field">
+          <label>Idle frames per variant</label>
+          <input type="number" id="egg-idle-count" value="6" min="1" max="16">
+        </div>
+        <div class="field">
+          <label>Hatch frames per variant</label>
+          <input type="number" id="egg-hatch-count" value="2" min="0" max="8">
+        </div>
+        <div class="field">
+          <label>Hatch col offset (px)</label>
+          <input type="number" id="egg-hatch-x" value="207" min="0" max="999">
+        </div>
+        <div class="field">
+          <label>Hatch frame width (px)</label>
+          <input type="number" id="egg-hatch-w" value="18" min="1" max="64">
+        </div>
+        <button class="btn btn-primary btn-full" id="btn-egg-analyze">▶ Analyze Grid</button>
+
+        <div class="section-head" style="margin-top:8px;">Preview</div>
+        <div style="display:flex;flex-direction:column;align-items:center;gap:8px;">
+          <div style="background:#000;border:1px solid var(--border);border-radius:3px;padding:8px;display:inline-block;">
+            <canvas id="egg-preview-canvas" width="68" height="72"
+              style="image-rendering:pixelated;display:block;"></canvas>
+          </div>
+          <div style="display:flex;gap:6px;">
+            <button class="btn" id="egg-prev-var">◀</button>
+            <span id="egg-preview-label" style="font-size:10px;color:var(--muted);align-self:center;">Variant 1</span>
+            <button class="btn" id="egg-next-var">▶</button>
+          </div>
+          <div style="display:flex;gap:6px;">
+            <button class="btn btn-primary" id="egg-preview-play">▶ Play</button>
+            <button class="btn" id="egg-preview-stop">■ Stop</button>
+          </div>
+        </div>
+
       </div>
     </div>
   </div>
@@ -1812,6 +1913,272 @@ function exportTamaDex() {
 
 document.getElementById('btn-export-dex').addEventListener('click', exportTamaDex);
 document.getElementById('btn-open-folder').addEventListener('click', openFolder);
+document.getElementById('btn-eggs-mode').addEventListener('click', openEggEditor);
+
+// ═══════════════════════════════════════════════════════════════════════════
+// EGG EDITOR
+// ═══════════════════════════════════════════════════════════════════════════
+
+const EGG = {
+  bitmap:   null,   // ImageBitmap of loaded sheet
+  off:      null,   // offscreen canvas
+  variants: [],     // [{id, name, idleFrames:[], hatchFrames:[]}]
+  previewVariant: 0,
+  previewFrame:   0,
+  previewPlaying: false,
+  previewRaf:     null,
+  lastTick:       0,
+};
+
+function openEggEditor() {
+  document.getElementById('egg-editor').style.display    = 'flex';
+  document.getElementById('editor-area').style.display   = 'none';
+  document.getElementById('char-list').style.display     = 'none';
+}
+
+function closeEggEditor() {
+  document.getElementById('egg-editor').style.display    = 'none';
+  document.getElementById('editor-area').style.display   = 'flex';
+  document.getElementById('char-list').style.display     = 'flex';
+  eggStopPreview();
+}
+
+document.getElementById('btn-eggs-close').addEventListener('click', closeEggEditor);
+
+// ── Load sheet ─────────────────────────────────────────────────────────────
+document.getElementById('btn-egg-load').addEventListener('click', () => {
+  document.getElementById('egg-sheet-input').click();
+});
+
+document.getElementById('egg-sheet-input').addEventListener('change', async e => {
+  const file = e.target.files[0]; if (!file) return;
+  const url  = URL.createObjectURL(file);
+  const img  = await new Promise(r => { const i=new Image(); i.onload=()=>r(i); i.src=url; });
+  URL.revokeObjectURL(url);
+  EGG.bitmap = await createImageBitmap(img);
+  EGG.off    = document.createElement('canvas');
+  EGG.off.width  = EGG.bitmap.width;
+  EGG.off.height = EGG.bitmap.height;
+  EGG.off.getContext('2d').drawImage(EGG.bitmap, 0, 0);
+
+  // Draw sheet preview at 2×
+  const sc = document.getElementById('egg-sheet-canvas');
+  sc.width  = EGG.bitmap.width  * 2;
+  sc.height = EGG.bitmap.height * 2;
+  const sctx = sc.getContext('2d'); sctx.imageSmoothingEnabled = false;
+  sctx.drawImage(EGG.bitmap, 0, 0, sc.width, sc.height);
+
+  document.getElementById('egg-empty').style.display       = 'none';
+  document.getElementById('egg-sheet-wrap').style.display  = 'block';
+  toast(`Loaded ${file.name} — ${EGG.bitmap.width}×${EGG.bitmap.height}px`);
+});
+
+// ── Set number → ID preview ────────────────────────────────────────────────
+function updateEggIdPreview() {
+  const n = String(parseInt(document.getElementById('egg-set-num').value)||1).padStart(3,'0');
+  const varCount = EGG.variants.length || 3;
+  document.getElementById('egg-id-preview').textContent =
+    `TAM-000-${n}-000 … ${String(varCount-1).padStart(3,'0')}`;
+}
+document.getElementById('egg-set-num').addEventListener('input', updateEggIdPreview);
+
+// ── Analyze grid ───────────────────────────────────────────────────────────
+document.getElementById('btn-egg-analyze').addEventListener('click', () => {
+  if (!EGG.bitmap) { toast('Load a sheet first'); return; }
+
+  const cw      = parseInt(document.getElementById('egg-cell-w').value)    || 34;
+  const ch      = parseInt(document.getElementById('egg-cell-h').value)    || 36;
+  const idleN   = parseInt(document.getElementById('egg-idle-count').value) || 6;
+  const hatchN  = parseInt(document.getElementById('egg-hatch-count').value)|| 2;
+  const hatchX  = parseInt(document.getElementById('egg-hatch-x').value)   || 207;
+  const hatchW  = parseInt(document.getElementById('egg-hatch-w').value)   || 18;
+  const setNum  = String(parseInt(document.getElementById('egg-set-num').value)||1).padStart(3,'0');
+
+  const rowCount = Math.floor(EGG.bitmap.height / ch);
+  EGG.variants   = [];
+
+  for (let r = 0; r < rowCount; r++) {
+    const varNum = String(r).padStart(3,'0');
+    const id     = `TAM-000-${setNum}-${varNum}`;
+    const y      = r * ch;
+
+    const idleFrames = [];
+    for (let f = 0; f < idleN; f++) {
+      idleFrames.push({ x: f * cw, y, w: cw, h: ch });
+    }
+
+    const hatchFrames = [];
+    for (let f = 0; f < hatchN; f++) {
+      hatchFrames.push({ x: hatchX + f * (hatchW + 1), y, w: hatchW, h: ch });
+    }
+
+    EGG.variants.push({ id, name: `Variant ${r+1}`, idleFrames, hatchFrames });
+  }
+
+  renderEggVariants();
+  eggStartPreview();
+  document.getElementById('egg-variants-wrap').style.display = 'block';
+  document.getElementById('btn-egg-export').disabled = false;
+  updateEggIdPreview();
+  toast(`Found ${rowCount} variants`);
+});
+
+// ── Render variant strips ──────────────────────────────────────────────────
+function renderEggVariants() {
+  const grid = document.getElementById('egg-variants-grid');
+  grid.innerHTML = '';
+  const S = 3; // display scale
+
+  EGG.variants.forEach((variant, vi) => {
+    const section = document.createElement('div');
+    section.style.cssText = 'display:flex;flex-direction:column;gap:8px;';
+
+    // Header row with name input and ID
+    const head = document.createElement('div');
+    head.style.cssText = 'display:flex;align-items:center;gap:10px;';
+    head.innerHTML = `
+      <span style="font-size:9px;color:var(--orange);letter-spacing:1px;text-transform:uppercase;">
+        ${variant.id}
+      </span>
+      <input type="text" value="${variant.name}"
+        style="background:var(--raised);border:1px solid var(--border);color:var(--text);
+               font-family:'DM Mono',monospace;font-size:11px;padding:3px 8px;border-radius:3px;
+               outline:none;width:160px;"
+        oninput="EGG.variants[${vi}].name=this.value">`;
+    section.appendChild(head);
+
+    // Sprite frames row
+    const frames = document.createElement('div');
+    frames.style.cssText = 'display:flex;gap:6px;align-items:flex-end;flex-wrap:wrap;';
+
+    // Idle frames
+    const idleLabel = document.createElement('div');
+    idleLabel.style.cssText = 'font-size:9px;color:var(--muted);align-self:center;margin-right:2px;';
+    idleLabel.textContent = 'Idle';
+    frames.appendChild(idleLabel);
+
+    variant.idleFrames.forEach((sp, fi) => {
+      const c = document.createElement('canvas');
+      c.width  = sp.w * S; c.height = sp.h * S;
+      c.style.cssText = 'image-rendering:pixelated;border:1px solid var(--border);border-radius:2px;background:#000;';
+      const ctx = c.getContext('2d'); ctx.imageSmoothingEnabled = false;
+      ctx.drawImage(EGG.off, sp.x,sp.y,sp.w,sp.h, 0,0,sp.w*S,sp.h*S);
+      frames.appendChild(c);
+    });
+
+    // Separator
+    const sep = document.createElement('div');
+    sep.style.cssText = 'width:1px;background:var(--border);height:40px;align-self:center;margin:0 4px;';
+    frames.appendChild(sep);
+
+    // Hatch frames
+    const hatchLabel = document.createElement('div');
+    hatchLabel.style.cssText = 'font-size:9px;color:var(--muted);align-self:center;margin-right:2px;';
+    hatchLabel.textContent = 'Hatch';
+    frames.appendChild(hatchLabel);
+
+    variant.hatchFrames.forEach((sp, fi) => {
+      const c = document.createElement('canvas');
+      c.width  = sp.w * S; c.height = sp.h * S;
+      c.style.cssText = 'image-rendering:pixelated;border:1px solid var(--border);border-radius:2px;background:#000;';
+      const ctx = c.getContext('2d'); ctx.imageSmoothingEnabled = false;
+      ctx.drawImage(EGG.off, sp.x,sp.y,sp.w,sp.h, 0,0,sp.w*S,sp.h*S);
+      frames.appendChild(c);
+    });
+
+    section.appendChild(frames);
+
+    // Divider
+    const div = document.createElement('div');
+    div.style.cssText = 'border-bottom:1px solid var(--border);padding-top:4px;';
+    section.appendChild(div);
+
+    grid.appendChild(section);
+  });
+}
+
+// ── Preview ────────────────────────────────────────────────────────────────
+function eggStartPreview() {
+  eggStopPreview();
+  EGG.previewPlaying = true;
+  EGG.previewFrame   = 0;
+  EGG.lastTick       = 0;
+  function tick(ts) {
+    if (!EGG.previewPlaying) return;
+    if (ts - EGG.lastTick >= 120) { // ~8fps shimmer
+      EGG.lastTick = ts;
+      eggDrawPreview();
+      const v = EGG.variants[EGG.previewVariant];
+      if (v) EGG.previewFrame = (EGG.previewFrame + 1) % v.idleFrames.length;
+    }
+    EGG.previewRaf = requestAnimationFrame(tick);
+  }
+  EGG.previewRaf = requestAnimationFrame(tick);
+}
+
+function eggStopPreview() {
+  EGG.previewPlaying = false;
+  if (EGG.previewRaf) { cancelAnimationFrame(EGG.previewRaf); EGG.previewRaf = null; }
+}
+
+function eggDrawPreview() {
+  const v   = EGG.variants[EGG.previewVariant]; if (!v) return;
+  const sp  = v.idleFrames[EGG.previewFrame % v.idleFrames.length]; if (!sp) return;
+  const S   = 2;
+  const c   = document.getElementById('egg-preview-canvas');
+  c.width   = sp.w * S; c.height = sp.h * S;
+  const ctx = c.getContext('2d'); ctx.imageSmoothingEnabled = false;
+  ctx.fillStyle = '#000'; ctx.fillRect(0,0,c.width,c.height);
+  ctx.drawImage(EGG.off, sp.x,sp.y,sp.w,sp.h, 0,0,sp.w*S,sp.h*S);
+}
+
+function updateEggPreviewLabel() {
+  const v = EGG.variants[EGG.previewVariant];
+  document.getElementById('egg-preview-label').textContent =
+    v ? `${v.name} (${v.id})` : '—';
+}
+
+document.getElementById('egg-prev-var').addEventListener('click', () => {
+  EGG.previewVariant = (EGG.previewVariant - 1 + EGG.variants.length) % EGG.variants.length;
+  EGG.previewFrame = 0;
+  updateEggPreviewLabel();
+});
+
+document.getElementById('egg-next-var').addEventListener('click', () => {
+  EGG.previewVariant = (EGG.previewVariant + 1) % EGG.variants.length;
+  EGG.previewFrame = 0;
+  updateEggPreviewLabel();
+});
+
+document.getElementById('egg-preview-play').addEventListener('click', eggStartPreview);
+document.getElementById('egg-preview-stop').addEventListener('click', eggStopPreview);
+
+// ── Export JSON ────────────────────────────────────────────────────────────
+document.getElementById('btn-egg-export').addEventListener('click', () => {
+  if (!EGG.variants.length) return;
+
+  const setNum  = String(parseInt(document.getElementById('egg-set-num').value)||1).padStart(3,'0');
+  const setName = document.getElementById('egg-set-name').value.trim() || 'Egg Set';
+
+  const out = {
+    setId:     `TAM-000-${setNum}`,
+    setName,
+    sheet:     'Eggs.png',
+    variants:  EGG.variants.map(v => ({
+      id:          v.id,
+      name:        v.name,
+      idleFrames:  v.idleFrames,
+      hatchFrames: v.hatchFrames,
+    })),
+  };
+
+  const blob = new Blob([JSON.stringify(out, null, 2)], {type:'application/json'});
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href = url; a.download = `TAM-000-${setNum}.json`; a.click();
+  URL.revokeObjectURL(url);
+  toast(`Exported TAM-000-${setNum}.json`);
+});
 
 // ── Load TamaDex (to preserve beta flags when re-exporting) ──────────────
 // If a tamadex.json is in the folder, load it automatically
