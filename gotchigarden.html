@@ -453,23 +453,25 @@ function rawUrl(folder, filename) {
 }
 
 // ─── ROSTER ───────────────────────────────────────────────────────────────
-// charId is assigned randomly from enabled tamas on load
+// All students start as eggs — tamas are earned by hatching
+// eggVariant: null = assigned randomly on load from egg JSON
+// charId: null = no tama yet
 const STUDENTS = [
-  { id:1,  name:'Alice',   charId:null, bgFile:DEFAULT_BG, gotchiPoints:120, petCount:1 },
-  { id:2,  name:'Ben',     charId:null, bgFile:DEFAULT_BG, gotchiPoints:85,  petCount:1 },
-  { id:3,  name:'Chloe',   charId:null, bgFile:DEFAULT_BG, gotchiPoints:210, petCount:1 },
-  { id:4,  name:'Dylan',   charId:null, bgFile:DEFAULT_BG, gotchiPoints:55,  petCount:1 },
-  { id:5,  name:'Eva',     charId:null, bgFile:DEFAULT_BG, gotchiPoints:175, petCount:1 },
-  { id:6,  name:'Finn',    charId:null, bgFile:DEFAULT_BG, gotchiPoints:90,  petCount:1 },
-  { id:7,  name:'Grace',   charId:null, bgFile:DEFAULT_BG, gotchiPoints:140, petCount:1 },
-  { id:8,  name:'Henry',   charId:null, bgFile:DEFAULT_BG, gotchiPoints:30,  petCount:1 },
-  { id:9,  name:'Iris',    charId:null, bgFile:DEFAULT_BG, gotchiPoints:200, petCount:1 },
-  { id:10, name:'Jake',    charId:null, bgFile:DEFAULT_BG, gotchiPoints:65,  petCount:1 },
-  { id:11, name:'Kira',    charId:null, bgFile:DEFAULT_BG, gotchiPoints:155, petCount:1 },
-  { id:12, name:'Luca',    charId:null, bgFile:DEFAULT_BG, gotchiPoints:110, petCount:1 },
-  { id:13, name:'Maya',    charId:null, bgFile:DEFAULT_BG, gotchiPoints:240, petCount:1 },
-  { id:14, name:'Noah',    charId:null, bgFile:DEFAULT_BG, gotchiPoints:45,  petCount:1 },
-  { id:15, name:'Olivia',  charId:null, bgFile:DEFAULT_BG, gotchiPoints:185, petCount:1 },
+  { id:1,  name:'Alice',   charId:null, eggVariant:null, bgFile:DEFAULT_BG, gotchiPoints:120 },
+  { id:2,  name:'Ben',     charId:null, eggVariant:null, bgFile:DEFAULT_BG, gotchiPoints:85  },
+  { id:3,  name:'Chloe',   charId:null, eggVariant:null, bgFile:DEFAULT_BG, gotchiPoints:210 },
+  { id:4,  name:'Dylan',   charId:null, eggVariant:null, bgFile:DEFAULT_BG, gotchiPoints:55  },
+  { id:5,  name:'Eva',     charId:null, eggVariant:null, bgFile:DEFAULT_BG, gotchiPoints:175 },
+  { id:6,  name:'Finn',    charId:null, eggVariant:null, bgFile:DEFAULT_BG, gotchiPoints:90  },
+  { id:7,  name:'Grace',   charId:null, eggVariant:null, bgFile:DEFAULT_BG, gotchiPoints:140 },
+  { id:8,  name:'Henry',   charId:null, eggVariant:null, bgFile:DEFAULT_BG, gotchiPoints:30  },
+  { id:9,  name:'Iris',    charId:null, eggVariant:null, bgFile:DEFAULT_BG, gotchiPoints:200 },
+  { id:10, name:'Jake',    charId:null, eggVariant:null, bgFile:DEFAULT_BG, gotchiPoints:65  },
+  { id:11, name:'Kira',    charId:null, eggVariant:null, bgFile:DEFAULT_BG, gotchiPoints:155 },
+  { id:12, name:'Luca',    charId:null, eggVariant:null, bgFile:DEFAULT_BG, gotchiPoints:110 },
+  { id:13, name:'Maya',    charId:null, eggVariant:null, bgFile:DEFAULT_BG, gotchiPoints:240 },
+  { id:14, name:'Noah',    charId:null, eggVariant:null, bgFile:DEFAULT_BG, gotchiPoints:45  },
+  { id:15, name:'Olivia',  charId:null, eggVariant:null, bgFile:DEFAULT_BG, gotchiPoints:185 },
 ];
 
 // Assign random enabled tama to each student from tamadex
@@ -491,7 +493,24 @@ async function assignTamas() {
   console.log('Tama assignments:', STUDENTS.map(s => `${s.name}→${s.charId}`));
 }
 
-// ─── ANIMATION DEFS ───────────────────────────────────────────────────────
+// ─── EGG ASSETS ───────────────────────────────────────────────────────────
+let eggJSON  = null;  // loaded from TAM-000-001.json
+let eggSheet = null;  // loaded Eggs.png as HTMLImageElement
+
+async function loadEggAssets() {
+  const [json, img] = await Promise.all([
+    fetch(`${PAGES_BASE}/${TAMA_PATH}/TAM-000-001.json`).then(r => r.json()),
+    fetchImage(TAMA_PATH, 'Eggs.png'),
+  ]);
+  eggJSON  = json;
+  eggSheet = img;
+
+  // Assign random variant to each student
+  const variants = eggJSON.variants;
+  STUDENTS.forEach(s => {
+    s.eggVariant = variants[Math.floor(Math.random() * variants.length)];
+  });
+}
 const ANIMATION_DEFS = {
   idle: {
     adult:{fps:4,loop:true,frames:[{body:'stand',face:'normal',hold:1}]},
@@ -547,6 +566,113 @@ async function fetchImage(folder, filename) {
   });
   imageCache[key] = img;
   return img;
+}
+
+// ─── EGG CELL ─────────────────────────────────────────────────────────────
+class EggCell {
+  constructor(container, student) {
+    this.student  = student;
+    this.variant  = student.eggVariant;
+    this._lastTick = 0;
+    this._seqIdx   = 0;
+    this._animSeq  = eggJSON.animations.idle.sequence;
+    this._fps      = eggJSON.animations.idle.fps;
+    this.canvas    = null;
+
+    // Build offscreen egg sheet canvas
+    this.off = document.createElement('canvas');
+    this.off.width  = eggSheet.naturalWidth  || eggSheet.width;
+    this.off.height = eggSheet.naturalHeight || eggSheet.height;
+    const oc = this.off.getContext('2d');
+    oc.imageSmoothingEnabled = false;
+    oc.drawImage(eggSheet, 0, 0);
+
+    this._buildDOM(container);
+    requestAnimationFrame(t => this._loop(t));
+  }
+
+  _buildDOM(container) {
+    this.wrap = document.createElement('div');
+    this.wrap.className = 'gotchi-cell';
+    this.wrap.dataset.id = this.student.id;
+
+    const vp = document.createElement('div');
+    vp.className = 'cell-vp';
+    vp.style.background = '#000'; // black bg for eggs
+
+    this.canvas = document.createElement('canvas');
+    this.canvas.className = 'cell-canvas';
+    this.canvas.width = CW; this.canvas.height = CH;
+    this.canvas.style.display = 'block';
+    this.ctx = this.canvas.getContext('2d');
+    this.ctx.imageSmoothingEnabled = false;
+    vp.appendChild(this.canvas);
+
+    const plate = document.createElement('div');
+    plate.className = 'cell-plate';
+    plate.innerHTML = `
+      <div class="cell-name">${this.student.name}</div>
+      <div class="cell-pts" id="pts-${this.student.id}">${this.student.gotchiPoints} pts</div>
+      <div class="cell-dot" id="dot-${this.student.id}"></div>`;
+
+    this.wrap.appendChild(vp);
+    this.wrap.appendChild(plate);
+    this.wrap.addEventListener('click',     () => selectStudent(this.student.id));
+    this.wrap.addEventListener('mousemove', e  => {
+      // Tooltip shows "???" since tama is unknown
+      const rect = this.canvas.getBoundingClientRect();
+      const mx = e.clientX - rect.left, my = e.clientY - rect.top;
+      // Egg is centred — check if cursor is within egg bounds
+      const sp  = this.variant?.idleFrames?.[0];
+      if (!sp) return;
+      const SCALE = Math.floor(Math.min(CW, CH) / Math.max(sp.w, sp.h) * 0.6);
+      const dw = sp.w * SCALE, dh = sp.h * SCALE;
+      const dx = Math.round((CW - dw) / 2), dy = Math.round((CH - dh) / 2);
+      if (mx >= dx && mx <= dx+dw && my >= dy && my <= dy+dh)
+        showTooltip(e, '???');
+      else hideTooltip();
+    });
+    this.wrap.addEventListener('mouseleave', () => hideTooltip());
+    container.appendChild(this.wrap);
+  }
+
+  _render() {
+    const ctx = this.ctx;
+    ctx.imageSmoothingEnabled = false;
+    ctx.fillStyle = '#000';
+    ctx.fillRect(0, 0, CW, CH);
+
+    if (!this.variant) return;
+    const frameIdx = this._animSeq[this._seqIdx % this._animSeq.length];
+    const sp       = this.variant.idleFrames[frameIdx];
+    if (!sp) return;
+
+    // Scale egg to ~60% of cell, centred
+    const SCALE = Math.floor(Math.min(CW, CH) / Math.max(sp.w, sp.h) * 0.6);
+    const dw = sp.w * SCALE, dh = sp.h * SCALE;
+    const dx = Math.round((CW - dw) / 2);
+    const dy = Math.round((CH - dh) / 2);
+    ctx.drawImage(this.off, sp.x, sp.y, sp.w, sp.h, dx, dy, dw, dh);
+  }
+
+  _loop(ts) {
+    if (ts - this._lastTick >= 1000 / this._fps) {
+      this._lastTick = ts;
+      this._seqIdx   = (this._seqIdx + 1) % this._animSeq.length;
+      this._render();
+    }
+    requestAnimationFrame(t => this._loop(t));
+  }
+
+  awardPoints(n) {
+    this.student.gotchiPoints = Math.max(0, this.student.gotchiPoints + n);
+    const el  = document.getElementById('pts-' + this.student.id);
+    const dot = document.getElementById('dot-' + this.student.id);
+    if (el)  el.textContent = this.student.gotchiPoints + ' pts';
+    if (dot) { dot.classList.add('flash'); setTimeout(() => dot.classList.remove('flash'), 600); }
+    if (selected === this.student.id) refreshStudentPanel();
+    updateHeader();
+  }
 }
 
 // ─── GOTCHI CELL ──────────────────────────────────────────────────────────
@@ -894,24 +1020,18 @@ let selected = null;
 function buildGrid() {
   const grid = document.getElementById('classroom-grid');
   grid.innerHTML = '';
-  cells = STUDENTS.map(s => new GotchiCell(grid, s));
+  // All students start as eggs
+  cells = STUDENTS.map(s => new EggCell(grid, s));
   updateHeader();
 }
 
 async function init() {
   try {
-    await assignTamas();
+    // Load egg assets first — all students start as eggs
+    await loadEggAssets();
   } catch(e) {
-    console.error('Failed to load tamadex:', e);
-    // Fallback: assign first enabled IDs we know about
-    const fallback = [
-      'TAM-002-034-000','TAM-002-038-000','TAM-002-041-000','TAM-002-022-000',
-      'TAM-002-029-000','TAM-002-023-000','TAM-002-011-000','TAM-002-052-000',
-      'TAM-002-058-000','TAM-002-062-000','TAM-002-063-000','TAM-002-067-000',
-      'TAM-001-001-000','TAM-001-002-000','TAM-002-034-000','TAM-002-038-000',
-    ];
-    STUDENTS.forEach((s,i) => s.charId = fallback[i % fallback.length]);
-    toast('⚠ tamadex.json not found — using fallback assignments');
+    console.error('Failed to load egg assets:', e);
+    toast('⚠ Could not load egg assets');
   }
   buildGrid();
 }
@@ -932,18 +1052,27 @@ function selectStudent(id) {
 function refreshStudentPanel() {
   const s    = STUDENTS.find(s => s.id === selected); if (!s) return;
   const cell = cells.find(c => c.student.id === selected);
+  const isEgg = cell instanceof EggCell;
 
   document.getElementById('sel-name').textContent = s.name;
   document.getElementById('sel-pts').textContent  = s.gotchiPoints;
 
-  // Portrait — base band 'neutral' sprite, 1×, transparent background
+  // Portrait
   const portrait = document.getElementById('spotlight-portrait');
   const pCtx     = portrait.getContext('2d');
   pCtx.imageSmoothingEnabled = false;
 
-  if (cell?.off && cell.charJSON) {
-    // Adults: base band 'neutral' — pre-assembled with face
-    // Babies: no base band, use body_anim first sprite instead
+  if (isEgg && cell.variant) {
+    // Show current egg frame as portrait
+    const sp = cell.variant.idleFrames[0];
+    if (sp) {
+      portrait.width  = sp.w * 2;
+      portrait.height = sp.h * 2;
+      pCtx.fillStyle  = '#000';
+      pCtx.fillRect(0, 0, portrait.width, portrait.height);
+      pCtx.drawImage(cell.off, sp.x, sp.y, sp.w, sp.h, 0, 0, sp.w*2, sp.h*2);
+    }
+  } else if (!isEgg && cell?.off && cell.charJSON) {
     const baseBand  = cell.charJSON.bands?.find(b => b.role === 'base');
     const bodyBand  = cell.charJSON.bands?.find(b => b.role === 'body_anim');
     const sp        = baseBand?.sprites?.find(s => s.label === 'neutral')
