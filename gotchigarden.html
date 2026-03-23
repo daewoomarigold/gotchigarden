@@ -486,12 +486,19 @@ class GotchiCell {
 
     pet.steerTimer -= dt * 60;
     if (pet.steerTimer <= 0) {
-      // Stop walking — transition to stand to decide next action
-      pet.state      = 'stand';
-      pet.stateTimer = 20 + Math.random() * 30;
-      pet.vx = 0; pet.vy = 0;
-      pet.frameIdx = 0; pet.holdCounter = 0;
-      return;
+      if (Math.random() < 0.15) {
+        // Occasionally stop to stand (and possibly sit/wave)
+        pet.state      = 'stand';
+        pet.stateTimer = 20 + Math.random() * 30;
+        pet.vx = 0; pet.vy = 0;
+        pet.frameIdx = 0; pet.holdCounter = 0;
+        return;
+      }
+      // Most of the time just turn and keep walking
+      const turn     = (Math.random() - 0.5) * Math.PI * 0.78;
+      pet.angle     += turn;
+      pet.speed      = 0.9 + Math.random() * 0.675;
+      pet.steerTimer = 30 + Math.random() * 60;
     }
 
     const steer    = 0.08;
@@ -531,16 +538,16 @@ class GotchiCell {
       case 'stand':
         if (pet.stateTimer <= 0) {
           const r = Math.random();
-          if (r < 0.30) {
-            // → sit
+          if (r < 0.10) {
+            // → sit (rare)
             pet.state      = 'sit';
             pet.stateTimer = 60 + Math.random() * 120;
-          } else if (r < 0.75) {
-            // → wave (high chance from stand)
+          } else if (r < 0.25) {
+            // → wave (occasional)
             pet.state      = 'wave';
             pet.stateTimer = 40 + Math.random() * 80;
           } else {
-            // → walk right away
+            // → walk (most of the time)
             this._resumeWalk(pet);
           }
           pet.frameIdx = 0; pet.holdCounter = 0;
@@ -570,7 +577,7 @@ class GotchiCell {
   _resumeWalk(pet) {
     pet.state       = 'walk';
     pet.angle       = (Math.random() > 0.5 ? 0 : Math.PI) + (Math.random() - 0.5) * 0.6;
-    pet.speed       = 1.0 + Math.random() * 0.75;
+    pet.speed       = 0.9 + Math.random() * 0.675;
     pet.vx          = Math.cos(pet.angle) * pet.speed;
     pet.vy          = 0;
     pet.steerTimer  = 30 + Math.random() * 60;
