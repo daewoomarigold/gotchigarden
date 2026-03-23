@@ -449,7 +449,7 @@ class GotchiCell {
     for (let i = 0; i < count; i++) {
       // Bias starting angle toward horizontal so motion looks natural immediately
       const angle = (Math.random() > 0.5 ? 0 : Math.PI) + (Math.random() - 0.5) * 0.6;
-      const speed = 2.0 + Math.random() * 1.5;
+      const speed = 1.0 + Math.random() * 0.75;
       this.pets.push({
         x: 10 + Math.random() * (CW - sw - 20),
         y: minY + Math.random() * Math.max(0, maxY - minY),
@@ -487,7 +487,7 @@ class GotchiCell {
       // Turn up to ±70° — produces clear visible curves between direction changes
       const turn     = (Math.random() - 0.5) * Math.PI * 0.78;
       pet.angle     += turn;
-      pet.speed      = 2.0 + Math.random() * 1.5;
+      pet.speed      = 1.0 + Math.random() * 0.75;
       pet.steerTimer = 30 + Math.random() * 60;
     }
 
