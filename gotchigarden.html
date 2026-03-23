@@ -149,8 +149,8 @@ header {
 
 .spotlight-header-left {
   display: flex;
-  align-items: center;
-  gap: 8px;
+  flex-direction: column;
+  align-items: flex-start;
   flex: 1;
   min-width: 0;
 }
@@ -317,11 +317,10 @@ header {
       <!-- Header -->
       <div class="spotlight-header">
         <div class="spotlight-header-left">
-          <canvas id="spotlight-portrait" width="36" height="46"
-            style="image-rendering:pixelated;image-rendering:crisp-edges;border-radius:3px;background:#87CEEB;flex-shrink:0;"></canvas>
           <div>
             <div class="spotlight-name" id="sel-name">—</div>
-            <div class="spotlight-tama" id="sel-tama-name">—</div>
+            <canvas id="spotlight-portrait"
+              style="image-rendering:pixelated;image-rendering:crisp-edges;display:block;margin-top:6px;"></canvas>
           </div>
         </div>
         <button class="spotlight-close" onclick="closeOverlay('overlay-student')">✕</button>
@@ -878,24 +877,23 @@ function selectStudent(id) {
 function refreshStudentPanel() {
   const s    = STUDENTS.find(s => s.id === selected); if (!s) return;
   const cell = cells.find(c => c.student.id === selected);
-  const charName = cell?.charJSON?.displayName || '—';
 
-  document.getElementById('sel-name').textContent      = s.name;
-  document.getElementById('sel-tama-name').textContent = charName;
-  document.getElementById('sel-pts').textContent       = s.gotchiPoints;
+  document.getElementById('sel-name').textContent = s.name;
+  document.getElementById('sel-pts').textContent  = s.gotchiPoints;
 
-  // Draw portrait — body_anim 'stand' sprite at 2×
+  // Portrait — base band 'neutral' sprite, 1×, transparent background
   const portrait = document.getElementById('spotlight-portrait');
   const pCtx     = portrait.getContext('2d');
-  pCtx.clearRect(0, 0, portrait.width, portrait.height);
   pCtx.imageSmoothingEnabled = false;
 
-  if (cell?.off) {
-    const sp = cell._body['stand'] || cell._body[Object.keys(cell._body)[0]];
+  if (cell?.off && cell.charJSON) {
+    const baseBand = cell.charJSON.bands?.find(b => b.role === 'base');
+    const sp       = baseBand?.sprites?.find(s => s.label === 'neutral')
+                  || baseBand?.sprites?.[0];
     if (sp) {
       portrait.width  = sp.w;
       portrait.height = sp.h;
-      pCtx.imageSmoothingEnabled = false;
+      pCtx.clearRect(0, 0, sp.w, sp.h);
       pCtx.drawImage(cell.off, sp.x, sp.y, sp.w, sp.h, 0, 0, sp.w, sp.h);
     }
   }
