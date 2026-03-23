@@ -887,9 +887,13 @@ function refreshStudentPanel() {
   pCtx.imageSmoothingEnabled = false;
 
   if (cell?.off && cell.charJSON) {
-    const baseBand = cell.charJSON.bands?.find(b => b.role === 'base');
-    const sp       = baseBand?.sprites?.find(s => s.label === 'neutral')
-                  || baseBand?.sprites?.[0];
+    // Adults: base band 'neutral' — pre-assembled with face
+    // Babies: no base band, use body_anim first sprite instead
+    const baseBand  = cell.charJSON.bands?.find(b => b.role === 'base');
+    const bodyBand  = cell.charJSON.bands?.find(b => b.role === 'body_anim');
+    const sp        = baseBand?.sprites?.find(s => s.label === 'neutral')
+                   || baseBand?.sprites?.[0]
+                   || bodyBand?.sprites?.[0];
     if (sp) {
       portrait.width  = sp.w;
       portrait.height = sp.h;
