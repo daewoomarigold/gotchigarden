@@ -579,13 +579,20 @@ class EggCell {
     this._fps      = eggJSON.animations.idle.fps;
     this.canvas    = null;
 
-    // Build offscreen egg sheet canvas
+    // Build offscreen egg sheet canvas with black background removed
     this.off = document.createElement('canvas');
     this.off.width  = eggSheet.naturalWidth  || eggSheet.width;
     this.off.height = eggSheet.naturalHeight || eggSheet.height;
-    const oc = this.off.getContext('2d');
+    const oc  = this.off.getContext('2d');
     oc.imageSmoothingEnabled = false;
     oc.drawImage(eggSheet, 0, 0);
+    // Remove black background pixels
+    const imgData = oc.getImageData(0, 0, this.off.width, this.off.height);
+    const d = imgData.data;
+    for (let i = 0; i < d.length; i += 4) {
+      if (d[i] < 15 && d[i+1] < 15 && d[i+2] < 15) d[i+3] = 0;
+    }
+    oc.putImageData(imgData, 0, 0);
 
     this._buildDOM(container);
     requestAnimationFrame(t => this._loop(t));
@@ -598,7 +605,7 @@ class EggCell {
 
     const vp = document.createElement('div');
     vp.className = 'cell-vp';
-    vp.style.background = '#000'; // black bg for eggs
+    vp.style.background = '#87CEEB';
 
     this.canvas = document.createElement('canvas');
     this.canvas.className = 'cell-canvas';
@@ -619,16 +626,15 @@ class EggCell {
     this.wrap.appendChild(plate);
     this.wrap.addEventListener('click',     () => selectStudent(this.student.id));
     this.wrap.addEventListener('mousemove', e  => {
-      // Tooltip shows "???" since tama is unknown
       const rect = this.canvas.getBoundingClientRect();
       const mx = e.clientX - rect.left, my = e.clientY - rect.top;
-      // Egg is centred — check if cursor is within egg bounds
-      const sp  = this.variant?.idleFrames?.[0];
+      const sp = this.variant?.idleFrames?.[0];
       if (!sp) return;
-      const SCALE = Math.floor(Math.min(CW, CH) / Math.max(sp.w, sp.h) * 0.6);
-      const dw = sp.w * SCALE, dh = sp.h * SCALE;
-      const dx = Math.round((CW - dw) / 2), dy = Math.round((CH - dh) / 2);
-      if (mx >= dx && mx <= dx+dw && my >= dy && my <= dy+dh)
+      const zoneTop = Math.floor(CH * 0.65);
+      const zoneH   = CH - zoneTop;
+      const dx = Math.round((CW - sp.w) / 2);
+      const dy = zoneTop + Math.round((zoneH - sp.h) / 2);
+      if (mx >= dx && mx <= dx+sp.w && my >= dy && my <= dy+sp.h)
         showTooltip(e, '???');
       else hideTooltip();
     });
@@ -639,7 +645,9 @@ class EggCell {
   _render() {
     const ctx = this.ctx;
     ctx.imageSmoothingEnabled = false;
-    ctx.fillStyle = '#000';
+
+    // Sky blue base like tama cells
+    ctx.fillStyle = '#87CEEB';
     ctx.fillRect(0, 0, CW, CH);
 
     if (!this.variant) return;
@@ -647,11 +655,17 @@ class EggCell {
     const sp       = this.variant.idleFrames[frameIdx];
     if (!sp) return;
 
-    // Scale egg to ~60% of cell, centred
-    const SCALE = Math.floor(Math.min(CW, CH) / Math.max(sp.w, sp.h) * 0.6);
+    // Boundary zone: lower 35% of cell (same as tamas)
+    const zoneTop = Math.floor(CH * 0.65);
+    const zoneH   = CH - zoneTop;
+
+    // Scale egg to fit within the zone at native scale (1×)
+    const SCALE = 1;
     const dw = sp.w * SCALE, dh = sp.h * SCALE;
+    // Centre horizontally, centre vertically within the zone
     const dx = Math.round((CW - dw) / 2);
-    const dy = Math.round((CH - dh) / 2);
+    const dy = zoneTop + Math.round((zoneH - dh) / 2);
+
     ctx.drawImage(this.off, sp.x, sp.y, sp.w, sp.h, dx, dy, dw, dh);
   }
 
