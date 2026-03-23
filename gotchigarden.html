@@ -443,17 +443,26 @@ class GotchiCell {
   _spawn(count) {
     const sp = Object.values(this._body)[0];
     const sw = sp?sp.w:36, sh = sp?sp.h:46;
-    const minY = Math.floor(CH * 0.35), maxY = CH - sh - 2;
+    // Bottom 35% boundary
+    const minY = Math.floor(CH * 0.65); // sprite top: 65% down
+    const maxY = CH - sh - 4;           // sprite bottom stays within cell
     for (let i = 0; i < count; i++) {
-      const dx = (Math.random() > .5 ? 1 : -1) * (.3 + Math.random() * .4);
+      // Bias starting angle toward horizontal so motion looks natural immediately
+      const angle = (Math.random() > 0.5 ? 0 : Math.PI) + (Math.random() - 0.5) * 0.6;
+      const speed = 2.0 + Math.random() * 1.5;
       this.pets.push({
-        x: Math.random() * (CW - sw),
-        y: minY + Math.random() * (maxY - minY),
-        dx, facingRight: dx > 0, moving: true,
+        x: 10 + Math.random() * (CW - sw - 20),
+        y: minY + Math.random() * Math.max(0, maxY - minY),
+        vx: Math.cos(angle) * speed,
+        vy: 0,
+        angle, speed,
+        facingRight: Math.cos(angle) > 0,
+        moving: true,
         frameIdx: Math.floor(Math.random() * 2),
         holdCounter: 0,
-        wanderTimer: 40 + Math.floor(Math.random() * 100),
-        pauseTimer:  0,
+        steerTimer: 30 + Math.floor(Math.random() * 60),
+        pauseTimer: 0,
+        sw, sh, minY, maxY,
       });
     }
   }
@@ -461,24 +470,65 @@ class GotchiCell {
   _def(key)  { return ANIMATION_DEFS[key]?.[this.gen] || null; }
   _key(pet)  { return this._forced || (pet.moving ? 'walk' : 'idle'); }
 
-  _update(pet) {
+  // Position update — runs every RAF frame at ~60fps for smooth movement
+  _moveStep(pet, dt) {
+    if (!pet.moving || this._forced) return;
+
+    // Steer timer — counts down in real frames (dt*60 ≈ 1 per frame at 60fps)
+    pet.steerTimer -= dt * 60;
+    if (pet.steerTimer <= 0) {
+      if (Math.random() < 0.2) {
+        // Pause briefly
+        pet.moving     = false;
+        pet.pauseTimer = 40 + Math.random() * 60;
+        pet.vx = 0; pet.vy = 0;
+        return;
+      }
+      // Turn up to ±70° — produces clear visible curves between direction changes
+      const turn     = (Math.random() - 0.5) * Math.PI * 0.78;
+      pet.angle     += turn;
+      pet.speed      = 2.0 + Math.random() * 1.5;
+      pet.steerTimer = 30 + Math.random() * 60;
+    }
+
+    // steer=0.08 means ~12 frames to reach new direction — visibly curved arc
+    const steer    = 0.08;
+    const targetVx = Math.cos(pet.angle) * pet.speed;
+    const targetVy = Math.sin(pet.angle) * pet.speed * 0.25; // flatten vertical
+    pet.vx += (targetVx - pet.vx) * steer;
+    pet.vy += (targetVy - pet.vy) * steer;
+
+    pet.x += pet.vx * dt * 60;
+    pet.y += pet.vy * dt * 60;
+
+    // Wall bouncing — reflect and update angle
+    if (pet.x <= 0)           { pet.x = 0;           pet.vx =  Math.abs(pet.vx); pet.angle = Math.atan2(pet.vy,  Math.abs(pet.vx)); }
+    if (pet.x >= CW - pet.sw) { pet.x = CW - pet.sw; pet.vx = -Math.abs(pet.vx); pet.angle = Math.atan2(pet.vy, -Math.abs(pet.vx)); }
+    if (pet.y <= pet.minY)    { pet.y = pet.minY;     pet.vy =  Math.abs(pet.vy); pet.angle = Math.atan2( Math.abs(pet.vy), pet.vx); }
+    if (pet.y >= pet.maxY)    { pet.y = pet.maxY;     pet.vy = -Math.abs(pet.vy); pet.angle = Math.atan2(-Math.abs(pet.vy), pet.vx); }
+
+    if (Math.abs(pet.vx) > 0.05) pet.facingRight = pet.vx > 0;
+  }
+
+  // Sprite frame update — runs at animation fps (3fps for walk)
+  _updateFrame(pet) {
     const key = this._key(pet), def = this._def(key); if (!def) return;
     pet.holdCounter++;
     const fd = def.frames[pet.frameIdx % def.frames.length];
-    if (pet.holdCounter >= (fd.hold || 1)) { pet.holdCounter = 0; pet.frameIdx = (pet.frameIdx + 1) % def.frames.length; }
-    if (!this._forced) {
-      if (pet.moving) {
-        pet.x += pet.dx; pet.wanderTimer--;
-        const sp = this._body[fd.body] || Object.values(this._body)[0], sw = sp ? sp.w : 36;
-        if (pet.x <= 0)       { pet.x = 0;       pet.dx =  Math.abs(pet.dx); pet.facingRight = true;  }
-        if (pet.x >= CW - sw) { pet.x = CW - sw;  pet.dx = -Math.abs(pet.dx); pet.facingRight = false; }
-        if (pet.wanderTimer <= 0) {
-          if (Math.random() < .4) { pet.moving = false; pet.dx = 0; pet.pauseTimer = 40 + Math.floor(Math.random() * 80); pet.frameIdx = 0; pet.holdCounter = 0; }
-          else { pet.dx = (Math.random() > .5 ? 1 : -1) * (.3 + Math.random() * .4); pet.facingRight = pet.dx > 0; pet.wanderTimer = 40 + Math.floor(Math.random() * 100); }
-        }
-      } else {
-        pet.pauseTimer--;
-        if (pet.pauseTimer <= 0) { pet.moving = true; pet.dx = (Math.random() > .5 ? 1 : -1) * (.3 + Math.random() * .4); pet.facingRight = pet.dx > 0; pet.wanderTimer = 40 + Math.floor(Math.random() * 100); pet.frameIdx = 0; pet.holdCounter = 0; }
+    if (pet.holdCounter >= (fd.hold || 1)) {
+      pet.holdCounter = 0;
+      pet.frameIdx = (pet.frameIdx + 1) % def.frames.length;
+    }
+    // Resume from pause
+    if (!pet.moving && !this._forced) {
+      pet.pauseTimer--;
+      if (pet.pauseTimer <= 0) {
+        pet.moving    = true;
+        pet.angle     = Math.random() * Math.PI * 2;
+        pet.speed     = 0.8 + Math.random() * 0.7;
+        pet.steerTimer = 60 + Math.random() * 120;
+        pet.frameIdx  = 0;
+        pet.holdCounter = 0;
       }
     }
   }
@@ -489,6 +539,7 @@ class GotchiCell {
     const bs = this._body[fd.body]; if (!bs) return;
     const fs = (!this.isBaby && fd.face) ? this._face[fd.face] || null : null;
     const an = (!this.isBaby && fd.face) ? this._anch[fd.body] || { offsetX:0, offsetY:0, useFace:true } : { offsetX:0, offsetY:0, useFace:false };
+    // Round to nearest pixel for crisp pixel art — no sub-pixel blur
     const px = Math.round(pet.x), py = Math.round(pet.y);
     ctx.save();
     if (pet.facingRight) { ctx.translate(px + bs.w/2, 0); ctx.scale(-1, 1); ctx.translate(-(px + bs.w/2), 0); }
@@ -508,18 +559,37 @@ class GotchiCell {
   }
 
   _loop(ts) {
+    // dt — time since last frame in seconds, capped to avoid jumps after tab switch
+    const dt = Math.min((ts - (this._lastRaf || ts)) / 1000, 0.05);
+    this._lastRaf = ts;
+
+    // Position updates every RAF (~60fps) for smooth movement
+    if (!this._forced) this.pets.forEach(p => this._moveStep(p, dt));
+
+    // Sprite frame updates at animation fps
     const def = this._def(this._forced || 'walk'), fps = def ? def.fps : 4;
     if (ts - this._lastTick >= 1000 / fps) {
       this._lastTick = ts;
-      this.pets.forEach(p => this._update(p));
-      this._render();
+      this.pets.forEach(p => this._updateFrame(p));
     }
+
+    // Render every frame
+    this._render();
     requestAnimationFrame(t => this._loop(t));
   }
 
   forceAnimation(key) {
     this._forced = key || null;
-    this.pets.forEach(p => { p.frameIdx = 0; p.holdCounter = 0; });
+    this.pets.forEach(p => {
+      p.frameIdx = 0; p.holdCounter = 0;
+      if (!key) {
+        // Resume wander with a fresh random direction
+        p.moving = true;
+        p.angle  = Math.random() * Math.PI * 2;
+        p.speed  = 0.8 + Math.random() * 0.7;
+        p.steerTimer = 60 + Math.random() * 120;
+      }
+    });
   }
 
   awardPoints(n) {
