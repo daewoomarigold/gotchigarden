@@ -278,7 +278,27 @@ header {
 .fab.yellow { border-color:var(--yellow); color:var(--yellow); }
 .fab.yellow:hover { background:rgba(255,224,102,.1); }
 
-#toast { position:fixed; bottom:14px; left:50%; transform:translateX(-50%) translateY(40px); z-index:999; background:var(--cyan); color:var(--bg); padding:7px 18px; border-radius:4px; font-size:11px; letter-spacing:1px; opacity:0; transition:all 0.22s; pointer-events:none; white-space:nowrap; }
+#tama-tooltip {
+  position: fixed;
+  z-index: 200;
+  pointer-events: none;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 5px 10px;
+  font-family: 'Pixelify Sans', monospace;
+  font-size: 0.75rem;
+  color: var(--text);
+  white-space: nowrap;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+  opacity: 0;
+  transform: translateY(4px);
+  transition: opacity 0.15s, transform 0.15s;
+}
+#tama-tooltip.visible {
+  opacity: 1;
+  transform: translateY(0);
+} position:fixed; bottom:14px; left:50%; transform:translateX(-50%) translateY(40px); z-index:999; background:var(--cyan); color:var(--bg); padding:7px 18px; border-radius:4px; font-size:11px; letter-spacing:1px; opacity:0; transition:all 0.22s; pointer-events:none; white-space:nowrap; }
 #toast.show { transform:translateX(-50%) translateY(0); opacity:1; }
 </style>
 </head>
@@ -335,16 +355,6 @@ header {
         </div>
       </div>
 
-      <!-- Teacher controls -->
-      <div class="spotlight-section">
-        <div class="spotlight-section-head">Award Points</div>
-        <input type="number" class="award-input" id="award-amount" value="10" min="1" max="999" style="margin-bottom:8px;">
-        <div class="btn-row">
-          <button class="btn yellow full" id="btn-award-one">★ Award</button>
-          <button class="btn red full"    id="btn-deduct-one">− Deduct</button>
-        </div>
-      </div>
-
       <!-- Shop -->
       <div class="spotlight-section">
         <div class="spotlight-section-head">Tama Shop</div>
@@ -394,6 +404,7 @@ header {
   </div>
 </div>
 
+<div id="tama-tooltip"></div>
 <div id="toast"></div>
 
 <script>
@@ -561,7 +572,10 @@ class GotchiCell {
 
     this.wrap.appendChild(vp);
     this.wrap.appendChild(plate);
-    this.wrap.addEventListener('click', () => selectStudent(this.student.id));
+    this.wrap.addEventListener('click',      () => selectStudent(this.student.id));
+    this.wrap.addEventListener('mouseenter', e  => showTooltip(e, this.student.name));
+    this.wrap.addEventListener('mousemove',  e  => moveTooltip(e));
+    this.wrap.addEventListener('mouseleave', ()  => hideTooltip());
     container.appendChild(this.wrap);
   }
 
@@ -950,18 +964,27 @@ function toast(msg) {
   clearTimeout(el._t); el._t = setTimeout(() => el.classList.remove('show'), 2200);
 }
 
-// ─── AWARD / DEDUCT ───────────────────────────────────────────────────────
-document.getElementById('btn-award-one').addEventListener('click', () => {
-  if (!selected || !cells.length) return;
-  const amt = parseInt(document.getElementById('award-amount').value) || 10;
-  cells.find(c => c.student.id === selected)?.awardPoints(amt);
-});
+// ─── TOOLTIP ──────────────────────────────────────────────────────────────
+const tooltip = document.getElementById('tama-tooltip');
 
-document.getElementById('btn-deduct-one').addEventListener('click', () => {
-  if (!selected || !cells.length) return;
-  const amt = parseInt(document.getElementById('award-amount').value) || 10;
-  cells.find(c => c.student.id === selected)?.awardPoints(-amt);
-});
+function showTooltip(e, name) {
+  tooltip.textContent = name;
+  tooltip.classList.add('visible');
+  moveTooltip(e);
+}
+
+function moveTooltip(e) {
+  const x = e.clientX + 12;
+  const y = e.clientY - 36;
+  // Keep within viewport
+  const tw = tooltip.offsetWidth;
+  tooltip.style.left = Math.min(x, window.innerWidth - tw - 8) + 'px';
+  tooltip.style.top  = Math.max(8, y) + 'px';
+}
+
+function hideTooltip() {
+  tooltip.classList.remove('visible');
+}
 
 document.getElementById('btn-do-award-all').addEventListener('click', () => {
   const amt = parseInt(document.getElementById('award-all-amount').value) || 10;
