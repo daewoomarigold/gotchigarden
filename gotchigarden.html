@@ -17,7 +17,7 @@
   --yellow:  #ffe066;
   --green:   #6bffb8;
   --red:     #ff6b6b;
-  --cw: 225px; --ch: 225px; --np: 22px; --gap: 10px;
+  --cw: 300px; --ch: 300px; --np: 22px; --gap: 10px;
 }
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -43,8 +43,8 @@ header {
 
 .classroom-grid {
   display: grid;
-  grid-template-columns: repeat(8, var(--cw));
-  grid-template-rows: repeat(2, calc(var(--ch) + var(--np)));
+  grid-template-columns: repeat(5, var(--cw));
+  grid-template-rows: repeat(3, calc(var(--ch) + var(--np)));
   gap: var(--gap);
 }
 
@@ -250,7 +250,6 @@ const STUDENTS = [
   { id:13, name:'Maya',    charId:null, bgFile:DEFAULT_BG, gotchiPoints:240, petCount:1 },
   { id:14, name:'Noah',    charId:null, bgFile:DEFAULT_BG, gotchiPoints:45,  petCount:1 },
   { id:15, name:'Olivia',  charId:null, bgFile:DEFAULT_BG, gotchiPoints:185, petCount:1 },
-  { id:16, name:'Pierce',  charId:null, bgFile:DEFAULT_BG, gotchiPoints:75,  petCount:1 },
 ];
 
 // Assign random enabled tama to each student from tamadex
@@ -292,7 +291,7 @@ const ANIMATION_DEFS = {
   },
 };
 
-const CW = 225, CH = 225;
+const CW = 300, CH = 300;
 
 // ─── ASSET CACHE ──────────────────────────────────────────────────────────
 // Cache fetched JSONs and images so shared characters don't re-download
