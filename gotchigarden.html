@@ -576,7 +576,7 @@ class EggCell {
     this._lastTick = 0;
     this._seqIdx   = 0;
     this._animSeq  = eggJSON.animations.idle.sequence;
-    this._fps      = eggJSON.animations.idle.fps;
+    this._fps      = 2; // slow shimmer — overrides JSON fps
     this.canvas    = null;
     this.bgCanvas  = null;
 
