@@ -571,13 +571,14 @@ async function fetchImage(folder, filename) {
 // ─── EGG CELL ─────────────────────────────────────────────────────────────
 class EggCell {
   constructor(container, student) {
-    this.student  = student;
-    this.variant  = student.eggVariant;
+    this.student   = student;
+    this.variant   = student.eggVariant;
     this._lastTick = 0;
     this._seqIdx   = 0;
     this._animSeq  = eggJSON.animations.idle.sequence;
     this._fps      = eggJSON.animations.idle.fps;
     this.canvas    = null;
+    this.bgCanvas  = null;
 
     // Build offscreen egg sheet canvas with black background removed
     this.off = document.createElement('canvas');
@@ -586,7 +587,6 @@ class EggCell {
     const oc  = this.off.getContext('2d');
     oc.imageSmoothingEnabled = false;
     oc.drawImage(eggSheet, 0, 0);
-    // Remove black background pixels
     const imgData = oc.getImageData(0, 0, this.off.width, this.off.height);
     const d = imgData.data;
     for (let i = 0; i < d.length; i += 4) {
@@ -595,6 +595,13 @@ class EggCell {
     oc.putImageData(imgData, 0, 0);
 
     this._buildDOM(container);
+    // Load background then start loop
+    fetchImage(BG_PATH, student.bgFile).then(bgImg => {
+      this.bgCanvas = document.createElement('canvas');
+      this.bgCanvas.width  = bgImg.naturalWidth  || bgImg.width;
+      this.bgCanvas.height = bgImg.naturalHeight || bgImg.height;
+      this.bgCanvas.getContext('2d').drawImage(bgImg, 0, 0);
+    }).catch(() => {}); // falls back to sky blue if bg fails
     requestAnimationFrame(t => this._loop(t));
   }
 
@@ -645,28 +652,22 @@ class EggCell {
   _render() {
     const ctx = this.ctx;
     ctx.imageSmoothingEnabled = false;
-
-    // Sky blue base like tama cells
+    // Sky blue base, then background image on top (same as GotchiCell)
     ctx.fillStyle = '#87CEEB';
     ctx.fillRect(0, 0, CW, CH);
+    if (this.bgCanvas) ctx.drawImage(this.bgCanvas, 0, 0, CW, CH);
 
     if (!this.variant) return;
     const frameIdx = this._animSeq[this._seqIdx % this._animSeq.length];
     const sp       = this.variant.idleFrames[frameIdx];
     if (!sp) return;
 
-    // Boundary zone: lower 35% of cell (same as tamas)
+    // Centre within lower 35% boundary zone
     const zoneTop = Math.floor(CH * 0.65);
     const zoneH   = CH - zoneTop;
-
-    // Scale egg to fit within the zone at native scale (1×)
-    const SCALE = 1;
-    const dw = sp.w * SCALE, dh = sp.h * SCALE;
-    // Centre horizontally, centre vertically within the zone
-    const dx = Math.round((CW - dw) / 2);
-    const dy = zoneTop + Math.round((zoneH - dh) / 2);
-
-    ctx.drawImage(this.off, sp.x, sp.y, sp.w, sp.h, dx, dy, dw, dh);
+    const dx = Math.round((CW - sp.w) / 2);
+    const dy = zoneTop + Math.round((zoneH - sp.h) / 2);
+    ctx.drawImage(this.off, sp.x, sp.y, sp.w, sp.h, dx, dy, sp.w, sp.h);
   }
 
   _loop(ts) {
