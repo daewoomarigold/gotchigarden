@@ -1987,10 +1987,10 @@ document.getElementById('btn-egg-analyze').addEventListener('click', () => {
   const rowCount = Math.floor(EGG.bitmap.height / ch);
   EGG.variants   = [];
 
-  // Hatch frame 1: cracked egg (seg 6, x=170, 18px) — same size as idle frames
-  // Hatch frame 2: burst explosion (x=207, 30px) — all fragments combined
+  // Hatch frame 1: cracked egg at same width as idle cell (34px), x=170
+  // Hatch frame 2: burst explosion (x=207, 30px)
   const HATCH_FRAMES = [
-    { x: 170, w: 18, label: 'crack' },
+    { x: 170, w: cw, label: 'crack' },
     { x: 207, w: 30, label: 'burst' },
   ];
 
