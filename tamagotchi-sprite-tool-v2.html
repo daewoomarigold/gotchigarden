@@ -2160,6 +2160,23 @@ document.getElementById('btn-egg-export').addEventListener('click', () => {
     setId:     `TAM-000-${setNum}`,
     setName,
     sheet:     'Eggs.png',
+    animations: {
+      idle: {
+        fps:    6,
+        loop:   true,
+        // Sequence uses 1-based frame indices into idleFrames
+        // Pattern: 1,2,1,3 — frames 4 and 5 unused
+        sequence: [0, 1, 0, 2],
+      },
+      hatch: {
+        fps:    8,
+        loop:   false,
+        // One-shot transition — plays frames 6,7 (crack then burst) then fires hatch event
+        // Frame indices into hatchFrames array
+        sequence: [0, 1],
+        onComplete: 'hatch', // signal to game engine to trigger baby spawn
+      },
+    },
     variants:  EGG.variants.map(v => ({
       id:          v.id,
       name:        v.name,
