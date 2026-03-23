@@ -1078,14 +1078,14 @@ function refreshStudentPanel() {
   pCtx.imageSmoothingEnabled = false;
 
   if (isEgg && cell.variant) {
-    // Show current egg frame as portrait
-    const sp = cell.variant.idleFrames[0];
+    // Show egg at ~50% of cell render size — use transparent offscreen canvas
+    const sp    = cell.variant.idleFrames[0];
+    const SCALE = 2;
     if (sp) {
-      portrait.width  = sp.w * 2;
-      portrait.height = sp.h * 2;
-      pCtx.fillStyle  = '#000';
-      pCtx.fillRect(0, 0, portrait.width, portrait.height);
-      pCtx.drawImage(cell.off, sp.x, sp.y, sp.w, sp.h, 0, 0, sp.w*2, sp.h*2);
+      portrait.width  = sp.w * SCALE;
+      portrait.height = sp.h * SCALE;
+      pCtx.clearRect(0, 0, portrait.width, portrait.height);
+      pCtx.drawImage(cell.off, sp.x, sp.y, sp.w, sp.h, 0, 0, sp.w*SCALE, sp.h*SCALE);
     }
   } else if (!isEgg && cell?.off && cell.charJSON) {
     const baseBand  = cell.charJSON.bands?.find(b => b.role === 'base');
