@@ -566,7 +566,7 @@ let tamaDex = null; // cached tamadex
 
 async function loadTamaDex() {
   if (tamaDex) return tamaDex;
-  const resp = await fetch(`${PAGES_BASE}/${TAMA_PATH}/tamadex.json`);
+  const resp = await fetch(`${PAGES_BASE}/${TAMA_PATH}/tamadex.json?v=${Date.now()}`);
   tamaDex = await resp.json();
   return tamaDex;
 }
@@ -728,6 +728,110 @@ async function triggerHatch(studentId) {
 // Appears in both grid view and spotlight mirror for free.
 function cellAnnounce(cell, text, duration = 3000) {
   cell._announcement = { text, startTs: performance.now(), duration };
+}
+
+// ─── EVOLVE SEQUENCE (baby→adult, adult→variant) ──────────────────────────
+async function triggerEvolve(studentId) {
+  const cell = cells.find(c => c.student.id === studentId);
+  if (!cell) return;
+  const pet = cell.pets.find(p => p.stage === 'baby' || p.stage === 'adult');
+  if (!pet) return;
+
+  // Step 0a: pick next stage in background
+  const tamaEntry = await pickEvolution(pet.stage);
+  if (!tamaEntry) { toast(`⚠ No ${getNextStage(pet.stage)} tamas available`); return; }
+
+  // Pause cell loop
+  cell._hatching = true;
+
+  // Helper: draw cell with this pet at a specific body sprite + x offset
+  function renderPetFrame(bodyLabel, offsetX = 0) {
+    const ctx = cell.ctx; ctx.imageSmoothingEnabled = false;
+    ctx.fillStyle = '#87CEEB'; ctx.fillRect(0,0,CW,CH);
+    if (cell.bgCanvas) ctx.drawImage(cell.bgCanvas,0,0,CW,CH);
+    // Draw other pets normally
+    cell.pets.forEach(p => {
+      if (p === pet) return;
+      if (p.stage==='egg') p.drawEgg(ctx); else p.drawTama(ctx);
+    });
+    // Draw evolving pet at specific frame
+    const bs = pet._body[bodyLabel] || Object.values(pet._body)[0];
+    if (!bs) return;
+    const px = Math.round(pet.x + offsetX), py = Math.round(pet.y);
+    ctx.save();
+    if (pet.facingRight) { ctx.translate(px+bs.w/2,0); ctx.scale(-1,1); ctx.translate(-(px+bs.w/2),0); }
+    ctx.drawImage(pet.off, bs.x,bs.y,bs.w,bs.h, px,py,bs.w,bs.h);
+    ctx.restore();
+  }
+
+  // ── Step 1: stand still ───────────────────────────────────────────────
+  renderPetFrame('stand');
+  await sleep(400);
+
+  // ── Step 2: cycle stand ↔ happy for ~2 seconds ────────────────────────
+  const cycleFrames = ['stand','happy','stand','happy','stand','happy','stand','happy'];
+  for (const label of cycleFrames) {
+    renderPetFrame(label);
+    await sleep(250);
+  }
+
+  // ── Step 3: vigorous horizontal shake (~1.5 seconds) ──────────────────
+  await new Promise(resolve => {
+    const start = performance.now();
+    function frame(ts) {
+      const elapsed = ts - start;
+      if (elapsed >= 1500) { renderPetFrame('stand', 0); resolve(); return; }
+      const offsetX = Math.sin(elapsed / 60 * Math.PI * 2) * 4;
+      renderPetFrame('stand', offsetX);
+      requestAnimationFrame(frame);
+    }
+    requestAnimationFrame(frame);
+  });
+
+  await sleep(200);
+
+  // ── Step 4: white flash ───────────────────────────────────────────────
+  await new Promise(resolve => {
+    const start = performance.now();
+    function frame(ts) {
+      const t = Math.min((ts-start)/400, 1);
+      const ctx = cell.ctx;
+      ctx.globalAlpha = t; ctx.fillStyle='#fff'; ctx.fillRect(0,0,CW,CH); ctx.globalAlpha=1;
+      if (t<1) requestAnimationFrame(frame); else resolve();
+    }
+    requestAnimationFrame(frame);
+  });
+
+  // ── Step 5: swap pet, fade in new tama ───────────────────────────────
+  const petIdx  = cell.pets.indexOf(pet);
+  const spawnX  = pet.x, spawnY = pet.y;
+  cell.pets.splice(petIdx, 1);
+  await cell.addTama(tamaEntry.id);
+  const newPet  = cell.pets[cell.pets.length-1];
+  if (newPet) {
+    newPet.x  = spawnX;
+    newPet.y  = Math.min(spawnY, newPet.maxY);
+    newPet.vx = 0; newPet.vy = 0;
+  }
+
+  // Fade in
+  cell._hatching = false;
+  cell.canvas.style.opacity    = '0';
+  cell.canvas.style.transition = 'opacity 0.5s';
+  await sleep(30);
+  cell.canvas.style.opacity = '1';
+
+  // Wave briefly
+  if (newPet) {
+    newPet.forceAnimation('wave');
+    setTimeout(() => newPet.forceAnimation(null), 2500);
+  }
+
+  refreshStudentPanel();
+
+  // ── Step 6: announcement (10 seconds) ────────────────────────────────
+  await sleep(300);
+  cellAnnounce(cell, `🌟 Evolved into ${tamaEntry.displayName}!`, 10000);
 }
 
 function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
@@ -1384,28 +1488,15 @@ document.getElementById('btn-debug-evolve').addEventListener('click', async () =
   const cell = cells.find(c => c.student.id === selected);
   if (!cell || !cell.pets.length) return;
 
-  // Save snapshot for undo
-  getEvolutionHistory(selected).push(snapshotPets(cell));
-
   const pet = cell.pets[0];
-  const nextStage = getNextStage(pet.stage);
-  if (!nextStage) { toast('Already at final stage'); return; }
-
-  const tamaEntry = await pickEvolution(pet.stage);
-  if (!tamaEntry) { toast(`⚠ No ${nextStage} tamas available`); return; }
 
   if (pet.stage === 'egg') {
-    // Remove egg, add tama
-    await cell.hatchEgg(0, tamaEntry.id);
+    // Egg hatch uses the full hatch sequence
+    triggerHatch(selected);
   } else {
-    // Replace tama with next stage tama
-    const petIdx = cell.pets.indexOf(pet);
-    cell.pets.splice(petIdx, 1);
-    await cell.addTama(tamaEntry.id);
+    // Tama evolution uses the evolve sequence
+    triggerEvolve(selected);
   }
-
-  refreshStudentPanel();
-  toast(`↑ Evolved to ${tamaEntry.displayName}`);
 });
 
 // Undo — restore previous state
