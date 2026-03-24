@@ -721,51 +721,10 @@ async function triggerHatch(studentId) {
 }
 
 // ─── CELL ANNOUNCEMENT ────────────────────────────────────────────────────
-// Draws a speech-bubble style message on the cell canvas for a few seconds.
-// Appears in both grid view and the spotlight mirror automatically.
+// Sets announcement state on the cell — _render draws it every frame automatically.
+// Appears in both grid view and spotlight mirror for free.
 function cellAnnounce(cell, text, duration = 3000) {
-  const ctx     = cell.ctx;
-  const startTs = performance.now();
-
-  function drawAnnouncement(ts) {
-    const elapsed = ts - startTs;
-    if (elapsed > duration) return; // stop drawing
-
-    // Render normal cell frame first
-    ctx.imageSmoothingEnabled = false;
-    ctx.fillStyle = '#87CEEB'; ctx.fillRect(0,0,CW,CH);
-    if (cell.bgCanvas) ctx.drawImage(cell.bgCanvas,0,0,CW,CH);
-    cell.pets.forEach(p => { if (p.stage==='egg') p.drawEgg(ctx); else p.drawTama(ctx); });
-
-    // Fade in/out
-    const fadeIn  = Math.min(elapsed / 300, 1);
-    const fadeOut = elapsed > duration - 400 ? Math.max(0, (duration - elapsed) / 400) : 1;
-    const alpha   = fadeIn * fadeOut;
-
-    // Bubble background
-    const bw = Math.min(CW - 16, 180), bh = 28;
-    const bx = Math.round((CW - bw) / 2);
-    const by = Math.floor(CH * 0.55);
-    ctx.globalAlpha = alpha;
-    ctx.fillStyle   = '#fff';
-    ctx.strokeStyle = '#333';
-    ctx.lineWidth   = 2;
-    ctx.beginPath();
-    ctx.roundRect(bx, by, bw, bh, 6);
-    ctx.fill(); ctx.stroke();
-
-    // Text
-    ctx.fillStyle    = '#333';
-    ctx.font         = `bold ${Math.floor(bh * 0.5)}px "Pixelify Sans", monospace`;
-    ctx.textAlign    = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText(text, CW/2, by + bh/2, bw - 12);
-    ctx.globalAlpha  = 1;
-    ctx.textAlign    = 'left';
-
-    requestAnimationFrame(drawAnnouncement);
-  }
-  requestAnimationFrame(drawAnnouncement);
+  cell._announcement = { text, startTs: performance.now(), duration };
 }
 
 function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
@@ -1050,7 +1009,8 @@ class GotchiCell {
     this.ctx       = null;
     this._lastRaf  = 0;
     this._forced   = null;
-    this._hatching = false; // true during hatch sequence — pauses _render
+    this._hatching = false;
+    this._announcement = null; // { text, startTs, duration }
 
     this._buildDOM(container);
     this._load();
@@ -1167,6 +1127,32 @@ class GotchiCell {
       if (p.stage==='egg') p.drawEgg(ctx);
       else p.drawTama(ctx);
     });
+    // Draw announcement overlay on top if active
+    if (this._announcement) {
+      const { text, startTs, duration } = this._announcement;
+      const elapsed = performance.now() - startTs;
+      if (elapsed >= duration) { this._announcement = null; return; }
+      const fadeIn  = Math.min(elapsed / 300, 1);
+      const fadeOut = elapsed > duration - 400 ? Math.max(0, (duration - elapsed) / 400) : 1;
+      const alpha   = fadeIn * fadeOut;
+      const bw = Math.min(CW - 16, 180), bh = 28;
+      const bx = Math.round((CW - bw) / 2);
+      const by = Math.floor(CH * 0.55);
+      ctx.globalAlpha = alpha;
+      ctx.fillStyle   = '#fff';
+      ctx.strokeStyle = '#333';
+      ctx.lineWidth   = 2;
+      ctx.beginPath();
+      ctx.roundRect(bx, by, bw, bh, 6);
+      ctx.fill(); ctx.stroke();
+      ctx.fillStyle    = '#333';
+      ctx.font         = `bold ${Math.floor(bh * 0.5)}px "Pixelify Sans", monospace`;
+      ctx.textAlign    = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(text, CW/2, by + bh/2, bw - 12);
+      ctx.globalAlpha  = 1;
+      ctx.textAlign    = 'left';
+    }
   }
 
   _loop(ts) {
