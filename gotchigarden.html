@@ -59,7 +59,7 @@ header {
   border:1px solid var(--border); border-radius:3px 3px 0 0;
   overflow:hidden; position:relative;
   box-shadow:0 0 8px rgba(107,63,160,0.25);
-  background:#87CEEB;
+  background: var(--surface);
 }
 .cell-vp.empty {
   background:var(--surface); display:flex;
@@ -134,7 +134,7 @@ header {
 
 .spotlight-left {
   flex-shrink: 0;
-  background: #87CEEB;
+  background: var(--surface);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1292,7 +1292,7 @@ class GotchiCell {
 
     const vp = document.createElement('div');
     vp.className = 'cell-vp';
-    vp.style.background = '#87CEEB';
+    vp.style.background = 'var(--surface)';
 
     this.loadingEl = document.createElement('div');
     this.loadingEl.className = 'cell-loading';
