@@ -981,6 +981,8 @@ function buildBgCanvas(bgImg) {
   return c;
 }
 
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
 // ─── EGG ASSETS ───────────────────────────────────────────────────────────
 let eggJSON  = null;  // loaded from TAM-000-001.json
 let eggSheet = null;  // loaded Eggs.png as HTMLImageElement
