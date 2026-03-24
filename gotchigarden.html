@@ -600,17 +600,20 @@ async function pickEvolution(currentStage) {
   const nextStage = getNextStage(currentStage);
   if (!nextStage) return null;
 
-  // Filter to enabled characters of the correct next stage
   const pool = dex.characters.filter(c =>
     c.enabled && getTamIdStage(c.id) === nextStage
   );
+
+  // Diagnostic — remove once working
+  console.log(`pickEvolution('${currentStage}') → nextStage='${nextStage}'`);
+  console.log(`  All enabled:`, dex.characters.filter(c=>c.enabled).map(c=>`${c.id}(${getTamIdStage(c.id)})`));
+  console.log(`  Pool:`, pool.map(c=>c.id));
 
   if (!pool.length) {
     console.warn(`No enabled ${nextStage} tamas found in tamadex`);
     return null;
   }
 
-  // Equal weight — pure random for now
   return pool[Math.floor(Math.random() * pool.length)];
 }
 
