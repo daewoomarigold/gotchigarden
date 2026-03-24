@@ -425,6 +425,23 @@ header {
         </button>
       </div>
 
+      <!-- Debug tools -->
+      <div class="spotlight-section" id="debug-section">
+        <div class="spotlight-section-head" style="color:var(--red);">⚙ Debug</div>
+        <button class="btn btn-full" id="btn-debug-evolve"
+          style="border-color:var(--cyan);color:var(--cyan);">
+          ↑ Force Evolve
+        </button>
+        <button class="btn btn-full" id="btn-debug-undo"
+          style="border-color:var(--muted);color:var(--muted);">
+          ↩ Undo Evolution
+        </button>
+        <button class="btn btn-full" id="btn-debug-reset"
+          style="border-color:var(--red);color:var(--red);">
+          🥚 Reset to Egg
+        </button>
+      </div>
+
       <!-- Shop -->
       <div class="spotlight-section">
         <div class="spotlight-section-head">Tama Shop</div>
@@ -545,29 +562,74 @@ async function assignTamas() {
 }
 
 // ─── HATCH SEQUENCE ───────────────────────────────────────────────────────
-let tamaDex = null; // cached tamadex for hatch assignments
+let tamaDex = null; // cached tamadex
 
-async function pickHatchTama() {
-  // Load tamadex if not already cached
-  if (!tamaDex) {
-    const resp = await fetch(`${PAGES_BASE}/tamadex.json`);
-    tamaDex    = await resp.json();
+async function loadTamaDex() {
+  if (tamaDex) return tamaDex;
+  const resp = await fetch(`${PAGES_BASE}/tamadex.json`);
+  tamaDex = await resp.json();
+  return tamaDex;
+}
+
+// ─── GROWTH CHART ─────────────────────────────────────────────────────────
+// Defines which stages can evolve into which.
+// Evolution order: egg(000) → baby(001) → adult(002-xxx-000) → variant(002-xxx-00x)
+// For now all candidates within a stage are equally weighted.
+// Future: assign weights per character for routing paths.
+
+function getNextStage(currentStage) {
+  switch (currentStage) {
+    case 'egg':   return 'baby';
+    case 'baby':  return 'adult';
+    case 'adult': return 'variant';
+    default:      return null;
   }
-  const pool = tamaDex.characters.filter(c => c.enabled);
+}
+
+function getTamIdStage(id) {
+  // TAM-000 = egg, TAM-001 = baby, TAM-002-xxx-000 = adult, TAM-002-xxx-00x = variant
+  const parts = id.split('-');
+  if (parts[1] === '000') return 'egg';
+  if (parts[1] === '001') return 'baby';
+  if (parts[1] === '002') return parseInt(parts[3]) === 0 ? 'adult' : 'variant';
+  return 'adult';
+}
+
+async function pickEvolution(currentStage) {
+  const dex       = await loadTamaDex();
+  const nextStage = getNextStage(currentStage);
+  if (!nextStage) return null;
+
+  // Filter to enabled characters in the target stage
+  const pool = dex.characters.filter(c => {
+    if (!c.enabled) return false;
+    return getTamIdStage(c.id) === nextStage;
+  });
+
+  if (!pool.length) {
+    // Fallback: any enabled character (shouldn't happen with full dex)
+    const fallback = dex.characters.filter(c => c.enabled);
+    return fallback[Math.floor(Math.random() * fallback.length)] || null;
+  }
+
+  // Equal weight — pure random for now
   return pool[Math.floor(Math.random() * pool.length)];
 }
 
 async function triggerHatch(studentId) {
   const cell = cells.find(c => c.student.id === studentId);
   if (!cell) return;
-  // Find the first egg pet in this cell
   const petIdx = cell.pets.findIndex(p => p.stage === 'egg');
   if (petIdx === -1) return;
   const pet = cell.pets[petIdx];
-  closeOverlay('overlay-student');
 
-  // Step 1a: pick tama in background
-  const tamaEntry = await pickHatchTama();
+  // Step 1a: pick baby from growth chart
+  const tamaEntry = await pickEvolution('egg');
+  if (!tamaEntry) { toast('⚠ No baby tamas available'); return; }
+
+  // Keep spotlight overlay open — mirror continues running
+  // Just disable hatch button to prevent double-trigger
+  document.getElementById('btn-hatch').disabled = true;
 
   // Steps 2–3: freeze egg on frame 1
   pet.hatching = true;
@@ -640,6 +702,10 @@ async function triggerHatch(studentId) {
     newPet.forceAnimation('wave');
     setTimeout(() => newPet.forceAnimation(null), 2000);
   }
+
+  // Refresh spotlight panel to show new tama portrait + hide hatch button
+  refreshStudentPanel();
+  document.getElementById('btn-hatch').disabled = false;
 
   // ── Step 9: toast ─────────────────────────────────────────────────────
   await sleep(300);
@@ -1253,6 +1319,98 @@ function hideTooltip() {
 
 document.getElementById('btn-hatch').addEventListener('click', () => {
   if (selected) triggerHatch(selected);
+});
+
+// ─── DEBUG TOOLS ──────────────────────────────────────────────────────────
+// Each student has an evolution history stack for undo
+const evolutionHistory = {}; // studentId → [{stage, charId, eggVariant}]
+
+function getEvolutionHistory(id) {
+  if (!evolutionHistory[id]) evolutionHistory[id] = [];
+  return evolutionHistory[id];
+}
+
+function snapshotPets(cell) {
+  return cell.pets.map(p => ({
+    stage:      p.stage,
+    charId:     p.charJSON?.id || null,
+    eggVariant: p.eggVariant   || null,
+  }));
+}
+
+// Force evolve — advances the first pet to the next stage
+document.getElementById('btn-debug-evolve').addEventListener('click', async () => {
+  if (!selected) return;
+  const cell = cells.find(c => c.student.id === selected);
+  if (!cell || !cell.pets.length) return;
+
+  // Save snapshot for undo
+  getEvolutionHistory(selected).push(snapshotPets(cell));
+
+  const pet = cell.pets[0];
+  const nextStage = getNextStage(pet.stage);
+  if (!nextStage) { toast('Already at final stage'); return; }
+
+  const tamaEntry = await pickEvolution(pet.stage);
+  if (!tamaEntry) { toast(`⚠ No ${nextStage} tamas available`); return; }
+
+  if (pet.stage === 'egg') {
+    // Remove egg, add tama
+    await cell.hatchEgg(0, tamaEntry.id);
+  } else {
+    // Replace tama with next stage tama
+    const petIdx = cell.pets.indexOf(pet);
+    cell.pets.splice(petIdx, 1);
+    await cell.addTama(tamaEntry.id);
+  }
+
+  refreshStudentPanel();
+  toast(`↑ Evolved to ${tamaEntry.displayName}`);
+});
+
+// Undo — restore previous state
+document.getElementById('btn-debug-undo').addEventListener('click', async () => {
+  if (!selected) return;
+  const history = getEvolutionHistory(selected);
+  if (!history.length) { toast('Nothing to undo'); return; }
+
+  const cell     = cells.find(c => c.student.id === selected);
+  const snapshot = history.pop();
+
+  // Clear current pets
+  cell.pets = [];
+
+  // Restore snapshot
+  for (const s of snapshot) {
+    if (s.stage === 'egg') {
+      await cell._addEgg(s.eggVariant);
+    } else {
+      await cell.addTama(s.charId);
+    }
+  }
+
+  refreshStudentPanel();
+  toast('↩ Evolution undone');
+});
+
+// Reset to egg — clears all pets and restores a random egg
+document.getElementById('btn-debug-reset').addEventListener('click', async () => {
+  if (!selected) return;
+  const cell    = cells.find(c => c.student.id === selected);
+  const student = STUDENTS.find(s => s.id === selected);
+
+  // Save snapshot first
+  getEvolutionHistory(selected).push(snapshotPets(cell));
+
+  // Clear pets and restore egg
+  cell.pets = [];
+  const variants = eggJSON.variants;
+  const variant  = variants[Math.floor(Math.random() * variants.length)];
+  student.eggVariant = variant;
+  await cell._addEgg(variant);
+
+  refreshStudentPanel();
+  toast('🥚 Reset to egg');
 });
 
 document.getElementById('btn-do-award-all').addEventListener('click', () => {
