@@ -95,7 +95,33 @@ header {
 .cell-dot.flash    { background:var(--cyan); box-shadow:0 0 6px var(--cyan); }
 .cell-dot.inactive { background:var(--muted); box-shadow:none; }
 
-/* ── Spotlight panel ── */
+/* ── Pet roster ── */
+.pet-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 4px;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  cursor: pointer;
+  background: var(--raised);
+  transition: border-color 0.1s, background 0.1s;
+  min-width: 44px;
+}
+.pet-card:hover { border-color: var(--cyan); }
+.pet-card.selected {
+  border-color: var(--yellow);
+  background: rgba(255,224,102,0.08);
+}
+.pet-card-label {
+  font-size: 8px;
+  color: var(--muted);
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+/* ── Spotlight header (simplified) ── */
 .spotlight-panel {
   display: flex;
   background: var(--surface);
@@ -360,6 +386,46 @@ header {
   pointer-events: none; white-space: nowrap;
 }
 #toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+
+/* ── Pet roster portraits ── */
+.pet-portrait-btn {
+  background: var(--raised);
+  border: 2px solid var(--border);
+  border-radius: 4px;
+  padding: 3px;
+  cursor: pointer;
+  transition: border-color 0.12s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.pet-portrait-btn:hover  { border-color: var(--cyan); }
+.pet-portrait-btn.active { border-color: var(--yellow); background: rgba(255,224,102,0.08); }
+.pet-portrait-btn canvas { image-rendering: pixelated; image-rendering: crisp-edges; display: block; }
+
+.pet-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  background: var(--raised);
+  border: 2px solid var(--border);
+  border-radius: 5px;
+  padding: 5px 4px 3px;
+  cursor: pointer;
+  transition: border-color 0.12s;
+  min-width: 36px;
+}
+.pet-card:hover   { border-color: var(--cyan); }
+.pet-card.selected { border-color: var(--yellow); background: rgba(255,224,102,0.08); }
+.pet-card-label {
+  font-size: 8px;
+  color: var(--muted);
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
 </style>
 </head>
 <body>
@@ -394,15 +460,9 @@ header {
     <!-- Right: info + shop -->
     <div class="spotlight-right">
 
-      <!-- Header -->
+      <!-- Student header -->
       <div class="spotlight-header">
-        <div class="spotlight-header-left">
-          <div>
-            <div class="spotlight-name" id="sel-name">—</div>
-            <canvas id="spotlight-portrait"
-              style="image-rendering:pixelated;image-rendering:crisp-edges;display:block;margin-top:6px;"></canvas>
-          </div>
-        </div>
+        <div class="spotlight-name" id="sel-name">—</div>
         <button class="spotlight-close" onclick="closeOverlay('overlay-student')">✕</button>
       </div>
 
@@ -415,13 +475,24 @@ header {
         </div>
       </div>
 
-      <!-- Hatch (temp test button) -->
-      <div class="spotlight-section" id="hatch-section" style="display:none;">
-        <div class="spotlight-section-head">Hatch</div>
-        <button class="btn btn-full" id="btn-hatch"
-          style="border-color:var(--yellow);color:var(--yellow);">
-          🥚 Hatch Egg
+      <!-- Pet roster -->
+      <div class="spotlight-section">
+        <div class="spotlight-section-head">Pets</div>
+        <div id="pet-roster" style="display:flex;flex-wrap:wrap;gap:6px;align-items:flex-end;margin-top:4px;">
+          <!-- populated by JS -->
+        </div>
+        <button class="btn btn-full" id="btn-add-egg"
+          style="margin-top:8px;border-color:var(--yellow);color:var(--yellow);">
+          + Add Egg
         </button>
+      </div>
+
+      <!-- Per-pet actions — updates based on selected pet -->
+      <div class="spotlight-section" id="pet-actions">
+        <div class="spotlight-section-head" id="pet-actions-head">Actions</div>
+        <div id="pet-actions-body" style="display:flex;flex-direction:column;gap:6px;">
+          <!-- populated by JS -->
+        </div>
       </div>
 
       <!-- Debug tools -->
@@ -445,11 +516,6 @@ header {
       <div class="spotlight-section">
         <div class="spotlight-section-head">Tama Shop</div>
         <div class="shop-grid">
-          <button class="shop-btn" disabled>
-            <span class="shop-icon">🥚</span>
-            <span class="shop-label">New Egg</span>
-            <span class="shop-cost muted">Coming soon</span>
-          </button>
           <button class="shop-btn" disabled>
             <span class="shop-icon">🖼</span>
             <span class="shop-label">Background</span>
@@ -616,18 +682,18 @@ async function pickEvolution(currentStage) {
   return pool[Math.floor(Math.random() * pool.length)];
 }
 
-async function triggerHatch(studentId) {
+async function triggerHatch(studentId, petIdx = 0) {
   const cell = cells.find(c => c.student.id === studentId);
   if (!cell) return;
-  const petIdx = cell.pets.findIndex(p => p.stage === 'egg');
-  if (petIdx === -1) return;
+  if (petIdx === undefined) petIdx = cell.pets.findIndex(p => p.stage === 'egg');
+  if (petIdx === -1 || !cell.pets[petIdx] || cell.pets[petIdx].stage !== 'egg') return;
   const pet = cell.pets[petIdx];
 
   // Step 1a: pick baby from growth chart
   const tamaEntry = await pickEvolution('egg');
   if (!tamaEntry) { toast('⚠ No baby tamas available'); return; }
 
-  document.getElementById('btn-hatch').disabled = true;
+  document.getElementById('btn-debug-evolve').disabled = true;
 
   // Remember egg position so tama spawns there
   const eggX = pet.x, eggY = pet.y;
@@ -715,7 +781,7 @@ async function triggerHatch(studentId) {
 
   // Refresh spotlight panel
   refreshStudentPanel();
-  document.getElementById('btn-hatch').disabled = false;
+  document.getElementById('btn-debug-evolve').disabled = false;
 
   // ── Step 9: cell announcement ─────────────────────────────────────────
   await sleep(300);
@@ -730,11 +796,11 @@ function cellAnnounce(cell, text, duration = 3000) {
 }
 
 // ─── EVOLVE SEQUENCE (baby→adult, adult→variant) ──────────────────────────
-async function triggerEvolve(studentId) {
+async function triggerEvolve(studentId, petIdx = 0) {
   const cell = cells.find(c => c.student.id === studentId);
   if (!cell) return;
-  const pet = cell.pets.find(p => p.stage === 'baby' || p.stage === 'adult');
-  if (!pet) return;
+  const pet = cell.pets[petIdx];
+  if (!pet || (pet.stage !== 'baby' && pet.stage !== 'adult')) return;
 
   // Step 0a: pick next stage in background
   const tamaEntry = await pickEvolution(pet.stage);
@@ -802,9 +868,9 @@ async function triggerEvolve(studentId) {
   });
 
   // ── Step 5: swap pet, fade in new tama ───────────────────────────────
-  const petIdx  = cell.pets.indexOf(pet);
+  const evolvePetIdx = cell.pets.indexOf(pet);
   const spawnX  = pet.x, spawnY = pet.y;
-  cell.pets.splice(petIdx, 1);
+  cell.pets.splice(evolvePetIdx, 1);
   await cell.addTama(tamaEntry.id);
   const newPet  = cell.pets[cell.pets.length-1];
   if (newPet) {
@@ -1311,6 +1377,7 @@ function selectStudent(id) {
   if (selected === id) { selected = null; closeOverlay('overlay-student'); }
   else {
     selected = id;
+    selectedPetIdx = 0; // reset to first pet when switching students
     refreshStudentPanel();
     openOverlay('overlay-student');
     startMirror(id);
@@ -1319,50 +1386,99 @@ function selectStudent(id) {
     el.classList.toggle('selected', parseInt(el.dataset.id) === selected));
 }
 
+// Track which pet is selected in the spotlight roster
+let selectedPetIdx = 0;
+
 function refreshStudentPanel() {
   const s    = STUDENTS.find(s => s.id === selected); if (!s) return;
   const cell = cells.find(c => c.student.id === selected);
   if (!cell) return;
 
-  // Determine cell state from pets array
-  const eggPet  = cell.pets.find(p => p.stage === 'egg');
-  const tamaPet = cell.pets.find(p => p.stage === 'adult' || p.stage === 'baby');
-  const hasEgg  = !!eggPet;
-
   document.getElementById('sel-name').textContent = s.name;
   document.getElementById('sel-pts').textContent  = s.gotchiPoints;
 
-  // Show hatch button only if cell has an egg
-  document.getElementById('hatch-section').style.display = hasEgg ? 'flex' : 'none';
+  // Clamp selectedPetIdx to valid range
+  if (selectedPetIdx >= cell.pets.length) selectedPetIdx = 0;
 
-  // Portrait
-  const portrait = document.getElementById('spotlight-portrait');
-  const pCtx     = portrait.getContext('2d');
-  pCtx.imageSmoothingEnabled = false;
+  buildPetRoster(cell);
+  buildPetActions(cell);
+}
 
-  if (eggPet) {
-    // Show egg sprite at 2× — use egg pet's transparent offscreen canvas
-    const sp = eggPet.eggVariant.idleFrames[0];
-    if (sp) {
-      const SCALE = 2;
-      portrait.width  = sp.w * SCALE;
-      portrait.height = sp.h * SCALE;
-      pCtx.clearRect(0, 0, portrait.width, portrait.height);
-      pCtx.drawImage(eggPet.off, sp.x, sp.y, sp.w, sp.h, 0, 0, sp.w*SCALE, sp.h*SCALE);
+function buildPetRoster(cell) {
+  const roster = document.getElementById('pet-roster');
+  roster.innerHTML = '';
+
+  cell.pets.forEach((pet, idx) => {
+    const card = document.createElement('div');
+    card.className = 'pet-card' + (idx === selectedPetIdx ? ' selected' : '');
+    card.title = pet.tooltipName;
+
+    // Portrait canvas
+    const c   = document.createElement('canvas');
+    c.style.cssText = 'image-rendering:pixelated;image-rendering:crisp-edges;display:block;';
+    c.style.background = 'transparent';
+    const ctx = c.getContext('2d');
+    ctx.imageSmoothingEnabled = false;
+
+    if (pet.stage === 'egg') {
+      const sp = pet.eggVariant.idleFrames[0];
+      c.width  = sp.w; c.height = sp.h;
+      ctx.drawImage(pet.off, sp.x, sp.y, sp.w, sp.h, 0, 0, sp.w, sp.h);
+    } else {
+      const baseBand = pet.charJSON.bands?.find(b => b.role === 'base');
+      const bodyBand = pet.charJSON.bands?.find(b => b.role === 'body_anim');
+      const sp       = baseBand?.sprites?.find(s => s.label === 'neutral')
+                    || baseBand?.sprites?.[0]
+                    || bodyBand?.sprites?.[0];
+      if (sp) {
+        c.width = sp.w; c.height = sp.h;
+        ctx.drawImage(pet.off, sp.x, sp.y, sp.w, sp.h, 0, 0, sp.w, sp.h);
+      }
     }
-  } else if (tamaPet) {
-    // Show tama base/neutral sprite
-    const charJSON  = tamaPet.charJSON;
-    const baseBand  = charJSON.bands?.find(b => b.role === 'base');
-    const bodyBand  = charJSON.bands?.find(b => b.role === 'body_anim');
-    const sp        = baseBand?.sprites?.find(s => s.label === 'neutral')
-                   || baseBand?.sprites?.[0]
-                   || bodyBand?.sprites?.[0];
-    if (sp) {
-      portrait.width  = sp.w;
-      portrait.height = sp.h;
-      pCtx.clearRect(0, 0, sp.w, sp.h);
-      pCtx.drawImage(tamaPet.off, sp.x, sp.y, sp.w, sp.h, 0, 0, sp.w, sp.h);
+
+    const label = document.createElement('div');
+    label.className = 'pet-card-label';
+    label.textContent = pet.stage === 'egg' ? '???' :
+                        pet.stage === 'baby' ? 'Baby' : 'Adult';
+
+    card.appendChild(c);
+    card.appendChild(label);
+    card.addEventListener('click', () => {
+      selectedPetIdx = idx;
+      buildPetRoster(cell);
+      buildPetActions(cell);
+    });
+    roster.appendChild(card);
+  });
+}
+
+function buildPetActions(cell) {
+  const pet  = cell.pets[selectedPetIdx];
+  const head = document.getElementById('pet-actions-head');
+  const body = document.getElementById('pet-actions-body');
+  body.innerHTML = '';
+
+  if (!pet) { head.textContent = 'Actions'; return; }
+
+  const name = pet.stage === 'egg' ? '???' : (pet.charJSON?.displayName || pet.stage);
+  head.textContent = name;
+
+  if (pet.stage === 'egg') {
+    const btn = document.createElement('button');
+    btn.className = 'btn btn-full';
+    btn.style.cssText = 'border-color:var(--yellow);color:var(--yellow);';
+    btn.textContent = '🥚 Hatch Egg';
+    btn.addEventListener('click', () => triggerHatch(selected, selectedPetIdx));
+    body.appendChild(btn);
+  } else {
+    const nextStage = getNextStage(pet.stage);
+    if (nextStage) {
+      const btn = document.createElement('button');
+      btn.className = 'btn btn-full';
+      btn.style.cssText = 'border-color:var(--cyan);color:var(--cyan);';
+      btn.textContent = `✨ Evolve`;
+      btn.addEventListener('click', () => triggerEvolve(selected, selectedPetIdx));
+      body.appendChild(btn);
     }
   }
 }
@@ -1402,6 +1518,7 @@ function closeOverlay(id) {
   document.getElementById(id).classList.remove('open');
   if (id === 'overlay-student') {
     selected = null;
+    selectedPetIdx = 0;
     stopMirror();
     document.querySelectorAll('.gotchi-cell').forEach(el => el.classList.remove('selected'));
   }
@@ -1416,13 +1533,18 @@ function toast(msg) {
 }
 
 
-document.getElementById('btn-hatch').addEventListener('click', () => {
-  if (selected) triggerHatch(selected);
+document.getElementById('btn-add-egg').addEventListener('click', async () => {
+  if (!selected) return;
+  const cell    = cells.find(c => c.student.id === selected);
+  const variant = eggJSON.variants[Math.floor(Math.random() * eggJSON.variants.length)];
+  await cell._addEgg(variant);
+  selectedPetIdx = cell.pets.length - 1; // select the new egg
+  refreshStudentPanel();
+  toast('🥚 New egg added!');
 });
 
 // ─── DEBUG TOOLS ──────────────────────────────────────────────────────────
-// Each student has an evolution history stack for undo
-const evolutionHistory = {}; // studentId → [{stage, charId, eggVariant}]
+const evolutionHistory = {};
 
 function getEvolutionHistory(id) {
   if (!evolutionHistory[id]) evolutionHistory[id] = [];
@@ -1437,64 +1559,43 @@ function snapshotPets(cell) {
   }));
 }
 
-// Force evolve — advances the first pet to the next stage
-document.getElementById('btn-debug-evolve').addEventListener('click', async () => {
+document.getElementById('btn-debug-evolve').addEventListener('click', () => {
   if (!selected) return;
   const cell = cells.find(c => c.student.id === selected);
   if (!cell || !cell.pets.length) return;
-
-  const pet = cell.pets[0];
-
-  if (pet.stage === 'egg') {
-    // Egg hatch uses the full hatch sequence
-    triggerHatch(selected);
-  } else {
-    // Tama evolution uses the evolve sequence
-    triggerEvolve(selected);
-  }
+  getEvolutionHistory(selected).push(snapshotPets(cell));
+  const pet = cell.pets[selectedPetIdx];
+  if (!pet) return;
+  if (pet.stage === 'egg') triggerHatch(selected, selectedPetIdx);
+  else triggerEvolve(selected, selectedPetIdx);
 });
 
-// Undo — restore previous state
 document.getElementById('btn-debug-undo').addEventListener('click', async () => {
   if (!selected) return;
   const history = getEvolutionHistory(selected);
   if (!history.length) { toast('Nothing to undo'); return; }
-
   const cell     = cells.find(c => c.student.id === selected);
   const snapshot = history.pop();
-
-  // Clear current pets
   cell.pets = [];
-
-  // Restore snapshot
   for (const s of snapshot) {
-    if (s.stage === 'egg') {
-      await cell._addEgg(s.eggVariant);
-    } else {
-      await cell.addTama(s.charId);
-    }
+    if (s.stage === 'egg') await cell._addEgg(s.eggVariant);
+    else await cell.addTama(s.charId);
   }
-
+  selectedPetIdx = 0;
   refreshStudentPanel();
   toast('↩ Evolution undone');
 });
 
-// Reset to egg — clears all pets and restores a random egg
 document.getElementById('btn-debug-reset').addEventListener('click', async () => {
   if (!selected) return;
   const cell    = cells.find(c => c.student.id === selected);
   const student = STUDENTS.find(s => s.id === selected);
-
-  // Save snapshot first
   getEvolutionHistory(selected).push(snapshotPets(cell));
-
-  // Clear pets and restore egg
   cell.pets = [];
-  const variants = eggJSON.variants;
-  const variant  = variants[Math.floor(Math.random() * variants.length)];
+  const variant = eggJSON.variants[Math.floor(Math.random() * eggJSON.variants.length)];
   student.eggVariant = variant;
   await cell._addEgg(variant);
-
+  selectedPetIdx = 0;
   refreshStudentPanel();
   toast('🥚 Reset to egg');
 });
