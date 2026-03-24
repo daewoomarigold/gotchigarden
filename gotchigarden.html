@@ -514,10 +514,6 @@ header {
         <div id="pet-roster" style="display:flex;flex-wrap:wrap;gap:6px;align-items:flex-end;margin-top:4px;">
           <!-- populated by JS -->
         </div>
-        <button class="btn btn-full" id="btn-add-egg"
-          style="margin-top:8px;border-color:var(--yellow);color:var(--yellow);">
-          + Add Egg
-        </button>
       </div>
 
       <!-- Per-pet actions — updates based on selected pet -->
@@ -553,6 +549,11 @@ header {
             <span class="shop-icon">🖼</span>
             <span class="shop-label">Background</span>
             <span class="shop-cost" style="color:var(--cyan);font-size:9px;">Pick one</span>
+          </button>
+          <button class="shop-btn" id="btn-add-egg">
+            <span class="shop-icon">🥚</span>
+            <span class="shop-label">New Egg</span>
+            <span class="shop-cost" style="color:var(--yellow);font-size:9px;">1 pt</span>
           </button>
         </div>
       </div>
@@ -1631,14 +1632,44 @@ function toast(msg) {
 }
 
 
-document.getElementById('btn-add-egg').addEventListener('click', async () => {
+document.getElementById('btn-add-egg').addEventListener('click', () => {
   if (!selected) return;
-  const cell    = cells.find(c => c.student.id === selected);
-  const variant = eggJSON.variants[Math.floor(Math.random() * eggJSON.variants.length)];
-  await cell._addEgg(variant);
-  selectedPetIdx = cell.pets.length - 1; // select the new egg
-  refreshStudentPanel();
-  toast('🥚 New egg added!');
+  const student = STUDENTS.find(s => s.id === selected);
+  if (!student) return;
+
+  const EGG_PRICE = 1;
+  if (student.gotchiPoints < EGG_PRICE) {
+    toast(`⚠ Not enough GotchiPts (need ${EGG_PRICE})`);
+    return;
+  }
+
+  // Show confirmation
+  document.getElementById('buy-confirm-text').innerHTML =
+    `Are you sure you want to buy a<br>
+     <strong style="color:var(--text);">New Egg</strong><br>
+     for <strong style="color:var(--yellow);">${EGG_PRICE} GotchiPt</strong>?<br>
+     <span style="font-size:10px;color:var(--muted);">Balance after: ${student.gotchiPoints - EGG_PRICE} pts</span>`;
+
+  const confirmBtn = document.getElementById('btn-buy-confirm-yes');
+  const handler = async () => {
+    confirmBtn.removeEventListener('click', handler);
+    closeOverlay('overlay-buy-confirm');
+
+    student.gotchiPoints -= EGG_PRICE;
+    const el = document.getElementById('pts-' + student.id);
+    if (el) el.textContent = student.gotchiPoints + ' pts';
+    document.getElementById('sel-pts').textContent = student.gotchiPoints;
+    updateHeader();
+
+    const cell    = cells.find(c => c.student.id === selected);
+    const variant = eggJSON.variants[Math.floor(Math.random() * eggJSON.variants.length)];
+    await cell._addEgg(variant);
+    selectedPetIdx = cell.pets.length - 1;
+    refreshStudentPanel();
+    toast('🥚 New egg added!');
+  };
+  confirmBtn.addEventListener('click', handler);
+  openOverlay('overlay-buy-confirm');
 });
 
 // ─── DEBUG TOOLS ──────────────────────────────────────────────────────────
