@@ -559,102 +559,91 @@ async function pickHatchTama() {
 
 async function triggerHatch(studentId) {
   const cell = cells.find(c => c.student.id === studentId);
-  if (!(cell instanceof EggCell)) return;
+  if (!cell) return;
+  // Find the first egg pet in this cell
+  const petIdx = cell.pets.findIndex(p => p.stage === 'egg');
+  if (petIdx === -1) return;
+  const pet = cell.pets[petIdx];
   closeOverlay('overlay-student');
 
-  // Pick the next tama now (step 1a) — async, happens in background
+  // Step 1a: pick tama in background
   const tamaEntry = await pickHatchTama();
-  const student   = cell.student;
 
-  // Steps 2–3: stop idle, freeze on frame 1
-  cell._hatching = true;
-  cell._seqIdx   = 0;
-  const freezeFrame = cell.variant.idleFrames[0];
+  // Steps 2–3: freeze egg on frame 1
+  pet.hatching = true;
+  pet._seqIdx  = 0;
+  const freezeFrame = pet.eggVariant.idleFrames[0];
 
-  // ── Step 4: shake (3 seconds, escalating) ─────────────────────────────
-  await shakeEgg(cell, freezeFrame);
+  // Helper: render cell with egg at specific frame + offset
+  function renderEggFrame(sp, offsetX=0) {
+    const ctx = cell.ctx; ctx.imageSmoothingEnabled = false;
+    ctx.fillStyle = '#87CEEB'; ctx.fillRect(0,0,CW,CH);
+    if (cell.bgCanvas) ctx.drawImage(cell.bgCanvas,0,0,CW,CH);
+    // Draw other pets (non-hatching)
+    cell.pets.forEach((p,i) => { if (i!==petIdx && p.stage!=='egg') p.drawTama(ctx); });
+    // Draw egg at specified frame
+    pet.drawEgg(ctx, offsetX, sp);
+  }
 
-  // ── Step 5: freeze on frame 1 again ───────────────────────────────────
-  await sleep(400);
-  cell._renderFrame(freezeFrame, 0);
-
-  // ── Step 6: hatch animation (crack → burst) ────────────────────────────
-  await sleep(300);
-  cell._renderFrame(null, 0, cell.variant.hatchFrames[0]); // crack
-  await sleep(400);
-  cell._renderFrame(null, 0, cell.variant.hatchFrames[1]); // burst
-  await sleep(400);
-
-  // ── Step 7: white flash ────────────────────────────────────────────────
-  await flashWhite(cell);
-
-  // ── Step 8: swap EggCell → GotchiCell ─────────────────────────────────
-  student.charId = tamaEntry.id;
-  const idx      = cells.indexOf(cell);
-  const grid     = document.getElementById('classroom-grid');
-  const oldWrap  = cell.wrap;
-
-  // Create new GotchiCell — appends to grid, then we reorder
-  const newCell  = new GotchiCell(grid, student);
-  grid.insertBefore(newCell.wrap, oldWrap);
-  grid.removeChild(oldWrap);
-  cells[idx] = newCell;
-
-  // Fade tama in
-  newCell.wrap.style.opacity = '0';
-  newCell.wrap.style.transition = 'opacity 0.6s';
-  await sleep(50);
-  newCell.wrap.style.opacity = '1';
-
-  // Wave on spawn
-  setTimeout(() => newCell.forceAnimation('wave'), 100);
-  setTimeout(() => newCell.forceAnimation(null),   2000);
-
-  // ── Step 9: "Your egg hatched!" message ───────────────────────────────
-  await sleep(300);
-  showHatchMessage(tamaEntry.displayName);
-}
-
-function shakeEgg(cell, sp) {
-  return new Promise(resolve => {
-    const start  = performance.now();
-    const TOTAL  = 3000; // 3 seconds
-
+  // ── Step 4: shake ─────────────────────────────────────────────────────
+  await new Promise(resolve => {
+    const start = performance.now();
     function frame(ts) {
       const elapsed = ts - start;
-      if (elapsed >= TOTAL) { cell._renderFrame(sp, 0); resolve(); return; }
-
-      // Escalate intensity over time
-      const t         = elapsed / TOTAL;
-      const amplitude = 2 + t * 6;       // 2px → 8px
-      const frequency = 0.2 - t * 0.15;  // slow → fast period
+      if (elapsed >= 3000) { renderEggFrame(freezeFrame, 0); resolve(); return; }
+      const t = elapsed / 3000;
+      const amplitude = 2 + t * 6;
+      const frequency = 0.2 - t * 0.15;
       const offsetX   = Math.sin(elapsed / (frequency * 1000) * Math.PI * 2) * amplitude;
-
-      cell._renderFrame(sp, offsetX);
+      renderEggFrame(freezeFrame, offsetX);
       requestAnimationFrame(frame);
     }
     requestAnimationFrame(frame);
   });
-}
 
-function flashWhite(cell) {
-  return new Promise(resolve => {
+  // ── Step 5: freeze ────────────────────────────────────────────────────
+  await sleep(400);
+  renderEggFrame(freezeFrame, 0);
+
+  // ── Step 6: crack → burst ─────────────────────────────────────────────
+  await sleep(300);
+  renderEggFrame(pet.eggVariant.hatchFrames[0]);
+  await sleep(400);
+  renderEggFrame(pet.eggVariant.hatchFrames[1]);
+  await sleep(400);
+
+  // ── Step 7: white flash ───────────────────────────────────────────────
+  await new Promise(resolve => {
     const start = performance.now();
-    const TOTAL = 400;
     function frame(ts) {
-      const t = Math.min((ts - start) / TOTAL, 1);
+      const t = Math.min((ts-start)/400, 1);
       const ctx = cell.ctx;
-      ctx.imageSmoothingEnabled = false;
-      // Draw egg then overlay white with increasing alpha
-      ctx.globalAlpha = t;
-      ctx.fillStyle = '#fff';
-      ctx.fillRect(0, 0, CW, CH);
-      ctx.globalAlpha = 1;
-      if (t < 1) requestAnimationFrame(frame);
-      else resolve();
+      ctx.globalAlpha = t; ctx.fillStyle='#fff'; ctx.fillRect(0,0,CW,CH); ctx.globalAlpha=1;
+      if (t<1) requestAnimationFrame(frame); else resolve();
     }
     requestAnimationFrame(frame);
   });
+
+  // ── Step 8: swap egg pet → tama pet ───────────────────────────────────
+  cell.student.charId = tamaEntry.id;
+  await cell.hatchEgg(petIdx, tamaEntry.id);
+
+  // Fade in
+  cell.canvas.style.opacity = '0';
+  cell.canvas.style.transition = 'opacity 0.6s';
+  await sleep(50);
+  cell.canvas.style.opacity = '1';
+
+  // New tama waves
+  const newPet = cell.pets[cell.pets.length-1];
+  if (newPet) {
+    newPet.forceAnimation('wave');
+    setTimeout(() => newPet.forceAnimation(null), 2000);
+  }
+
+  // ── Step 9: toast ─────────────────────────────────────────────────────
+  await sleep(300);
+  showHatchMessage(tamaEntry.displayName);
 }
 
 function showHatchMessage(tamaName) {
@@ -741,42 +730,214 @@ async function fetchImage(folder, filename) {
   return img;
 }
 
-// ─── EGG CELL ─────────────────────────────────────────────────────────────
-class EggCell {
+// ═══════════════════════════════════════════════════════════════════════════
+// PET — unified class, stage drives render + behaviour
+// stage: 'egg' | 'baby' | 'adult'
+// ═══════════════════════════════════════════════════════════════════════════
+class Pet {
+  constructor(stage, data) {
+    // data for egg:   { eggVariant }
+    // data for tama:  { charJSON, off, gen }
+    this.stage    = stage;
+    this.hatching = false; // true during hatch sequence
+
+    if (stage === 'egg') {
+      this.eggVariant = data.eggVariant;
+      this.off        = data.off; // transparent egg sheet canvas
+      this._seqIdx    = Math.floor(Math.random() * 4);
+      this._lastTick  = 0;
+      this._fps       = 2;
+      this._animSeq   = eggJSON.animations.idle.sequence;
+      // Fixed centred position — eggs don't move
+      const sp   = this.eggVariant.idleFrames[0];
+      const zoneTop = Math.floor(CH * 0.65);
+      const zoneH   = CH - zoneTop;
+      this.x = Math.round((CW - sp.w) / 2);
+      this.y = zoneTop + Math.round((zoneH - sp.h) / 2);
+      this.sw = sp.w; this.sh = sp.h;
+    } else {
+      this.charJSON = data.charJSON;
+      this.off      = data.off;
+      this.gen      = data.gen;
+      this.isBaby   = data.gen === 'baby';
+      this._body    = {}; this._face = {}; this._anch = {};
+      const bb = data.charJSON.bands.find(b => b.role === 'body_anim');
+      const fb = data.charJSON.bands.find(b => b.role === 'face_small');
+      if (bb) bb.sprites.forEach(s => this._body[s.label] = s);
+      if (fb) fb.sprites.forEach(s => this._face[s.label] = s);
+      if (data.charJSON.bodyAnimAnchors && bb)
+        bb.sprites.forEach((s,i) => this._anch[s.label] = data.charJSON.bodyAnimAnchors[i] || {offsetX:0,offsetY:0,useFace:true});
+      // Spawn position
+      const sp   = Object.values(this._body)[0];
+      this.sw    = sp?sp.w:36; this.sh = sp?sp.h:46;
+      const minY = Math.floor(CH * 0.65);
+      const maxY = CH - this.sh - 4;
+      const angle = (Math.random()>.5?0:Math.PI) + (Math.random()-.5)*.6;
+      const speed = 0.9 + Math.random() * 0.675;
+      this.x          = 10 + Math.random() * (CW - this.sw - 20);
+      this.y          = minY + Math.random() * Math.max(0, maxY - minY);
+      this.vx         = Math.cos(angle) * speed;
+      this.vy         = 0;
+      this.angle      = angle;
+      this.speed      = speed;
+      this.facingRight = Math.cos(angle) > 0;
+      this.state      = 'walk';
+      this.stateTimer = 30 + Math.floor(Math.random() * 60);
+      this.frameIdx   = 0;
+      this.holdCounter = 0;
+      this.steerTimer = 30 + Math.floor(Math.random() * 60);
+      this.minY = minY; this.maxY = maxY;
+      this._lastTick  = 0;
+      this._forced    = null;
+    }
+  }
+
+  get tooltipName() {
+    if (this.stage === 'egg') return '???';
+    return this.charJSON?.displayName || '???';
+  }
+
+  // ── Egg update ─────────────────────────────────────────────────────────
+  updateEgg(ts) {
+    if (this.hatching) return;
+    if (ts - this._lastTick >= 1000 / this._fps) {
+      this._lastTick = ts;
+      this._seqIdx   = (this._seqIdx + 1) % this._animSeq.length;
+    }
+  }
+
+  drawEgg(ctx, offsetX = 0, overrideSp = null) {
+    const frameIdx = this._animSeq[this._seqIdx % this._animSeq.length];
+    const sp       = overrideSp || this.eggVariant.idleFrames[frameIdx];
+    if (!sp) return;
+    ctx.drawImage(this.off, sp.x, sp.y, sp.w, sp.h,
+      this.x + Math.round(offsetX), this.y, sp.w, sp.h);
+  }
+
+  // ── Tama update ─────────────────────────────────────────────────────────
+  _animDef(key) { return ANIMATION_DEFS[key]?.[this.gen] || null; }
+  _animKey() {
+    if (this._forced) return this._forced;
+    switch (this.state) {
+      case 'walk':  return 'walk';
+      case 'stand': return 'idle';
+      case 'sit':   return 'sit';
+      case 'wave':  return 'wave';
+      default:      return 'idle';
+    }
+  }
+
+  moveStep(dt) {
+    if (this.stage !== 'adult' && this.stage !== 'baby') return;
+    if (this.state !== 'walk' || this._forced) return;
+    this.steerTimer -= dt * 60;
+    if (this.steerTimer <= 0) {
+      if (Math.random() < 0.15) {
+        this.state = 'stand'; this.stateTimer = 20 + Math.random()*30;
+        this.vx = 0; this.vy = 0; this.frameIdx = 0; this.holdCounter = 0;
+        return;
+      }
+      const turn = (Math.random()-.5)*Math.PI*0.78;
+      this.angle += turn;
+      this.speed  = 0.9 + Math.random()*0.675;
+      this.steerTimer = 30 + Math.random()*60;
+    }
+    const steer = 0.08;
+    const tvx   = Math.cos(this.angle)*this.speed;
+    const tvy   = Math.sin(this.angle)*this.speed*0.25;
+    this.vx += (tvx-this.vx)*steer;
+    this.vy += (tvy-this.vy)*steer;
+    this.x  += this.vx*dt*60;
+    this.y  += this.vy*dt*60;
+    if (this.x<=0)            {this.x=0;         this.vx= Math.abs(this.vx); this.angle=Math.atan2(this.vy, Math.abs(this.vx));}
+    if (this.x>=CW-this.sw)   {this.x=CW-this.sw;this.vx=-Math.abs(this.vx); this.angle=Math.atan2(this.vy,-Math.abs(this.vx));}
+    if (this.y<=this.minY)    {this.y=this.minY;  this.vy= Math.abs(this.vy); this.angle=Math.atan2( Math.abs(this.vy),this.vx);}
+    if (this.y>=this.maxY)    {this.y=this.maxY;  this.vy=-Math.abs(this.vy); this.angle=Math.atan2(-Math.abs(this.vy),this.vx);}
+    if (Math.abs(this.vx)>0.05) this.facingRight = this.vx>0;
+  }
+
+  updateFrame(ts) {
+    if (this.stage==='egg') return;
+    const key = this._animKey(), def = this._animDef(key); if (!def) return;
+    if (ts - this._lastTick >= 1000/def.fps) {
+      this._lastTick = ts;
+      this.holdCounter++;
+      const fd = def.frames[this.frameIdx % def.frames.length];
+      if (this.holdCounter>=(fd.hold||1)){this.holdCounter=0;this.frameIdx=(this.frameIdx+1)%def.frames.length;}
+      this.stateTimer--;
+      switch (this.state) {
+        case 'stand':
+          if (this.stateTimer<=0){
+            const r=Math.random();
+            if (r<0.10)      {this.state='sit'; this.stateTimer=60+Math.random()*120;}
+            else if(r<0.25)  {this.state='wave';this.stateTimer=40+Math.random()*80;}
+            else              this._resumeWalk();
+            this.frameIdx=0; this.holdCounter=0;
+          }
+          break;
+        case 'sit': case 'wave':
+          if (this.stateTimer<=0){
+            this.state='stand'; this.stateTimer=15+Math.random()*20;
+            this.frameIdx=0; this.holdCounter=0;
+          }
+          break;
+      }
+    }
+  }
+
+  _resumeWalk() {
+    this.state      = 'walk';
+    this.angle      = (Math.random()>.5?0:Math.PI)+(Math.random()-.5)*0.6;
+    this.speed      = 0.9+Math.random()*0.675;
+    this.vx         = Math.cos(this.angle)*this.speed;
+    this.vy         = 0;
+    this.steerTimer = 30+Math.random()*60;
+    this.frameIdx   = 0;
+    this.holdCounter= 0;
+  }
+
+  drawTama(ctx) {
+    const key = this._animKey(), def = this._animDef(key); if (!def) return;
+    const fd  = def.frames[this.frameIdx % def.frames.length];
+    const bs  = this._body[fd.body]; if (!bs) return;
+    const fs  = (!this.isBaby&&fd.face) ? this._face[fd.face]||null : null;
+    const an  = (!this.isBaby&&fd.face) ? this._anch[fd.body]||{offsetX:0,offsetY:0,useFace:true} : {offsetX:0,offsetY:0,useFace:false};
+    const px  = Math.round(this.x), py = Math.round(this.y);
+    ctx.save();
+    if (this.facingRight){ctx.translate(px+bs.w/2,0);ctx.scale(-1,1);ctx.translate(-(px+bs.w/2),0);}
+    ctx.drawImage(this.off,bs.x,bs.y,bs.w,bs.h,px,py,bs.w,bs.h);
+    if (!this.isBaby&&an.useFace&&fs)
+      ctx.drawImage(this.off,fs.x,fs.y,fs.w,fs.h,px+an.offsetX,py+an.offsetY,fs.w,fs.h);
+    ctx.restore();
+  }
+
+  forceAnimation(key) {
+    this._forced = key||null;
+    this.frameIdx=0; this.holdCounter=0;
+    if (!key) this._resumeWalk();
+  }
+
+  // Hit test — is point (mx,my) over this pet?
+  hitTest(mx, my) {
+    return mx>=this.x && mx<=this.x+this.sw && my>=this.y && my<=this.y+this.sh;
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// GOTCHI CELL — container for one student's pets
+// ═══════════════════════════════════════════════════════════════════════════
+class GotchiCell {
   constructor(container, student) {
     this.student   = student;
-    this.variant   = student.eggVariant;
-    this._lastTick = 0;
-    this._seqIdx   = 0;
-    this._animSeq  = eggJSON.animations.idle.sequence;
-    this._fps      = 2; // slow shimmer — overrides JSON fps
-    this._hatching = false; // true during hatch sequence
-    this.canvas    = null;
+    this.pets      = [];  // Pet[]
     this.bgCanvas  = null;
-
-    // Build offscreen egg sheet canvas with black background removed
-    this.off = document.createElement('canvas');
-    this.off.width  = eggSheet.naturalWidth  || eggSheet.width;
-    this.off.height = eggSheet.naturalHeight || eggSheet.height;
-    const oc  = this.off.getContext('2d');
-    oc.imageSmoothingEnabled = false;
-    oc.drawImage(eggSheet, 0, 0);
-    const imgData = oc.getImageData(0, 0, this.off.width, this.off.height);
-    const d = imgData.data;
-    for (let i = 0; i < d.length; i += 4) {
-      if (d[i] < 15 && d[i+1] < 15 && d[i+2] < 15) d[i+3] = 0;
-    }
-    oc.putImageData(imgData, 0, 0);
+    this.canvas    = null;
+    this.ctx       = null;
+    this._lastRaf  = 0;
+    this._forced   = null; // broadcast animation override
 
     this._buildDOM(container);
-    // Load background then start loop
-    fetchImage(BG_PATH, student.bgFile).then(bgImg => {
-      this.bgCanvas = document.createElement('canvas');
-      this.bgCanvas.width  = bgImg.naturalWidth  || bgImg.width;
-      this.bgCanvas.height = bgImg.naturalHeight || bgImg.height;
-      this.bgCanvas.getContext('2d').drawImage(bgImg, 0, 0);
-    }).catch(() => {}); // falls back to sky blue if bg fails
-    requestAnimationFrame(t => this._loop(t));
+    this._load();
   }
 
   _buildDOM(container) {
@@ -788,126 +949,6 @@ class EggCell {
     vp.className = 'cell-vp';
     vp.style.background = '#87CEEB';
 
-    this.canvas = document.createElement('canvas');
-    this.canvas.className = 'cell-canvas';
-    this.canvas.width = CW; this.canvas.height = CH;
-    this.canvas.style.display = 'block';
-    this.ctx = this.canvas.getContext('2d');
-    this.ctx.imageSmoothingEnabled = false;
-    vp.appendChild(this.canvas);
-
-    const plate = document.createElement('div');
-    plate.className = 'cell-plate';
-    plate.innerHTML = `
-      <div class="cell-name">${this.student.name}</div>
-      <div class="cell-pts" id="pts-${this.student.id}">${this.student.gotchiPoints} pts</div>
-      <div class="cell-dot" id="dot-${this.student.id}"></div>`;
-
-    this.wrap.appendChild(vp);
-    this.wrap.appendChild(plate);
-    this.wrap.addEventListener('click',     () => selectStudent(this.student.id));
-    this.wrap.addEventListener('mousemove', e  => {
-      const rect = this.canvas.getBoundingClientRect();
-      const mx = e.clientX - rect.left, my = e.clientY - rect.top;
-      const sp = this.variant?.idleFrames?.[0];
-      if (!sp) return;
-      const zoneTop = Math.floor(CH * 0.65);
-      const zoneH   = CH - zoneTop;
-      const dx = Math.round((CW - sp.w) / 2);
-      const dy = zoneTop + Math.round((zoneH - sp.h) / 2);
-      if (mx >= dx && mx <= dx+sp.w && my >= dy && my <= dy+sp.h)
-        showTooltip(e, '???');
-      else hideTooltip();
-    });
-    this.wrap.addEventListener('mouseleave', () => hideTooltip());
-    container.appendChild(this.wrap);
-  }
-
-  // Called by hatch sequence — renders specific frame with optional x shake offset
-  _renderFrame(idleSp, offsetX = 0, hatchSp = null) {
-    const ctx = this.ctx;
-    ctx.imageSmoothingEnabled = false;
-    ctx.fillStyle = '#87CEEB';
-    ctx.fillRect(0, 0, CW, CH);
-    if (this.bgCanvas) ctx.drawImage(this.bgCanvas, 0, 0, CW, CH);
-    const sp = hatchSp || idleSp || this.variant?.idleFrames?.[0];
-    if (!sp) return;
-    const zoneTop = Math.floor(CH * 0.65);
-    const zoneH   = CH - zoneTop;
-    const dx = Math.round((CW - sp.w) / 2) + Math.round(offsetX);
-    const dy = zoneTop + Math.round((zoneH - sp.h) / 2);
-    ctx.drawImage(this.off, sp.x, sp.y, sp.w, sp.h, dx, dy, sp.w, sp.h);
-  }
-
-  _render() {
-    if (this._hatching) return; // hatch sequence controls rendering directly
-    const ctx = this.ctx;
-    ctx.imageSmoothingEnabled = false;
-    // Sky blue base, then background image on top (same as GotchiCell)
-    ctx.fillStyle = '#87CEEB';
-    ctx.fillRect(0, 0, CW, CH);
-    if (this.bgCanvas) ctx.drawImage(this.bgCanvas, 0, 0, CW, CH);
-
-    if (!this.variant) return;
-    const frameIdx = this._animSeq[this._seqIdx % this._animSeq.length];
-    const sp       = this.variant.idleFrames[frameIdx];
-    if (!sp) return;
-
-    // Centre within lower 35% boundary zone
-    const zoneTop = Math.floor(CH * 0.65);
-    const zoneH   = CH - zoneTop;
-    const dx = Math.round((CW - sp.w) / 2);
-    const dy = zoneTop + Math.round((zoneH - sp.h) / 2);
-    ctx.drawImage(this.off, sp.x, sp.y, sp.w, sp.h, dx, dy, sp.w, sp.h);
-  }
-
-  _loop(ts) {
-    if (ts - this._lastTick >= 1000 / this._fps) {
-      this._lastTick = ts;
-      this._seqIdx   = (this._seqIdx + 1) % this._animSeq.length;
-      this._render();
-    }
-    requestAnimationFrame(t => this._loop(t));
-  }
-
-  awardPoints(n) {
-    this.student.gotchiPoints = Math.max(0, this.student.gotchiPoints + n);
-    const el  = document.getElementById('pts-' + this.student.id);
-    const dot = document.getElementById('dot-' + this.student.id);
-    if (el)  el.textContent = this.student.gotchiPoints + ' pts';
-    if (dot) { dot.classList.add('flash'); setTimeout(() => dot.classList.remove('flash'), 600); }
-    if (selected === this.student.id) refreshStudentPanel();
-    updateHeader();
-  }
-}
-
-// ─── GOTCHI CELL ──────────────────────────────────────────────────────────
-class GotchiCell {
-  constructor(container, student) {
-    this.student  = student;
-    this.charJSON = null;
-    this.bgCanvas = null;
-    this._body    = {}; this._face = {}; this._anch = {};
-    this.gen      = 'adult'; this.isBaby = false;
-    this._forced  = null;
-    this.pets     = [];
-    this._lastTick = 0;
-    this.off      = null;
-
-    this._buildDOM(container);
-    this._load(); // async — shows spinner until ready
-  }
-
-  _buildDOM(container) {
-    this.wrap = document.createElement('div');
-    this.wrap.className = 'gotchi-cell';
-    this.wrap.dataset.id = this.student.id;
-
-    const vp = document.createElement('div');
-    vp.className = 'cell-vp';
-    this.vp = vp;
-
-    // Loading spinner shown until assets arrive
     this.loadingEl = document.createElement('div');
     this.loadingEl.className = 'cell-loading';
     this.loadingEl.innerHTML = `<div class="cell-loading-spinner"></div>`;
@@ -930,23 +971,13 @@ class GotchiCell {
 
     this.wrap.appendChild(vp);
     this.wrap.appendChild(plate);
-    this.wrap.addEventListener('click',      () => selectStudent(this.student.id));
-    this.wrap.addEventListener('mousemove',  e  => {
-      if (!this.canvas) return;
+    this.wrap.addEventListener('click',     () => selectStudent(this.student.id));
+    this.wrap.addEventListener('mousemove', e => {
       const rect = this.canvas.getBoundingClientRect();
-      const mx   = e.clientX - rect.left;
-      const my   = e.clientY - rect.top;
-      // Check if cursor overlaps any pet sprite
-      const hit  = this.pets.some(p => {
-        const sp = this._body?.['walk_1'] || Object.values(this._body||{})[0];
-        const sw = sp ? sp.w : 36, sh = sp ? sp.h : 46;
-        return mx >= p.x && mx <= p.x + sw && my >= p.y && my <= p.y + sh;
-      });
-      if (hit && this.charJSON?.displayName) {
-        showTooltip(e, this.charJSON.displayName);
-      } else {
-        hideTooltip();
-      }
+      const mx = e.clientX - rect.left, my = e.clientY - rect.top;
+      const hit = this.pets.find(p => p.hitTest(mx, my));
+      if (hit) showTooltip(e, hit.tooltipName);
+      else hideTooltip();
     });
     this.wrap.addEventListener('mouseleave', () => hideTooltip());
     container.appendChild(this.wrap);
@@ -954,267 +985,100 @@ class GotchiCell {
 
   async _load() {
     try {
-      // Step 1: fetch the character JSON
-      const charJSON = await fetchJSON(this.student.charId);
-
-      // Step 2: fetch sprite sheet using the sheet field from JSON
-      const sheetImg = await fetchImage(TAMA_PATH, charJSON.sheet);
-
-      // Step 3: fetch background
       const bgImg = await fetchImage(BG_PATH, this.student.bgFile);
+      this.bgCanvas = document.createElement('canvas');
+      this.bgCanvas.width  = bgImg.naturalWidth  || bgImg.width;
+      this.bgCanvas.height = bgImg.naturalHeight || bgImg.height;
+      this.bgCanvas.getContext('2d').drawImage(bgImg, 0, 0);
 
-      this._init(charJSON, sheetImg, bgImg);
+      // Build initial pets — all students start with one egg
+      await this._addEgg(this.student.eggVariant);
+
+      this.loadingEl.style.display = 'none';
+      this.canvas.style.display    = 'block';
+      requestAnimationFrame(ts => this._loop(ts));
     } catch(e) {
       console.error(`Failed to load cell for ${this.student.name}:`, e);
-      this.loadingEl.innerHTML = `
-        <div style="color:var(--red);font-size:8px;padding:6px;text-align:center;line-height:1.6;word-break:break-all;">
-          ⚠ ${e.message}
-        </div>`;
+      this.loadingEl.innerHTML = `<div style="color:var(--red);font-size:8px;padding:6px;text-align:center;word-break:break-all;">⚠ ${e.message}</div>`;
     }
   }
 
-  _init(charJSON, sheetImg, bgImg) {
-    this.charJSON = charJSON;
-    this.gen      = charJSON.generation || 'adult';
-    this.isBaby   = this.gen === 'baby';
+  async _addEgg(eggVariant) {
+    // Build transparent egg offscreen canvas (shared sheet, per-cell canvas)
+    const off = document.createElement('canvas');
+    off.width  = eggSheet.naturalWidth  || eggSheet.width;
+    off.height = eggSheet.naturalHeight || eggSheet.height;
+    const oc   = off.getContext('2d');
+    oc.imageSmoothingEnabled = false;
+    oc.drawImage(eggSheet, 0, 0);
+    const imgData = oc.getImageData(0, 0, off.width, off.height);
+    const d = imgData.data;
+    for (let i=0;i<d.length;i+=4) if(d[i]<15&&d[i+1]<15&&d[i+2]<15) d[i+3]=0;
+    oc.putImageData(imgData, 0, 0);
+    this.pets.push(new Pet('egg', { eggVariant, off }));
+  }
 
-    // Build offscreen sprite sheet canvas
-    this.off = document.createElement('canvas');
-    this.off.width  = sheetImg.naturalWidth  || sheetImg.width;
-    this.off.height = sheetImg.naturalHeight || sheetImg.height;
-    const oc = this.off.getContext('2d');
+  async addTama(charId) {
+    const charJSON = await fetchJSON(charId);
+    const sheetImg = await fetchImage(TAMA_PATH, charJSON.sheet);
+    const off      = document.createElement('canvas');
+    off.width  = sheetImg.naturalWidth  || sheetImg.width;
+    off.height = sheetImg.naturalHeight || sheetImg.height;
+    const oc   = off.getContext('2d');
     oc.imageSmoothingEnabled = false;
     oc.drawImage(sheetImg, 0, 0);
-
-    // Build background canvas
-    this.bgCanvas = document.createElement('canvas');
-    this.bgCanvas.width  = bgImg.naturalWidth  || bgImg.width;
-    this.bgCanvas.height = bgImg.naturalHeight || bgImg.height;
-    this.bgCanvas.getContext('2d').drawImage(bgImg, 0, 0);
-
-    // Build lookup maps from body_anim, face_small, and anchors
-    const bb = charJSON.bands.find(b => b.role === 'body_anim');
-    const fb = charJSON.bands.find(b => b.role === 'face_small');
-    if (bb) bb.sprites.forEach(s => this._body[s.label] = s);
-    if (fb) fb.sprites.forEach(s => this._face[s.label] = s);
-    if (charJSON.bodyAnimAnchors && bb) {
-      bb.sprites.forEach((s, i) => {
-        this._anch[s.label] = charJSON.bodyAnimAnchors[i] || { offsetX:0, offsetY:0, useFace:true };
-      });
-    }
-
-    // Spawn pets
-    this._spawn(this.student.petCount || 1);
-
-    // Hide spinner, show canvas
-    this.loadingEl.style.display = 'none';
-    this.canvas.style.display    = 'block';
-
-    // Start loop
-    requestAnimationFrame(t => this._loop(t));
+    const gen = charJSON.generation || 'adult';
+    this.pets.push(new Pet(gen, { charJSON, off, gen }));
+    return this.pets[this.pets.length-1];
   }
 
-  _spawn(count) {
-    const sp = Object.values(this._body)[0];
-    const sw = sp?sp.w:36, sh = sp?sp.h:46;
-    const minY = Math.floor(CH * 0.65);
-    const maxY = CH - sh - 4;
-    for (let i = 0; i < count; i++) {
-      const angle = (Math.random() > 0.5 ? 0 : Math.PI) + (Math.random() - 0.5) * 0.6;
-      const speed = 1.0 + Math.random() * 0.75;
-      this.pets.push({
-        x: 10 + Math.random() * (CW - sw - 20),
-        y: minY + Math.random() * Math.max(0, maxY - minY),
-        vx: Math.cos(angle) * speed,
-        vy: 0,
-        angle, speed,
-        facingRight: Math.cos(angle) > 0,
-        state: 'walk',         // 'walk' | 'stand' | 'sit' | 'wave'
-        stateTimer: 30 + Math.floor(Math.random() * 60),
-        frameIdx: Math.floor(Math.random() * 2),
-        holdCounter: 0,
-        steerTimer: 30 + Math.floor(Math.random() * 60),
-        sw, sh, minY, maxY,
-      });
-    }
-  }
-
-  _def(key)  { return ANIMATION_DEFS[key]?.[this.gen] || null; }
-  _key(pet)  {
-    if (this._forced) return this._forced;
-    switch (pet.state) {
-      case 'walk':  return 'walk';
-      case 'stand': return 'idle';
-      case 'sit':   return 'sit';
-      case 'wave':  return 'wave';
-      default:      return 'idle';
-    }
-  }
-
-  _moveStep(pet, dt) {
-    if (pet.state !== 'walk' || this._forced) return;
-
-    pet.steerTimer -= dt * 60;
-    if (pet.steerTimer <= 0) {
-      if (Math.random() < 0.15) {
-        // Occasionally stop to stand (and possibly sit/wave)
-        pet.state      = 'stand';
-        pet.stateTimer = 20 + Math.random() * 30;
-        pet.vx = 0; pet.vy = 0;
-        pet.frameIdx = 0; pet.holdCounter = 0;
-        return;
-      }
-      // Most of the time just turn and keep walking
-      const turn     = (Math.random() - 0.5) * Math.PI * 0.78;
-      pet.angle     += turn;
-      pet.speed      = 0.9 + Math.random() * 0.675;
-      pet.steerTimer = 30 + Math.random() * 60;
-    }
-
-    const steer    = 0.08;
-    const targetVx = Math.cos(pet.angle) * pet.speed;
-    const targetVy = Math.sin(pet.angle) * pet.speed * 0.25;
-    pet.vx += (targetVx - pet.vx) * steer;
-    pet.vy += (targetVy - pet.vy) * steer;
-
-    pet.x += pet.vx * dt * 60;
-    pet.y += pet.vy * dt * 60;
-
-    if (pet.x <= 0)           { pet.x = 0;           pet.vx =  Math.abs(pet.vx); pet.angle = Math.atan2(pet.vy,  Math.abs(pet.vx)); }
-    if (pet.x >= CW - pet.sw) { pet.x = CW - pet.sw; pet.vx = -Math.abs(pet.vx); pet.angle = Math.atan2(pet.vy, -Math.abs(pet.vx)); }
-    if (pet.y <= pet.minY)    { pet.y = pet.minY;     pet.vy =  Math.abs(pet.vy); pet.angle = Math.atan2( Math.abs(pet.vy), pet.vx); }
-    if (pet.y >= pet.maxY)    { pet.y = pet.maxY;     pet.vy = -Math.abs(pet.vy); pet.angle = Math.atan2(-Math.abs(pet.vy), pet.vx); }
-
-    if (Math.abs(pet.vx) > 0.05) pet.facingRight = pet.vx > 0;
-  }
-
-  _updateFrame(pet) {
-    if (this._forced) {
-      const def = this._def(this._forced); if (!def) return;
-      pet.holdCounter++;
-      const fd = def.frames[pet.frameIdx % def.frames.length];
-      if (pet.holdCounter >= (fd.hold||1)) { pet.holdCounter=0; pet.frameIdx=(pet.frameIdx+1)%def.frames.length; }
-      return;
-    }
-
-    const key = this._key(pet), def = this._def(key); if (!def) return;
-    pet.holdCounter++;
-    const fd = def.frames[pet.frameIdx % def.frames.length];
-    if (pet.holdCounter >= (fd.hold||1)) { pet.holdCounter=0; pet.frameIdx=(pet.frameIdx+1)%def.frames.length; }
-
-    pet.stateTimer--;
-
-    switch (pet.state) {
-      case 'stand':
-        if (pet.stateTimer <= 0) {
-          const r = Math.random();
-          if (r < 0.10) {
-            // → sit (rare)
-            pet.state      = 'sit';
-            pet.stateTimer = 60 + Math.random() * 120;
-          } else if (r < 0.25) {
-            // → wave (occasional)
-            pet.state      = 'wave';
-            pet.stateTimer = 40 + Math.random() * 80;
-          } else {
-            // → walk (most of the time)
-            this._resumeWalk(pet);
-          }
-          pet.frameIdx = 0; pet.holdCounter = 0;
-        }
-        break;
-
-      case 'sit':
-        if (pet.stateTimer <= 0) {
-          // Must stand briefly before walking
-          pet.state      = 'stand';
-          pet.stateTimer = 15 + Math.random() * 20;
-          pet.frameIdx   = 0; pet.holdCounter = 0;
-        }
-        break;
-
-      case 'wave':
-        if (pet.stateTimer <= 0) {
-          // Stand briefly then walk
-          pet.state      = 'stand';
-          pet.stateTimer = 15 + Math.random() * 20;
-          pet.frameIdx   = 0; pet.holdCounter = 0;
-        }
-        break;
-    }
-  }
-
-  _resumeWalk(pet) {
-    pet.state       = 'walk';
-    pet.angle       = (Math.random() > 0.5 ? 0 : Math.PI) + (Math.random() - 0.5) * 0.6;
-    pet.speed       = 0.9 + Math.random() * 0.675;
-    pet.vx          = Math.cos(pet.angle) * pet.speed;
-    pet.vy          = 0;
-    pet.steerTimer  = 30 + Math.random() * 60;
-    pet.frameIdx    = 0;
-    pet.holdCounter = 0;
-  }
-
-  _draw(pet) {
-    const ctx = this.ctx, key = this._key(pet), def = this._def(key); if (!def) return;
-    const fd = def.frames[pet.frameIdx % def.frames.length];
-    const bs = this._body[fd.body]; if (!bs) return;
-    const fs = (!this.isBaby && fd.face) ? this._face[fd.face] || null : null;
-    const an = (!this.isBaby && fd.face) ? this._anch[fd.body] || { offsetX:0, offsetY:0, useFace:true } : { offsetX:0, offsetY:0, useFace:false };
-    // Round to nearest pixel for crisp pixel art — no sub-pixel blur
-    const px = Math.round(pet.x), py = Math.round(pet.y);
-    ctx.save();
-    if (pet.facingRight) { ctx.translate(px + bs.w/2, 0); ctx.scale(-1, 1); ctx.translate(-(px + bs.w/2), 0); }
-    ctx.drawImage(this.off, bs.x, bs.y, bs.w, bs.h, px, py, bs.w, bs.h);
-    if (!this.isBaby && an.useFace && fs)
-      ctx.drawImage(this.off, fs.x, fs.y, fs.w, fs.h, px + an.offsetX, py + an.offsetY, fs.w, fs.h);
-    ctx.restore();
+  // Replace egg pet at index with a tama (used by hatch sequence)
+  async hatchEgg(petIdx, charId) {
+    const tamaPet = await this.addTama(charId);
+    // Remove the egg from pets array
+    this.pets.splice(petIdx, 1);
+    // Move tama to same position as where egg was (it'll start wandering from there)
+    return tamaPet;
   }
 
   _render() {
-    if (!this.off || !this.bgCanvas) return;
+    if (!this.bgCanvas) return;
     const ctx = this.ctx; ctx.imageSmoothingEnabled = false;
     ctx.fillStyle = '#87CEEB';
     ctx.fillRect(0, 0, CW, CH);
     ctx.drawImage(this.bgCanvas, 0, 0, CW, CH);
-    this.pets.forEach(p => this._draw(p));
+    // Draw eggs first (under tamas), then tamas on top
+    this.pets.forEach(p => {
+      if (p.stage==='egg') p.drawEgg(ctx);
+      else p.drawTama(ctx);
+    });
   }
 
   _loop(ts) {
-    // dt — time since last frame in seconds, capped to avoid jumps after tab switch
-    const dt = Math.min((ts - (this._lastRaf || ts)) / 1000, 0.05);
+    const dt = Math.min((ts - (this._lastRaf||ts))/1000, 0.05);
     this._lastRaf = ts;
-
-    // Position updates every RAF (~60fps) for smooth movement
-    if (!this._forced) this.pets.forEach(p => this._moveStep(p, dt));
-
-    // Sprite frame updates at animation fps
-    const def = this._def(this._forced || 'walk'), fps = def ? def.fps : 4;
-    if (ts - this._lastTick >= 1000 / fps) {
-      this._lastTick = ts;
-      this.pets.forEach(p => this._updateFrame(p));
-    }
-
-    // Render every frame
+    this.pets.forEach(p => {
+      if (p.stage==='egg') p.updateEgg(ts);
+      else { p.moveStep(dt); p.updateFrame(ts); }
+    });
     this._render();
     requestAnimationFrame(t => this._loop(t));
   }
 
   forceAnimation(key) {
-    this._forced = key || null;
+    this._forced = key||null;
     this.pets.forEach(p => {
-      p.frameIdx = 0; p.holdCounter = 0;
-      if (!key) this._resumeWalk(p);
+      if (p.stage!=='egg') p.forceAnimation(key);
     });
   }
 
   awardPoints(n) {
     this.student.gotchiPoints = Math.max(0, this.student.gotchiPoints + n);
-    const el  = document.getElementById('pts-' + this.student.id);
-    const dot = document.getElementById('dot-' + this.student.id);
-    if (el)  el.textContent = this.student.gotchiPoints + ' pts';
-    if (dot) { dot.classList.add('flash'); setTimeout(() => dot.classList.remove('flash'), 600); }
-    if (selected === this.student.id) refreshStudentPanel();
+    const el  = document.getElementById('pts-'+this.student.id);
+    const dot = document.getElementById('dot-'+this.student.id);
+    if (el)  el.textContent = this.student.gotchiPoints+' pts';
+    if (dot) {dot.classList.add('flash');setTimeout(()=>dot.classList.remove('flash'),600);}
+    if (selected===this.student.id) refreshStudentPanel();
     updateHeader();
   }
 }
@@ -1226,14 +1090,12 @@ let selected = null;
 function buildGrid() {
   const grid = document.getElementById('classroom-grid');
   grid.innerHTML = '';
-  // All students start as eggs
-  cells = STUDENTS.map(s => new EggCell(grid, s));
+  cells = STUDENTS.map(s => new GotchiCell(grid, s));
   updateHeader();
 }
 
 async function init() {
   try {
-    // Load egg assets first — all students start as eggs
     await loadEggAssets();
   } catch(e) {
     console.error('Failed to load egg assets:', e);
@@ -1241,7 +1103,6 @@ async function init() {
   }
   buildGrid();
 }
-
 // ─── SELECTION ────────────────────────────────────────────────────────────
 function selectStudent(id) {
   if (selected === id) { selected = null; closeOverlay('overlay-student'); }
@@ -1258,32 +1119,39 @@ function selectStudent(id) {
 function refreshStudentPanel() {
   const s    = STUDENTS.find(s => s.id === selected); if (!s) return;
   const cell = cells.find(c => c.student.id === selected);
-  const isEgg = cell instanceof EggCell;
+  if (!cell) return;
+
+  // Determine cell state from pets array
+  const eggPet  = cell.pets.find(p => p.stage === 'egg');
+  const tamaPet = cell.pets.find(p => p.stage === 'adult' || p.stage === 'baby');
+  const hasEgg  = !!eggPet;
 
   document.getElementById('sel-name').textContent = s.name;
   document.getElementById('sel-pts').textContent  = s.gotchiPoints;
+
+  // Show hatch button only if cell has an egg
+  document.getElementById('hatch-section').style.display = hasEgg ? 'flex' : 'none';
 
   // Portrait
   const portrait = document.getElementById('spotlight-portrait');
   const pCtx     = portrait.getContext('2d');
   pCtx.imageSmoothingEnabled = false;
 
-  // Show hatch button only if this student has an egg
-  document.getElementById('hatch-section').style.display = isEgg ? 'flex' : 'none';
-
-  if (isEgg && cell.variant) {
-    // Show egg at ~50% of cell render size — use transparent offscreen canvas
-    const sp    = cell.variant.idleFrames[0];
-    const SCALE = 2;
+  if (eggPet) {
+    // Show egg sprite at 2× — use egg pet's transparent offscreen canvas
+    const sp = eggPet.eggVariant.idleFrames[0];
     if (sp) {
+      const SCALE = 2;
       portrait.width  = sp.w * SCALE;
       portrait.height = sp.h * SCALE;
       pCtx.clearRect(0, 0, portrait.width, portrait.height);
-      pCtx.drawImage(cell.off, sp.x, sp.y, sp.w, sp.h, 0, 0, sp.w*SCALE, sp.h*SCALE);
+      pCtx.drawImage(eggPet.off, sp.x, sp.y, sp.w, sp.h, 0, 0, sp.w*SCALE, sp.h*SCALE);
     }
-  } else if (!isEgg && cell?.off && cell.charJSON) {
-    const baseBand  = cell.charJSON.bands?.find(b => b.role === 'base');
-    const bodyBand  = cell.charJSON.bands?.find(b => b.role === 'body_anim');
+  } else if (tamaPet) {
+    // Show tama base/neutral sprite
+    const charJSON  = tamaPet.charJSON;
+    const baseBand  = charJSON.bands?.find(b => b.role === 'base');
+    const bodyBand  = charJSON.bands?.find(b => b.role === 'body_anim');
     const sp        = baseBand?.sprites?.find(s => s.label === 'neutral')
                    || baseBand?.sprites?.[0]
                    || bodyBand?.sprites?.[0];
@@ -1291,7 +1159,7 @@ function refreshStudentPanel() {
       portrait.width  = sp.w;
       portrait.height = sp.h;
       pCtx.clearRect(0, 0, sp.w, sp.h);
-      pCtx.drawImage(cell.off, sp.x, sp.y, sp.w, sp.h, 0, 0, sp.w, sp.h);
+      pCtx.drawImage(tamaPet.off, sp.x, sp.y, sp.w, sp.h, 0, 0, sp.w, sp.h);
     }
   }
 }
@@ -1322,30 +1190,11 @@ function _spotlightMousemove(e) {
   const cell = cells.find(c => c.student.id === selected);
   if (!cell) return;
   const rect = e.currentTarget.getBoundingClientRect();
-  const mx   = (e.clientX - rect.left)  / 2;
-  const my   = (e.clientY - rect.top)   / 2;
-
-  if (cell instanceof EggCell) {
-    // Egg: fixed position in lower 35% zone
-    const sp = cell.variant?.idleFrames?.[0];
-    if (!sp) return;
-    const zoneTop = Math.floor(CH * 0.65);
-    const zoneH   = CH - zoneTop;
-    const dx = Math.round((CW - sp.w) / 2);
-    const dy = zoneTop + Math.round((zoneH - sp.h) / 2);
-    if (mx >= dx && mx <= dx+sp.w && my >= dy && my <= dy+sp.h)
-      showTooltip(e, '???');
-    else hideTooltip();
-  } else {
-    // Tama: check pet sprite bounds
-    const hit = cell.pets.some(p => {
-      const sp = cell._body?.['walk_1'] || Object.values(cell._body || {})[0];
-      const sw = sp ? sp.w : 36, sh = sp ? sp.h : 46;
-      return mx >= p.x && mx <= p.x + sw && my >= p.y && my <= p.y + sh;
-    });
-    if (hit && cell.charJSON?.displayName) showTooltip(e, cell.charJSON.displayName);
-    else hideTooltip();
-  }
+  const mx   = (e.clientX - rect.left) / 2;
+  const my   = (e.clientY - rect.top)  / 2;
+  const hit  = cell.pets.find(p => p.hitTest(mx, my));
+  if (hit) showTooltip(e, hit.tooltipName);
+  else hideTooltip();
 }
 
 function stopMirror() {
