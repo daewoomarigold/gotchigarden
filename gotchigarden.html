@@ -544,7 +544,7 @@ const STUDENTS = [
 
 // Assign random enabled tama to each student from tamadex
 async function assignTamas() {
-  const url  = `${PAGES_BASE}/tamadex.json`;
+  const url  = `${PAGES_BASE}/${TAMA_PATH}/tamadex.json`;
   const resp = await fetch(url);
   if (!resp.ok) throw new Error(`Could not load tamadex.json (${resp.status})`);
   const dex  = await resp.json();
@@ -566,7 +566,7 @@ let tamaDex = null; // cached tamadex
 
 async function loadTamaDex() {
   if (tamaDex) return tamaDex;
-  const resp = await fetch(`${PAGES_BASE}/tamadex.json`);
+  const resp = await fetch(`${PAGES_BASE}/${TAMA_PATH}/tamadex.json`);
   tamaDex = await resp.json();
   return tamaDex;
 }
