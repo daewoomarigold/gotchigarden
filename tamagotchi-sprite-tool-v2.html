@@ -515,6 +515,7 @@ header h1 {
   <button class="btn btn-commit-all" id="btn-commit-all" disabled>↓ Commit All</button>
   <button class="btn" id="btn-export-dex" disabled style="border-color:var(--purple);color:var(--purple);">★ Export TamaDex</button>
   <button class="btn" id="btn-eggs-mode" style="border-color:var(--orange);color:var(--orange);">🥚 Egg Editor</button>
+  <button class="btn" id="btn-manifest-mode" style="border-color:var(--cyan);color:var(--cyan);">📋 Manifest</button>
   <div class="header-sep"></div>
   <div class="header-status" id="header-status">Open a folder containing sprite sheet PNGs and character JSONs</div>
 </header>
@@ -538,6 +539,56 @@ header h1 {
       <div style="font-size:9px;color:var(--muted);display:flex;gap:10px;align-items:center;">
         <span>● unsaved</span>
         <span style="color:var(--muted);">○ saved</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Manifest Generator ── -->
+  <div id="manifest-editor" style="display:none;flex:1;flex-direction:column;overflow:hidden;">
+
+    <div style="padding:12px 16px;background:var(--surface);border-bottom:1px solid var(--border2);display:flex;align-items:center;gap:12px;flex-shrink:0;">
+      <span style="font-family:'Pixelify Sans',monospace;font-size:1rem;color:var(--cyan);">📋 Manifest Generator</span>
+      <span style="font-size:9px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;">sprites/background/manifest.json</span>
+      <div style="flex:1;"></div>
+      <button class="btn" id="btn-manifest-load">↑ Open Background Folder</button>
+      <input type="file" id="manifest-folder-input" webkitdirectory multiple accept="image/png" style="display:none;">
+      <button class="btn" id="btn-manifest-export" disabled style="border-color:var(--cyan);color:var(--cyan);">↓ Export manifest.json</button>
+      <button class="btn" id="btn-manifest-close">✕ Close</button>
+    </div>
+
+    <div style="display:flex;flex:1;overflow:hidden;">
+
+      <!-- Main: grid of background previews -->
+      <div style="flex:1;overflow-y:auto;padding:16px;">
+        <div id="manifest-empty" style="color:var(--muted);font-size:11px;padding:20px;">
+          Open a folder containing background PNG files. Each PNG will become one entry in the manifest.
+        </div>
+        <div id="manifest-grid" style="display:none;display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;"></div>
+      </div>
+
+      <!-- Right: settings -->
+      <div style="width:220px;background:var(--surface);border-left:1px solid var(--border2);padding:16px;display:flex;flex-direction:column;gap:12px;flex-shrink:0;">
+        <div class="section-head">Manifest Settings</div>
+        <div class="field">
+          <label>Manifest type</label>
+          <select id="manifest-type" style="background:var(--raised);border:1px solid var(--border);color:var(--text);font-family:'DM Mono',monospace;font-size:11px;padding:4px 6px;border-radius:3px;width:100%;outline:none;">
+            <option value="backgrounds">backgrounds</option>
+            <option value="eggs">eggs</option>
+            <option value="items">items</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>ID prefix</label>
+          <input type="text" id="manifest-id-prefix" value="bg" placeholder="e.g. bg, egg, item">
+          <div style="font-size:9px;color:var(--muted);margin-top:2px;">IDs will be: bg_001, bg_002…</div>
+        </div>
+        <div style="font-size:9px;color:var(--muted);line-height:1.8;border-top:1px solid var(--border);padding-top:10px;">
+          <div id="manifest-stats">No files loaded</div>
+        </div>
+        <button class="btn btn-primary btn-full" id="btn-manifest-autoname">✦ Auto-name All</button>
+        <div style="font-size:9px;color:var(--muted);">
+          Auto-name cleans up filenames into readable display names.
+        </div>
       </div>
     </div>
   </div>
@@ -1906,6 +1957,152 @@ function exportTamaDex() {
 
 document.getElementById('btn-export-dex').addEventListener('click', exportTamaDex);
 document.getElementById('btn-open-folder').addEventListener('click', openFolder);
+document.getElementById('btn-manifest-mode').addEventListener('click', openManifestEditor);
+
+// ═══════════════════════════════════════════════════════════════════════════
+// MANIFEST GENERATOR
+// ═══════════════════════════════════════════════════════════════════════════
+
+const MANIFEST = {
+  entries: [], // [{ id, name, file, bitmap, url }]
+};
+
+function openManifestEditor() {
+  document.getElementById('manifest-editor').style.display = 'flex';
+  document.getElementById('editor-area').style.display     = 'none';
+  document.getElementById('char-list').style.display       = 'none';
+}
+
+function closeManifestEditor() {
+  document.getElementById('manifest-editor').style.display = 'none';
+  document.getElementById('editor-area').style.display     = 'flex';
+  document.getElementById('char-list').style.display       = 'flex';
+  // Revoke object URLs to free memory
+  MANIFEST.entries.forEach(e => { if (e.url) URL.revokeObjectURL(e.url); });
+  MANIFEST.entries = [];
+}
+
+document.getElementById('btn-manifest-close').addEventListener('click', closeManifestEditor);
+
+// ── Load folder ─────────────────────────────────────────────────────────
+document.getElementById('btn-manifest-load').addEventListener('click', () => {
+  document.getElementById('manifest-folder-input').click();
+});
+
+document.getElementById('manifest-folder-input').addEventListener('change', async e => {
+  const files = [...e.target.files].filter(f => f.name.toLowerCase().endsWith('.png'));
+  if (!files.length) { toast('No PNG files found in folder'); return; }
+
+  // Revoke old URLs
+  MANIFEST.entries.forEach(en => { if (en.url) URL.revokeObjectURL(en.url); });
+  MANIFEST.entries = [];
+
+  const prefix = document.getElementById('manifest-id-prefix').value.trim() || 'bg';
+
+  for (let i = 0; i < files.length; i++) {
+    const file = files[i];
+    const url  = URL.createObjectURL(file);
+    const id   = `${prefix}_${String(i+1).padStart(3,'0')}`;
+    const name = autoName(file.name);
+    MANIFEST.entries.push({ id, name, file: file.name, url });
+  }
+
+  renderManifestGrid();
+  document.getElementById('btn-manifest-export').disabled = false;
+  document.getElementById('manifest-stats').textContent =
+    `${files.length} PNG${files.length!==1?'s':''} loaded`;
+  toast(`Loaded ${files.length} backgrounds`);
+});
+
+// ── Auto-name: clean filename → display name ───────────────────────────
+function autoName(filename) {
+  return filename
+    .replace(/\.[^.]+$/, '')           // remove extension
+    .replace(/LCD Handhelds - Tamagotchi (Smart|On) - Backgrounds - /i, '') // strip prefix
+    .replace(/[-_]/g, ' ')             // dashes/underscores → spaces
+    .replace(/\s+/g, ' ')              // collapse spaces
+    .trim();
+}
+
+document.getElementById('btn-manifest-autoname').addEventListener('click', () => {
+  MANIFEST.entries.forEach(e => { e.name = autoName(e.file); });
+  renderManifestGrid();
+  toast('✦ Names updated');
+});
+
+// ── Render grid ──────────────────────────────────────────────────────────
+function renderManifestGrid() {
+  const grid  = document.getElementById('manifest-grid');
+  const empty = document.getElementById('manifest-empty');
+  grid.innerHTML  = '';
+  empty.style.display = MANIFEST.entries.length ? 'none' : 'block';
+  grid.style.display  = MANIFEST.entries.length ? 'grid'  : 'none';
+
+  MANIFEST.entries.forEach((entry, idx) => {
+    const card = document.createElement('div');
+    card.style.cssText = `
+      display:flex;flex-direction:column;gap:6px;
+      border:1px solid var(--border);border-radius:5px;
+      overflow:hidden;background:var(--raised);
+    `;
+
+    // Preview image
+    const img = document.createElement('img');
+    img.src   = entry.url;
+    img.style.cssText = 'width:100%;aspect-ratio:1;object-fit:cover;image-rendering:pixelated;display:block;';
+
+    // ID badge
+    const badge = document.createElement('div');
+    badge.style.cssText = 'font-size:9px;color:var(--cyan);letter-spacing:1px;padding:0 8px;';
+    badge.textContent   = entry.id;
+
+    // Editable name
+    const nameInput = document.createElement('input');
+    nameInput.type  = 'text';
+    nameInput.value = entry.name;
+    nameInput.style.cssText = `
+      background:transparent;border:none;border-top:1px solid var(--border);
+      color:var(--text);font-family:'DM Mono',monospace;font-size:10px;
+      padding:5px 8px;width:100%;outline:none;
+    `;
+    nameInput.addEventListener('focus', () => nameInput.style.background = 'var(--surface)');
+    nameInput.addEventListener('blur',  () => nameInput.style.background = 'transparent');
+    nameInput.addEventListener('input', () => { MANIFEST.entries[idx].name = nameInput.value; });
+
+    // Filename label
+    const fileLabel = document.createElement('div');
+    fileLabel.style.cssText = 'font-size:8px;color:var(--muted);padding:0 8px 6px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;';
+    fileLabel.title         = entry.file;
+    fileLabel.textContent   = entry.file;
+
+    card.appendChild(img);
+    card.appendChild(badge);
+    card.appendChild(nameInput);
+    card.appendChild(fileLabel);
+    grid.appendChild(card);
+  });
+}
+
+// ── Export manifest.json ────────────────────────────────────────────────
+document.getElementById('btn-manifest-export').addEventListener('click', () => {
+  if (!MANIFEST.entries.length) return;
+
+  const type = document.getElementById('manifest-type').value;
+  const out  = {
+    [type]: MANIFEST.entries.map(e => ({
+      id:   e.id,
+      name: e.name,
+      file: e.file,
+    })),
+  };
+
+  const blob = new Blob([JSON.stringify(out, null, 2)], { type: 'application/json' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href = url; a.download = 'manifest.json'; a.click();
+  URL.revokeObjectURL(url);
+  toast(`Exported manifest.json (${MANIFEST.entries.length} entries)`);
+});
 document.getElementById('btn-eggs-mode').addEventListener('click', openEggEditor);
 
 // ═══════════════════════════════════════════════════════════════════════════
