@@ -1196,7 +1196,7 @@
       "generation": "baby",
       "sheet": "LCD Handhelds - Tamagotchi Smart - Characters - Puchikotchi.png",
       "hasAnchors": false,
-      "enabled": false
+      "enabled": true
     },
     {
       "id": "TAM-001-002-000",
@@ -1205,7 +1205,7 @@
       "generation": "baby",
       "sheet": "LCD Handhelds - Tamagotchi Smart - Characters - Puchiotchi.png",
       "hasAnchors": false,
-      "enabled": false
+      "enabled": true
     }
   ]
 }
