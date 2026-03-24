@@ -1152,21 +1152,24 @@ class GotchiCell {
       <div class="cell-pts" id="pts-${this.student.id}">${this.student.gotchiPoints} pts</div>
       <div class="cell-dot" id="dot-${this.student.id}"></div>`;
 
+    this.vp = vp;
+
     this.wrap.appendChild(vp);
     this.wrap.appendChild(plate);
     this.wrap.addEventListener('click',     () => selectStudent(this.student.id));
     this.wrap.addEventListener('mousemove', e => {
-      const rect  = this.canvas.getBoundingClientRect();
+      if (!this.canvas || this.canvas.style.display === 'none') return;
+      const rect   = this.vp.getBoundingClientRect();
+      // Only process if cursor is inside the canvas viewport
+      if (e.clientX < rect.left || e.clientX > rect.right ||
+          e.clientY < rect.top  || e.clientY > rect.bottom) {
+        hideTooltip(); return;
+      }
       const scaleX = CW / rect.width;
       const scaleY = CH / rect.height;
-      const mx = (e.clientX - rect.left) * scaleX;
-      const my = (e.clientY - rect.top)  * scaleY;
-      // Debug — remove once working
-      if (this.pets.length) {
-        const p = this.pets[0];
-        console.log(`canvas CSS:${rect.width.toFixed(0)}x${rect.height.toFixed(0)} scale:${scaleX.toFixed(2)} mx:${mx.toFixed(0)} my:${my.toFixed(0)} | pet x:${p.x.toFixed(0)} y:${p.y.toFixed(0)} sw:${p.sw} sh:${p.sh}`);
-      }
-      const hit = this.pets.find(p => p.hitTest(mx, my));
+      const mx     = (e.clientX - rect.left) * scaleX;
+      const my     = (e.clientY - rect.top)  * scaleY;
+      const hit    = this.pets.find(p => p.hitTest(mx, my));
       if (hit) showTooltip(e, hit.tooltipName);
       else hideTooltip();
     });
