@@ -958,15 +958,11 @@ async function triggerEvolve(studentId, petIdx = 0) {
 }
 
 function buildBgCanvas(bgImg) {
-  const tw  = bgImg.naturalWidth  || bgImg.width;
-  const th  = bgImg.naturalHeight || bgImg.height;
   const c   = document.createElement('canvas');
   c.width   = CW; c.height = CH;
   const ctx = c.getContext('2d');
   ctx.imageSmoothingEnabled = false;
-  for (let y = 0; y < CH; y += th)
-    for (let x = 0; x < CW; x += tw)
-      ctx.drawImage(bgImg, x, y);
+  ctx.drawImage(bgImg, 0, 0, CW, CH);
   return c;
 }
 
@@ -1735,12 +1731,61 @@ async function openBgPicker() {
 
       card.appendChild(img);
       card.appendChild(label);
+
+      if (isLocked) {
+        const buyBtn = document.createElement('button');
+        buyBtn.style.cssText = `
+          margin:0 6px 6px;padding:3px 0;
+          background:none;border:1px solid var(--yellow);
+          color:var(--yellow);font-family:'DM Mono',monospace;
+          font-size:9px;border-radius:3px;cursor:pointer;
+          letter-spacing:1px;
+        `;
+        const BG_PRICE = 1;
+        buyBtn.textContent = `BUY • ${BG_PRICE} pt`;
+        buyBtn.addEventListener('click', e => {
+          e.stopPropagation();
+          purchaseBackground(bg, BG_PRICE);
+        });
+        card.appendChild(buyBtn);
+      }
+
       card.addEventListener('click', () => applyBackground(bg));
       grid.appendChild(card);
     });
   } catch(e) {
     grid.innerHTML = `<div style="color:var(--red);font-size:11px;padding:8px;">⚠ ${e.message}</div>`;
   }
+}
+
+async function purchaseBackground(bg, price) {
+  const student = STUDENTS.find(s => s.id === selected);
+  if (!student) return;
+
+  if (student.unlockedBgs.includes(bg.id)) {
+    toast('Already unlocked!');
+    return;
+  }
+  if (student.gotchiPoints < price) {
+    toast(`⚠ Not enough GotchiPts (need ${price})`);
+    return;
+  }
+
+  // Deduct points and unlock
+  student.gotchiPoints -= price;
+  student.unlockedBgs.push(bg.id);
+
+  // Update pts display
+  const el = document.getElementById('pts-' + student.id);
+  if (el) el.textContent = student.gotchiPoints + ' pts';
+  document.getElementById('sel-pts').textContent = student.gotchiPoints;
+  updateHeader();
+
+  toast(`✓ Unlocked ${bg.name}!`);
+
+  // Re-render picker so card shows as unlocked, then auto-apply
+  await openBgPicker();
+  await applyBackground(bg);
 }
 
 async function applyBackground(bg) {
