@@ -557,6 +557,21 @@ header {
         </div>
       </div>
 
+      <!-- Cell color -->
+      <div class="spotlight-section">
+        <div class="spotlight-section-head">Cell Color</div>
+        <div style="display:flex;align-items:center;gap:10px;margin-top:2px;">
+          <input type="color" id="cell-color-picker" value="#87CEEB"
+            style="width:40px;height:32px;border:2px solid var(--border);border-radius:4px;
+                   background:none;cursor:pointer;padding:2px;">
+          <div style="flex:1;">
+            <div style="font-size:10px;color:var(--muted);">Background fill color</div>
+            <div id="cell-color-hex" style="font-size:9px;color:var(--cyan);letter-spacing:1px;">#87CEEB</div>
+          </div>
+          <button class="btn" id="btn-cell-color-reset" style="font-size:9px;padding:3px 8px;">↺</button>
+        </div>
+      </div>
+
     </div>
   </div>
 </div>
@@ -653,24 +668,24 @@ function rawUrl(folder, filename) {
 // All students start as eggs — tamas are earned by hatching
 // eggVariant: null = assigned randomly on load from egg JSON
 // charId: null = no tama yet
-const DEFAULT_BG_ID   = 'bg_001';
+const DEFAULT_BG_COLOR = '#87CEEB';
 
 const STUDENTS = [
-  { id:1,  name:'Alice',  charId:null, eggVariant:null, bgFile:DEFAULT_BG, bgId:DEFAULT_BG_ID, unlockedBgs:[DEFAULT_BG_ID], gotchiPoints:120 },
-  { id:2,  name:'Ben',    charId:null, eggVariant:null, bgFile:DEFAULT_BG, bgId:DEFAULT_BG_ID, unlockedBgs:[DEFAULT_BG_ID], gotchiPoints:85  },
-  { id:3,  name:'Chloe',  charId:null, eggVariant:null, bgFile:DEFAULT_BG, bgId:DEFAULT_BG_ID, unlockedBgs:[DEFAULT_BG_ID], gotchiPoints:210 },
-  { id:4,  name:'Dylan',  charId:null, eggVariant:null, bgFile:DEFAULT_BG, bgId:DEFAULT_BG_ID, unlockedBgs:[DEFAULT_BG_ID], gotchiPoints:55  },
-  { id:5,  name:'Eva',    charId:null, eggVariant:null, bgFile:DEFAULT_BG, bgId:DEFAULT_BG_ID, unlockedBgs:[DEFAULT_BG_ID], gotchiPoints:175 },
-  { id:6,  name:'Finn',   charId:null, eggVariant:null, bgFile:DEFAULT_BG, bgId:DEFAULT_BG_ID, unlockedBgs:[DEFAULT_BG_ID], gotchiPoints:90  },
-  { id:7,  name:'Grace',  charId:null, eggVariant:null, bgFile:DEFAULT_BG, bgId:DEFAULT_BG_ID, unlockedBgs:[DEFAULT_BG_ID], gotchiPoints:140 },
-  { id:8,  name:'Henry',  charId:null, eggVariant:null, bgFile:DEFAULT_BG, bgId:DEFAULT_BG_ID, unlockedBgs:[DEFAULT_BG_ID], gotchiPoints:30  },
-  { id:9,  name:'Iris',   charId:null, eggVariant:null, bgFile:DEFAULT_BG, bgId:DEFAULT_BG_ID, unlockedBgs:[DEFAULT_BG_ID], gotchiPoints:200 },
-  { id:10, name:'Jake',   charId:null, eggVariant:null, bgFile:DEFAULT_BG, bgId:DEFAULT_BG_ID, unlockedBgs:[DEFAULT_BG_ID], gotchiPoints:65  },
-  { id:11, name:'Kira',   charId:null, eggVariant:null, bgFile:DEFAULT_BG, bgId:DEFAULT_BG_ID, unlockedBgs:[DEFAULT_BG_ID], gotchiPoints:155 },
-  { id:12, name:'Luca',   charId:null, eggVariant:null, bgFile:DEFAULT_BG, bgId:DEFAULT_BG_ID, unlockedBgs:[DEFAULT_BG_ID], gotchiPoints:110 },
-  { id:13, name:'Maya',   charId:null, eggVariant:null, bgFile:DEFAULT_BG, bgId:DEFAULT_BG_ID, unlockedBgs:[DEFAULT_BG_ID], gotchiPoints:240 },
-  { id:14, name:'Noah',   charId:null, eggVariant:null, bgFile:DEFAULT_BG, bgId:DEFAULT_BG_ID, unlockedBgs:[DEFAULT_BG_ID], gotchiPoints:45  },
-  { id:15, name:'Olivia', charId:null, eggVariant:null, bgFile:DEFAULT_BG, bgId:DEFAULT_BG_ID, unlockedBgs:[DEFAULT_BG_ID], gotchiPoints:185 },
+  { id:1,  name:'Alice',  charId:null, eggVariant:null, bgFile:DEFAULT_BG, bgId:DEFAULT_BG_ID, bgColor:DEFAULT_BG_COLOR, unlockedBgs:[DEFAULT_BG_ID], gotchiPoints:120 },
+  { id:2,  name:'Ben',    charId:null, eggVariant:null, bgFile:DEFAULT_BG, bgId:DEFAULT_BG_ID, bgColor:DEFAULT_BG_COLOR, unlockedBgs:[DEFAULT_BG_ID], gotchiPoints:85  },
+  { id:3,  name:'Chloe',  charId:null, eggVariant:null, bgFile:DEFAULT_BG, bgId:DEFAULT_BG_ID, bgColor:DEFAULT_BG_COLOR, unlockedBgs:[DEFAULT_BG_ID], gotchiPoints:210 },
+  { id:4,  name:'Dylan',  charId:null, eggVariant:null, bgFile:DEFAULT_BG, bgId:DEFAULT_BG_ID, bgColor:DEFAULT_BG_COLOR, unlockedBgs:[DEFAULT_BG_ID], gotchiPoints:55  },
+  { id:5,  name:'Eva',    charId:null, eggVariant:null, bgFile:DEFAULT_BG, bgId:DEFAULT_BG_ID, bgColor:DEFAULT_BG_COLOR, unlockedBgs:[DEFAULT_BG_ID], gotchiPoints:175 },
+  { id:6,  name:'Finn',   charId:null, eggVariant:null, bgFile:DEFAULT_BG, bgId:DEFAULT_BG_ID, bgColor:DEFAULT_BG_COLOR, unlockedBgs:[DEFAULT_BG_ID], gotchiPoints:90  },
+  { id:7,  name:'Grace',  charId:null, eggVariant:null, bgFile:DEFAULT_BG, bgId:DEFAULT_BG_ID, bgColor:DEFAULT_BG_COLOR, unlockedBgs:[DEFAULT_BG_ID], gotchiPoints:140 },
+  { id:8,  name:'Henry',  charId:null, eggVariant:null, bgFile:DEFAULT_BG, bgId:DEFAULT_BG_ID, bgColor:DEFAULT_BG_COLOR, unlockedBgs:[DEFAULT_BG_ID], gotchiPoints:30  },
+  { id:9,  name:'Iris',   charId:null, eggVariant:null, bgFile:DEFAULT_BG, bgId:DEFAULT_BG_ID, bgColor:DEFAULT_BG_COLOR, unlockedBgs:[DEFAULT_BG_ID], gotchiPoints:200 },
+  { id:10, name:'Jake',   charId:null, eggVariant:null, bgFile:DEFAULT_BG, bgId:DEFAULT_BG_ID, bgColor:DEFAULT_BG_COLOR, unlockedBgs:[DEFAULT_BG_ID], gotchiPoints:65  },
+  { id:11, name:'Kira',   charId:null, eggVariant:null, bgFile:DEFAULT_BG, bgId:DEFAULT_BG_ID, bgColor:DEFAULT_BG_COLOR, unlockedBgs:[DEFAULT_BG_ID], gotchiPoints:155 },
+  { id:12, name:'Luca',   charId:null, eggVariant:null, bgFile:DEFAULT_BG, bgId:DEFAULT_BG_ID, bgColor:DEFAULT_BG_COLOR, unlockedBgs:[DEFAULT_BG_ID], gotchiPoints:110 },
+  { id:13, name:'Maya',   charId:null, eggVariant:null, bgFile:DEFAULT_BG, bgId:DEFAULT_BG_ID, bgColor:DEFAULT_BG_COLOR, unlockedBgs:[DEFAULT_BG_ID], gotchiPoints:240 },
+  { id:14, name:'Noah',   charId:null, eggVariant:null, bgFile:DEFAULT_BG, bgId:DEFAULT_BG_ID, bgColor:DEFAULT_BG_COLOR, unlockedBgs:[DEFAULT_BG_ID], gotchiPoints:45  },
+  { id:15, name:'Olivia', charId:null, eggVariant:null, bgFile:DEFAULT_BG, bgId:DEFAULT_BG_ID, bgColor:DEFAULT_BG_COLOR, unlockedBgs:[DEFAULT_BG_ID], gotchiPoints:185 },
 ];
 
 // Assign random enabled tama to each student from tamadex
@@ -969,13 +984,12 @@ async function triggerEvolve(studentId, petIdx = 0) {
   cellAnnounce(cell, `🌟 Evolved into ${tamaEntry.displayName}!`, 10000);
 }
 
-function buildBgCanvas(bgImg) {
+function buildBgCanvas(bgImg, color = '#87CEEB') {
   const c   = document.createElement('canvas');
   c.width   = CW; c.height = CH;
   const ctx = c.getContext('2d');
   ctx.imageSmoothingEnabled = false;
-  // Fill solid first so no previous content bleeds through transparent bg pixels
-  ctx.fillStyle = '#87CEEB';
+  ctx.fillStyle = color;
   ctx.fillRect(0, 0, CW, CH);
   ctx.drawImage(bgImg, 0, 0, CW, CH);
   return c;
@@ -1310,7 +1324,7 @@ class GotchiCell {
   async _load() {
     try {
       const bgImg = await fetchImage(BG_PATH, this.student.bgFile);
-      this.bgCanvas = buildBgCanvas(bgImg);
+      this.bgCanvas = buildBgCanvas(bgImg, this.student.bgColor || DEFAULT_BG_COLOR);
 
       // Build initial pets — all students start with one egg
       await this._addEgg(this.student.eggVariant);
@@ -1833,7 +1847,7 @@ async function applyBackground(bg) {
 
   try {
     const bgImg   = await fetchImage(BG_PATH, bg.file);
-    cell.bgCanvas = buildBgCanvas(bgImg);
+    cell.bgCanvas = buildBgCanvas(bgImg, student.bgColor || DEFAULT_BG_COLOR);
   } catch(e) {
     toast('⚠ Could not load background');
     return;
