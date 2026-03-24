@@ -658,7 +658,9 @@ const PAGES_BASE = `https://${GITHUB_USER}.github.io/${GITHUB_REPO}`;
 const TAMA_PATH = 'sprites/tamas';
 const BG_PATH   = 'sprites/background';
 
-const DEFAULT_BG = 'LCD Handhelds - Tamagotchi Smart - Backgrounds - Base_tile_01.png';
+const DEFAULT_BG       = 'LCD Handhelds - Tamagotchi Smart - Backgrounds - Base_tile_01.png';
+const DEFAULT_BG_ID    = 'bg_001';
+const DEFAULT_BG_COLOR = '#87CEEB';
 
 function rawUrl(folder, filename) {
   return `${PAGES_BASE}/${folder}/${encodeURIComponent(filename)}`;
@@ -668,7 +670,6 @@ function rawUrl(folder, filename) {
 // All students start as eggs — tamas are earned by hatching
 // eggVariant: null = assigned randomly on load from egg JSON
 // charId: null = no tama yet
-const DEFAULT_BG_COLOR = '#87CEEB';
 
 const STUDENTS = [
   { id:1,  name:'Alice',  charId:null, eggVariant:null, bgFile:DEFAULT_BG, bgId:DEFAULT_BG_ID, bgColor:DEFAULT_BG_COLOR, unlockedBgs:[DEFAULT_BG_ID], gotchiPoints:120 },
@@ -1489,6 +1490,11 @@ function refreshStudentPanel() {
   document.getElementById('sel-name').textContent = s.name;
   document.getElementById('sel-pts').textContent  = s.gotchiPoints;
 
+  // Sync color picker to this student's color
+  const color = s.bgColor || DEFAULT_BG_COLOR;
+  document.getElementById('cell-color-picker').value = color;
+  document.getElementById('cell-color-hex').textContent = color.toUpperCase();
+
   // Clamp selectedPetIdx to valid range
   if (selectedPetIdx >= cell.pets.length) selectedPetIdx = 0;
 
@@ -1860,6 +1866,39 @@ async function applyBackground(bg) {
 
   toast(`🖼 Background changed to ${bg.name}`);
 }
+
+// ─── CELL COLOR PICKER ────────────────────────────────────────────────────
+const cellColorPicker = document.getElementById('cell-color-picker');
+const cellColorHex    = document.getElementById('cell-color-hex');
+
+cellColorPicker.addEventListener('input', async e => {
+  if (!selected) return;
+  const color   = e.target.value;
+  const student = STUDENTS.find(s => s.id === selected);
+  const cell    = cells.find(c => c.student.id === selected);
+  if (!student || !cell) return;
+
+  student.bgColor = color;
+  cellColorHex.textContent = color.toUpperCase();
+
+  // Rebuild bgCanvas with new color — keep same bg image
+  const bgImg   = await fetchImage(BG_PATH, student.bgFile);
+  cell.bgCanvas = buildBgCanvas(bgImg, color);
+});
+
+document.getElementById('btn-cell-color-reset').addEventListener('click', async () => {
+  if (!selected) return;
+  const student = STUDENTS.find(s => s.id === selected);
+  const cell    = cells.find(c => c.student.id === selected);
+  if (!student || !cell) return;
+
+  student.bgColor      = DEFAULT_BG_COLOR;
+  cellColorPicker.value = DEFAULT_BG_COLOR;
+  cellColorHex.textContent = DEFAULT_BG_COLOR;
+
+  const bgImg   = await fetchImage(BG_PATH, student.bgFile);
+  cell.bgCanvas = buildBgCanvas(bgImg, DEFAULT_BG_COLOR);
+});
 
 // ─── BROADCAST ────────────────────────────────────────────────────────────
 document.querySelectorAll('[data-anim]').forEach(btn => {
