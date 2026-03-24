@@ -1367,7 +1367,7 @@ function refreshStudentPanel() {
   }
 }
 
-// Live mirror — copies the selected cell's canvas into the spotlight at 2×
+// Live mirror — renders the selected cell's content directly into the spotlight at 2×
 let _mirrorRaf = null;
 function startMirror(id) {
   stopMirror();
@@ -1375,13 +1375,10 @@ function startMirror(id) {
   const ctx       = spotlight.getContext('2d');
   ctx.imageSmoothingEnabled = false;
 
-  // Wire tooltip to spotlight canvas at 2× scale
-  spotlight.addEventListener('mousemove', _spotlightMousemove);
-  spotlight.addEventListener('mouseleave', () => {});
-
   function frame() {
     const cell = cells.find(c => c.student.id === id);
     if (cell?.canvas) {
+      ctx.clearRect(0, 0, 600, 600);
       ctx.drawImage(cell.canvas, 0, 0, 600, 600);
     }
     _mirrorRaf = requestAnimationFrame(frame);
@@ -1391,9 +1388,6 @@ function startMirror(id) {
 
 function stopMirror() {
   if (_mirrorRaf) { cancelAnimationFrame(_mirrorRaf); _mirrorRaf = null; }
-  const spotlight = document.getElementById('spotlight-canvas');
-  spotlight.removeEventListener('mousemove',  _spotlightMousemove);
-  spotlight.onmouseleave = null;
 }
 
 function updateHeader() {
