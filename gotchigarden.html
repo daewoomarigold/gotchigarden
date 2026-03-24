@@ -707,8 +707,8 @@ async function triggerHatch(studentId, petIdx = 0) {
   // Helper: draw background + all other pets normally + hatching egg at specific frame
   function renderEggFrame(sp, offsetX=0) {
     const ctx = cell.ctx; ctx.imageSmoothingEnabled = false;
-    ctx.fillStyle = '#87CEEB'; ctx.fillRect(0,0,CW,CH);
     if (cell.bgCanvas) ctx.drawImage(cell.bgCanvas,0,0,CW,CH);
+    else { ctx.fillStyle='#87CEEB'; ctx.fillRect(0,0,CW,CH); }
     // Draw all other pets normally (both eggs and tamas)
     cell.pets.forEach((p,i) => {
       if (i === petIdx) return; // skip the hatching egg — we draw it manually below
@@ -816,8 +816,8 @@ async function triggerEvolve(studentId, petIdx = 0) {
   // Helper: draw cell with this pet at a specific body sprite + x offset
   function renderPetFrame(bodyLabel, offsetX = 0) {
     const ctx = cell.ctx; ctx.imageSmoothingEnabled = false;
-    ctx.fillStyle = '#87CEEB'; ctx.fillRect(0,0,CW,CH);
     if (cell.bgCanvas) ctx.drawImage(cell.bgCanvas,0,0,CW,CH);
+    else { ctx.fillStyle='#87CEEB'; ctx.fillRect(0,0,CW,CH); }
     // Draw other pets normally
     cell.pets.forEach(p => {
       if (p === pet) return;
@@ -1233,18 +1233,9 @@ class GotchiCell {
     try {
       const bgImg = await fetchImage(BG_PATH, this.student.bgFile);
       this.bgCanvas = document.createElement('canvas');
-      this.bgCanvas.width  = CW;
-      this.bgCanvas.height = CH;
-      const bgCtx = this.bgCanvas.getContext('2d');
-      bgCtx.imageSmoothingEnabled = false;
-      // Tile the background image to fill the full cell canvas
-      const tw = bgImg.naturalWidth  || bgImg.width;
-      const th = bgImg.naturalHeight || bgImg.height;
-      for (let y = 0; y < CH; y += th) {
-        for (let x = 0; x < CW; x += tw) {
-          bgCtx.drawImage(bgImg, x, y);
-        }
-      }
+      this.bgCanvas.width  = bgImg.naturalWidth  || bgImg.width;
+      this.bgCanvas.height = bgImg.naturalHeight || bgImg.height;
+      this.bgCanvas.getContext('2d').drawImage(bgImg, 0, 0);
 
       // Build initial pets — all students start with one egg
       await this._addEgg(this.student.eggVariant);
@@ -1299,8 +1290,7 @@ class GotchiCell {
   _render() {
     if (!this.bgCanvas || this._hatching) return;
     const ctx = this.ctx; ctx.imageSmoothingEnabled = false;
-    ctx.fillStyle = '#87CEEB';
-    ctx.fillRect(0, 0, CW, CH);
+    // Stretch background to fill entire canvas — no gaps
     ctx.drawImage(this.bgCanvas, 0, 0, CW, CH);
     this.pets.forEach(p => {
       if (p.stage==='egg') p.drawEgg(ctx);
