@@ -704,17 +704,21 @@ async function triggerHatch(studentId, petIdx = 0) {
   pet._seqIdx    = 0;
   const freezeFrame = pet.eggVariant.idleFrames[0];
 
-  // Helper: draw background + all non-hatching pets + egg frame centred at egg position
+  // Helper: draw background + all other pets normally + hatching egg at specific frame
   function renderEggFrame(sp, offsetX=0) {
     const ctx = cell.ctx; ctx.imageSmoothingEnabled = false;
     ctx.fillStyle = '#87CEEB'; ctx.fillRect(0,0,CW,CH);
     if (cell.bgCanvas) ctx.drawImage(cell.bgCanvas,0,0,CW,CH);
-    cell.pets.forEach((p,i) => { if (i!==petIdx && p.stage!=='egg') p.drawTama(ctx); });
+    // Draw all other pets normally (both eggs and tamas)
+    cell.pets.forEach((p,i) => {
+      if (i === petIdx) return; // skip the hatching egg — we draw it manually below
+      if (p.stage==='egg') p.drawEgg(ctx);
+      else p.drawTama(ctx);
+    });
     if (!sp) return;
-    // Centre the sprite (hatch frames are narrower than idle frames)
-    const dx = Math.round((CW - sp.w) / 2) + Math.round(offsetX);
-    const dy = eggY; // keep same vertical position as egg
-    ctx.drawImage(pet.off, sp.x, sp.y, sp.w, sp.h, dx, dy, sp.w, sp.h);
+    // Draw hatching egg at its own position with shake offset
+    ctx.drawImage(pet.off, sp.x, sp.y, sp.w, sp.h,
+      pet.x + Math.round(offsetX), eggY, sp.w, sp.h);
   }
 
   // ── Step 4: shake ─────────────────────────────────────────────────────
