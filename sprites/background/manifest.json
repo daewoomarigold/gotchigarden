@@ -1,0 +1,214 @@
+{
+  "backgrounds": [
+    {
+      "id": "bg_001",
+      "name": "Base tile 01",
+      "file": "LCD Handhelds - Tamagotchi Smart - Backgrounds - Base_tile_01.png"
+    },
+    {
+      "id": "bg_002",
+      "name": "Base tile 02",
+      "file": "LCD Handhelds - Tamagotchi Smart - Backgrounds - Base_tile_02.png"
+    },
+    {
+      "id": "bg_003",
+      "name": "Base tile 03",
+      "file": "LCD Handhelds - Tamagotchi Smart - Backgrounds - Base_tile_03.png"
+    },
+    {
+      "id": "bg_004",
+      "name": "Base tile 04",
+      "file": "LCD Handhelds - Tamagotchi Smart - Backgrounds - Base_tile_04.png"
+    },
+    {
+      "id": "bg_005",
+      "name": "Base tile 05",
+      "file": "LCD Handhelds - Tamagotchi Smart - Backgrounds - Base_tile_05.png"
+    },
+    {
+      "id": "bg_006",
+      "name": "Base tile 06",
+      "file": "LCD Handhelds - Tamagotchi Smart - Backgrounds - Base_tile_06.png"
+    },
+    {
+      "id": "bg_007",
+      "name": "Base tile 07",
+      "file": "LCD Handhelds - Tamagotchi Smart - Backgrounds - Base_tile_07.png"
+    },
+    {
+      "id": "bg_008",
+      "name": "Base tile 08",
+      "file": "LCD Handhelds - Tamagotchi Smart - Backgrounds - Base_tile_08.png"
+    },
+    {
+      "id": "bg_009",
+      "name": "Base tile 09",
+      "file": "LCD Handhelds - Tamagotchi Smart - Backgrounds - Base_tile_09.png"
+    },
+    {
+      "id": "bg_010",
+      "name": "Base tile 12",
+      "file": "LCD Handhelds - Tamagotchi Smart - Backgrounds - Base_tile_12.png"
+    },
+    {
+      "id": "bg_011",
+      "name": "Base tile 13",
+      "file": "LCD Handhelds - Tamagotchi Smart - Backgrounds - Base_tile_13.png"
+    },
+    {
+      "id": "bg_012",
+      "name": "Base tile 14",
+      "file": "LCD Handhelds - Tamagotchi Smart - Backgrounds - Base_tile_14.png"
+    },
+    {
+      "id": "bg_013",
+      "name": "Base tile 15",
+      "file": "LCD Handhelds - Tamagotchi Smart - Backgrounds - Base_tile_15.png"
+    },
+    {
+      "id": "bg_014",
+      "name": "Base tile 16",
+      "file": "LCD Handhelds - Tamagotchi Smart - Backgrounds - Base_tile_16.png"
+    },
+    {
+      "id": "bg_015",
+      "name": "Base tile 18",
+      "file": "LCD Handhelds - Tamagotchi Smart - Backgrounds - Base_tile_18.png"
+    },
+    {
+      "id": "bg_016",
+      "name": "Base tile 19",
+      "file": "LCD Handhelds - Tamagotchi Smart - Backgrounds - Base_tile_19.png"
+    },
+    {
+      "id": "bg_017",
+      "name": "Base tile 20",
+      "file": "LCD Handhelds - Tamagotchi Smart - Backgrounds - Base_tile_20.png"
+    },
+    {
+      "id": "bg_018",
+      "name": "Base tile 21",
+      "file": "LCD Handhelds - Tamagotchi Smart - Backgrounds - Base_tile_21.png"
+    },
+    {
+      "id": "bg_019",
+      "name": "Base tile 24",
+      "file": "LCD Handhelds - Tamagotchi Smart - Backgrounds - Base_tile_24.png"
+    },
+    {
+      "id": "bg_020",
+      "name": "Base tile 26",
+      "file": "LCD Handhelds - Tamagotchi Smart - Backgrounds - Base_tile_26.png"
+    },
+    {
+      "id": "bg_021",
+      "name": "Base tile 28",
+      "file": "LCD Handhelds - Tamagotchi Smart - Backgrounds - Base_tile_28.png"
+    },
+    {
+      "id": "bg_022",
+      "name": "Base tile 29",
+      "file": "LCD Handhelds - Tamagotchi Smart - Backgrounds - Base_tile_29.png"
+    },
+    {
+      "id": "bg_023",
+      "name": "Base tile 31",
+      "file": "LCD Handhelds - Tamagotchi Smart - Backgrounds - Base_tile_31.png"
+    },
+    {
+      "id": "bg_024",
+      "name": "Base tile 32",
+      "file": "LCD Handhelds - Tamagotchi Smart - Backgrounds - Base_tile_32.png"
+    },
+    {
+      "id": "bg_025",
+      "name": "Base tile 33",
+      "file": "LCD Handhelds - Tamagotchi Smart - Backgrounds - Base_tile_33.png"
+    },
+    {
+      "id": "bg_026",
+      "name": "Base tile 35",
+      "file": "LCD Handhelds - Tamagotchi Smart - Backgrounds - Base_tile_35.png"
+    },
+    {
+      "id": "bg_027",
+      "name": "Base tile 37",
+      "file": "LCD Handhelds - Tamagotchi Smart - Backgrounds - Base_tile_37.png"
+    },
+    {
+      "id": "bg_028",
+      "name": "Base tile 38",
+      "file": "LCD Handhelds - Tamagotchi Smart - Backgrounds - Base_tile_38.png"
+    },
+    {
+      "id": "bg_029",
+      "name": "Base tile 39",
+      "file": "LCD Handhelds - Tamagotchi Smart - Backgrounds - Base_tile_39.png"
+    },
+    {
+      "id": "bg_030",
+      "name": "Base tile 40",
+      "file": "LCD Handhelds - Tamagotchi Smart - Backgrounds - Base_tile_40.png"
+    },
+    {
+      "id": "bg_031",
+      "name": "Base tile 41",
+      "file": "LCD Handhelds - Tamagotchi Smart - Backgrounds - Base_tile_41.png"
+    },
+    {
+      "id": "bg_032",
+      "name": "Base tile 42",
+      "file": "LCD Handhelds - Tamagotchi Smart - Backgrounds - Base_tile_42.png"
+    },
+    {
+      "id": "bg_033",
+      "name": "Base tile 43",
+      "file": "LCD Handhelds - Tamagotchi Smart - Backgrounds - Base_tile_43.png"
+    },
+    {
+      "id": "bg_034",
+      "name": "Base tile 44",
+      "file": "LCD Handhelds - Tamagotchi Smart - Backgrounds - Base_tile_44.png"
+    },
+    {
+      "id": "bg_035",
+      "name": "Base tile 48",
+      "file": "LCD Handhelds - Tamagotchi Smart - Backgrounds - Base_tile_48.png"
+    },
+    {
+      "id": "bg_036",
+      "name": "Base tile 49",
+      "file": "LCD Handhelds - Tamagotchi Smart - Backgrounds - Base_tile_49.png"
+    },
+    {
+      "id": "bg_037",
+      "name": "Base tile 50",
+      "file": "LCD Handhelds - Tamagotchi Smart - Backgrounds - Base_tile_50.png"
+    },
+    {
+      "id": "bg_038",
+      "name": "Base tile 51",
+      "file": "LCD Handhelds - Tamagotchi Smart - Backgrounds - Base_tile_51.png"
+    },
+    {
+      "id": "bg_039",
+      "name": "Base tile 52",
+      "file": "LCD Handhelds - Tamagotchi Smart - Backgrounds - Base_tile_52.png"
+    },
+    {
+      "id": "bg_040",
+      "name": "Base tile 53",
+      "file": "LCD Handhelds - Tamagotchi Smart - Backgrounds - Base_tile_53.png"
+    },
+    {
+      "id": "bg_041",
+      "name": "Base tile 54",
+      "file": "LCD Handhelds - Tamagotchi Smart - Backgrounds - Base_tile_54.png"
+    },
+    {
+      "id": "bg_042",
+      "name": "Base tile 55",
+      "file": "LCD Handhelds - Tamagotchi Smart - Backgrounds - Base_tile_55.png"
+    }
+  ]
+}
