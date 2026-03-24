@@ -1381,9 +1381,10 @@ class GotchiCell {
   _render() {
     if (!this.bgCanvas || this._hatching) return;
     const ctx = this.ctx; ctx.imageSmoothingEnabled = false;
-    // Stretch background to fill entire canvas — no gaps
     ctx.drawImage(this.bgCanvas, 0, 0, CW, CH);
-    this.pets.forEach(p => {
+    // Y-sort: pets lower on screen (higher y + sh) draw on top — painter's algorithm
+    const sorted = [...this.pets].sort((a, b) => (a.y + a.sh) - (b.y + b.sh));
+    sorted.forEach(p => {
       if (p.stage==='egg') p.drawEgg(ctx);
       else p.drawTama(ctx);
     });
