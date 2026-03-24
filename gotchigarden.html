@@ -278,7 +278,42 @@ header {
 .fab.yellow { border-color:var(--yellow); color:var(--yellow); }
 .fab.yellow:hover { background:rgba(255,224,102,.1); }
 
-#tama-tooltip {
+/* ── Hatch message ── */
+#hatch-message {
+  position: fixed;
+  inset: 0;
+  z-index: 500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.4s;
+}
+#hatch-message.show { opacity: 1; }
+.hatch-bubble {
+  background: #fff;
+  border: 3px solid #333;
+  border-radius: 12px;
+  padding: 18px 32px;
+  box-shadow: 4px 4px 0 #333;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+.hatch-bubble-title {
+  font-family: 'Pixelify Sans', monospace;
+  font-size: 1.4rem;
+  color: #333;
+  letter-spacing: 1px;
+}
+.hatch-bubble-sub {
+  font-family: 'Pixelify Sans', monospace;
+  font-size: 0.75rem;
+  color: #888;
+  letter-spacing: 1px;
+}
   position: fixed;
   z-index: 200;
   pointer-events: none;
@@ -381,6 +416,15 @@ header {
         </div>
       </div>
 
+      <!-- Hatch (temp test button) -->
+      <div class="spotlight-section" id="hatch-section" style="display:none;">
+        <div class="spotlight-section-head">Hatch</div>
+        <button class="btn btn-full" id="btn-hatch"
+          style="border-color:var(--yellow);color:var(--yellow);">
+          🥚 Hatch Egg
+        </button>
+      </div>
+
       <!-- Shop -->
       <div class="spotlight-section">
         <div class="spotlight-section-head">Tama Shop</div>
@@ -430,6 +474,13 @@ header {
   </div>
 </div>
 
+<div id="hatch-message">
+  <div class="hatch-bubble">
+    <div style="font-size:2rem;">🎉</div>
+    <div class="hatch-bubble-title">Your egg hatched!</div>
+    <div class="hatch-bubble-sub" id="hatch-bubble-name">—</div>
+  </div>
+</div>
 <div id="tama-tooltip"></div>
 <div id="toast"></div>
 
@@ -492,6 +543,128 @@ async function assignTamas() {
 
   console.log('Tama assignments:', STUDENTS.map(s => `${s.name}→${s.charId}`));
 }
+
+// ─── HATCH SEQUENCE ───────────────────────────────────────────────────────
+let tamaDex = null; // cached tamadex for hatch assignments
+
+async function pickHatchTama() {
+  // Load tamadex if not already cached
+  if (!tamaDex) {
+    const resp = await fetch(`${PAGES_BASE}/tamadex.json`);
+    tamaDex    = await resp.json();
+  }
+  const pool = tamaDex.characters.filter(c => c.enabled);
+  return pool[Math.floor(Math.random() * pool.length)];
+}
+
+async function triggerHatch(studentId) {
+  const cell = cells.find(c => c.student.id === studentId);
+  if (!(cell instanceof EggCell)) return;
+  closeOverlay('overlay-student');
+
+  // Pick the next tama now (step 1a) — async, happens in background
+  const tamaEntry = await pickHatchTama();
+  const student   = cell.student;
+
+  // Steps 2–3: stop idle, freeze on frame 1
+  cell._hatching = true;
+  cell._seqIdx   = 0;
+  const freezeFrame = cell.variant.idleFrames[0];
+
+  // ── Step 4: shake (3 seconds, escalating) ─────────────────────────────
+  await shakeEgg(cell, freezeFrame);
+
+  // ── Step 5: freeze on frame 1 again ───────────────────────────────────
+  await sleep(400);
+  cell._renderFrame(freezeFrame, 0);
+
+  // ── Step 6: hatch animation (crack → burst) ────────────────────────────
+  await sleep(300);
+  cell._renderFrame(null, 0, cell.variant.hatchFrames[0]); // crack
+  await sleep(400);
+  cell._renderFrame(null, 0, cell.variant.hatchFrames[1]); // burst
+  await sleep(400);
+
+  // ── Step 7: white flash ────────────────────────────────────────────────
+  await flashWhite(cell);
+
+  // ── Step 8: swap EggCell → GotchiCell ─────────────────────────────────
+  student.charId = tamaEntry.id;
+  const idx      = cells.indexOf(cell);
+  const grid     = document.getElementById('classroom-grid');
+  const oldWrap  = cell.wrap;
+
+  // Create new GotchiCell — appends to grid, then we reorder
+  const newCell  = new GotchiCell(grid, student);
+  grid.insertBefore(newCell.wrap, oldWrap);
+  grid.removeChild(oldWrap);
+  cells[idx] = newCell;
+
+  // Fade tama in
+  newCell.wrap.style.opacity = '0';
+  newCell.wrap.style.transition = 'opacity 0.6s';
+  await sleep(50);
+  newCell.wrap.style.opacity = '1';
+
+  // Wave on spawn
+  setTimeout(() => newCell.forceAnimation('wave'), 100);
+  setTimeout(() => newCell.forceAnimation(null),   2000);
+
+  // ── Step 9: "Your egg hatched!" message ───────────────────────────────
+  await sleep(300);
+  showHatchMessage(tamaEntry.displayName);
+}
+
+function shakeEgg(cell, sp) {
+  return new Promise(resolve => {
+    const start  = performance.now();
+    const TOTAL  = 3000; // 3 seconds
+
+    function frame(ts) {
+      const elapsed = ts - start;
+      if (elapsed >= TOTAL) { cell._renderFrame(sp, 0); resolve(); return; }
+
+      // Escalate intensity over time
+      const t         = elapsed / TOTAL;
+      const amplitude = 2 + t * 6;       // 2px → 8px
+      const frequency = 0.2 - t * 0.15;  // slow → fast period
+      const offsetX   = Math.sin(elapsed / (frequency * 1000) * Math.PI * 2) * amplitude;
+
+      cell._renderFrame(sp, offsetX);
+      requestAnimationFrame(frame);
+    }
+    requestAnimationFrame(frame);
+  });
+}
+
+function flashWhite(cell) {
+  return new Promise(resolve => {
+    const start = performance.now();
+    const TOTAL = 400;
+    function frame(ts) {
+      const t = Math.min((ts - start) / TOTAL, 1);
+      const ctx = cell.ctx;
+      ctx.imageSmoothingEnabled = false;
+      // Draw egg then overlay white with increasing alpha
+      ctx.globalAlpha = t;
+      ctx.fillStyle = '#fff';
+      ctx.fillRect(0, 0, CW, CH);
+      ctx.globalAlpha = 1;
+      if (t < 1) requestAnimationFrame(frame);
+      else resolve();
+    }
+    requestAnimationFrame(frame);
+  });
+}
+
+function showHatchMessage(tamaName) {
+  document.getElementById('hatch-bubble-name').textContent = `Say hello to ${tamaName}!`;
+  const el = document.getElementById('hatch-message');
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 3500);
+}
+
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 
 // ─── EGG ASSETS ───────────────────────────────────────────────────────────
 let eggJSON  = null;  // loaded from TAM-000-001.json
@@ -577,6 +750,7 @@ class EggCell {
     this._seqIdx   = 0;
     this._animSeq  = eggJSON.animations.idle.sequence;
     this._fps      = 2; // slow shimmer — overrides JSON fps
+    this._hatching = false; // true during hatch sequence
     this.canvas    = null;
     this.bgCanvas  = null;
 
@@ -649,7 +823,24 @@ class EggCell {
     container.appendChild(this.wrap);
   }
 
+  // Called by hatch sequence — renders specific frame with optional x shake offset
+  _renderFrame(idleSp, offsetX = 0, hatchSp = null) {
+    const ctx = this.ctx;
+    ctx.imageSmoothingEnabled = false;
+    ctx.fillStyle = '#87CEEB';
+    ctx.fillRect(0, 0, CW, CH);
+    if (this.bgCanvas) ctx.drawImage(this.bgCanvas, 0, 0, CW, CH);
+    const sp = hatchSp || idleSp || this.variant?.idleFrames?.[0];
+    if (!sp) return;
+    const zoneTop = Math.floor(CH * 0.65);
+    const zoneH   = CH - zoneTop;
+    const dx = Math.round((CW - sp.w) / 2) + Math.round(offsetX);
+    const dy = zoneTop + Math.round((zoneH - sp.h) / 2);
+    ctx.drawImage(this.off, sp.x, sp.y, sp.w, sp.h, dx, dy, sp.w, sp.h);
+  }
+
   _render() {
+    if (this._hatching) return; // hatch sequence controls rendering directly
     const ctx = this.ctx;
     ctx.imageSmoothingEnabled = false;
     // Sky blue base, then background image on top (same as GotchiCell)
@@ -1077,6 +1268,9 @@ function refreshStudentPanel() {
   const pCtx     = portrait.getContext('2d');
   pCtx.imageSmoothingEnabled = false;
 
+  // Show hatch button only if this student has an egg
+  document.getElementById('hatch-section').style.display = isEgg ? 'flex' : 'none';
+
   if (isEgg && cell.variant) {
     // Show egg at ~50% of cell render size — use transparent offscreen canvas
     const sp    = cell.variant.idleFrames[0];
@@ -1127,17 +1321,31 @@ function startMirror(id) {
 function _spotlightMousemove(e) {
   const cell = cells.find(c => c.student.id === selected);
   if (!cell) return;
-  const rect  = e.currentTarget.getBoundingClientRect();
-  // Spotlight is 2× the source canvas — divide cursor pos by 2
-  const mx    = (e.clientX - rect.left)  / 2;
-  const my    = (e.clientY - rect.top)   / 2;
-  const hit   = cell.pets.some(p => {
-    const sp = cell._body?.['walk_1'] || Object.values(cell._body || {})[0];
-    const sw = sp ? sp.w : 36, sh = sp ? sp.h : 46;
-    return mx >= p.x && mx <= p.x + sw && my >= p.y && my <= p.y + sh;
-  });
-  if (hit && cell.charJSON?.displayName) showTooltip(e, cell.charJSON.displayName);
-  else hideTooltip();
+  const rect = e.currentTarget.getBoundingClientRect();
+  const mx   = (e.clientX - rect.left)  / 2;
+  const my   = (e.clientY - rect.top)   / 2;
+
+  if (cell instanceof EggCell) {
+    // Egg: fixed position in lower 35% zone
+    const sp = cell.variant?.idleFrames?.[0];
+    if (!sp) return;
+    const zoneTop = Math.floor(CH * 0.65);
+    const zoneH   = CH - zoneTop;
+    const dx = Math.round((CW - sp.w) / 2);
+    const dy = zoneTop + Math.round((zoneH - sp.h) / 2);
+    if (mx >= dx && mx <= dx+sp.w && my >= dy && my <= dy+sp.h)
+      showTooltip(e, '???');
+    else hideTooltip();
+  } else {
+    // Tama: check pet sprite bounds
+    const hit = cell.pets.some(p => {
+      const sp = cell._body?.['walk_1'] || Object.values(cell._body || {})[0];
+      const sw = sp ? sp.w : 36, sh = sp ? sp.h : 46;
+      return mx >= p.x && mx <= p.x + sw && my >= p.y && my <= p.y + sh;
+    });
+    if (hit && cell.charJSON?.displayName) showTooltip(e, cell.charJSON.displayName);
+    else hideTooltip();
+  }
 }
 
 function stopMirror() {
@@ -1193,6 +1401,10 @@ function moveTooltip(e) {
 function hideTooltip() {
   tooltip.classList.remove('visible');
 }
+
+document.getElementById('btn-hatch').addEventListener('click', () => {
+  if (selected) triggerHatch(selected);
+});
 
 document.getElementById('btn-do-award-all').addEventListener('click', () => {
   const amt = parseInt(document.getElementById('award-all-amount').value) || 10;
