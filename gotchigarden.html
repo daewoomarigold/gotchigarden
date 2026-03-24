@@ -1155,26 +1155,7 @@ class GotchiCell {
 
     this.wrap.appendChild(vp);
     this.wrap.appendChild(plate);
-    this.wrap.addEventListener('click',     () => selectStudent(this.student.id));
-    this.wrap.addEventListener('mousemove', e => {
-      // e.offsetX/Y are relative to the event target element
-      // If the event fires on a child, retarget to the vp
-      const target = e.target.closest('.cell-vp') || e.target;
-      const rect   = this.vp.getBoundingClientRect();
-      const mx     = e.clientX - rect.left;
-      const my     = e.clientY - rect.top;
-      // Clamp — ignore if cursor is outside the vp (e.g. over the name plate)
-      if (mx < 0 || my < 0 || mx > rect.width || my > rect.height) {
-        hideTooltip(); return;
-      }
-      // Scale from CSS pixels to canvas pixels
-      const sx = CW / rect.width;
-      const sy = CH / rect.height;
-      const hit = this.pets.find(p => p.hitTest(mx * sx, my * sy));
-      if (hit) showTooltip(e, hit.tooltipName);
-      else hideTooltip();
-    });
-    this.wrap.addEventListener('mouseleave', () => hideTooltip());
+    this.wrap.addEventListener('click', () => selectStudent(this.student.id));
     container.appendChild(this.wrap);
   }
 
@@ -1396,7 +1377,7 @@ function startMirror(id) {
 
   // Wire tooltip to spotlight canvas at 2× scale
   spotlight.addEventListener('mousemove', _spotlightMousemove);
-  spotlight.addEventListener('mouseleave', hideTooltip);
+  spotlight.addEventListener('mouseleave', () => {});
 
   function frame() {
     const cell = cells.find(c => c.student.id === id);
@@ -1408,24 +1389,11 @@ function startMirror(id) {
   _mirrorRaf = requestAnimationFrame(frame);
 }
 
-function _spotlightMousemove(e) {
-  const cell = cells.find(c => c.student.id === selected);
-  if (!cell) return;
-  const rect   = e.currentTarget.getBoundingClientRect();
-  const scaleX = CW / rect.width;
-  const scaleY = CH / rect.height;
-  const mx     = (e.clientX - rect.left) * scaleX;
-  const my     = (e.clientY - rect.top)  * scaleY;
-  const hit    = cell.pets.find(p => p.hitTest(mx, my));
-  if (hit) showTooltip(e, hit.tooltipName);
-  else hideTooltip();
-}
-
 function stopMirror() {
   if (_mirrorRaf) { cancelAnimationFrame(_mirrorRaf); _mirrorRaf = null; }
   const spotlight = document.getElementById('spotlight-canvas');
   spotlight.removeEventListener('mousemove',  _spotlightMousemove);
-  spotlight.removeEventListener('mouseleave', hideTooltip);
+  spotlight.onmouseleave = null;
 }
 
 function updateHeader() {
@@ -1453,27 +1421,6 @@ function toast(msg) {
   clearTimeout(el._t); el._t = setTimeout(() => el.classList.remove('show'), 2200);
 }
 
-// ─── TOOLTIP ──────────────────────────────────────────────────────────────
-const tooltip = document.getElementById('tama-tooltip');
-
-function showTooltip(e, name) {
-  tooltip.textContent = name;
-  tooltip.classList.add('visible');
-  moveTooltip(e);
-}
-
-function moveTooltip(e) {
-  const x = e.clientX + 12;
-  const y = e.clientY - 36;
-  // Keep within viewport
-  const tw = tooltip.offsetWidth;
-  tooltip.style.left = Math.min(x, window.innerWidth - tw - 8) + 'px';
-  tooltip.style.top  = Math.max(8, y) + 'px';
-}
-
-function hideTooltip() {
-  tooltip.classList.remove('visible');
-}
 
 document.getElementById('btn-hatch').addEventListener('click', () => {
   if (selected) triggerHatch(selected);
