@@ -48,8 +48,7 @@ header {
   gap: var(--gap);
 }
 
-.gotchi-cell { display:flex; flex-direction:column; cursor:pointer; transition:transform 0.12s; }
-.gotchi-cell:hover { transform:scale(1.02); }
+.gotchi-cell { display:flex; flex-direction:column; cursor:pointer; transition:box-shadow 0.12s; }
 .gotchi-cell.selected .cell-vp {
   border-color:var(--yellow);
   box-shadow:0 0 12px rgba(255,224,102,0.5),0 0 0 1px rgba(255,224,102,0.3);
@@ -1158,18 +1157,20 @@ class GotchiCell {
     this.wrap.appendChild(plate);
     this.wrap.addEventListener('click',     () => selectStudent(this.student.id));
     this.wrap.addEventListener('mousemove', e => {
-      if (!this.canvas || this.canvas.style.display === 'none') return;
+      // e.offsetX/Y are relative to the event target element
+      // If the event fires on a child, retarget to the vp
+      const target = e.target.closest('.cell-vp') || e.target;
       const rect   = this.vp.getBoundingClientRect();
-      // Only process if cursor is inside the canvas viewport
-      if (e.clientX < rect.left || e.clientX > rect.right ||
-          e.clientY < rect.top  || e.clientY > rect.bottom) {
+      const mx     = e.clientX - rect.left;
+      const my     = e.clientY - rect.top;
+      // Clamp — ignore if cursor is outside the vp (e.g. over the name plate)
+      if (mx < 0 || my < 0 || mx > rect.width || my > rect.height) {
         hideTooltip(); return;
       }
-      const scaleX = CW / rect.width;
-      const scaleY = CH / rect.height;
-      const mx     = (e.clientX - rect.left) * scaleX;
-      const my     = (e.clientY - rect.top)  * scaleY;
-      const hit    = this.pets.find(p => p.hitTest(mx, my));
+      // Scale from CSS pixels to canvas pixels
+      const sx = CW / rect.width;
+      const sy = CH / rect.height;
+      const hit = this.pets.find(p => p.hitTest(mx * sx, my * sy));
       if (hit) showTooltip(e, hit.tooltipName);
       else hideTooltip();
     });
