@@ -1156,8 +1156,11 @@ class GotchiCell {
     this.wrap.appendChild(plate);
     this.wrap.addEventListener('click',     () => selectStudent(this.student.id));
     this.wrap.addEventListener('mousemove', e => {
-      const rect = this.canvas.getBoundingClientRect();
-      const mx = e.clientX - rect.left, my = e.clientY - rect.top;
+      const rect  = this.canvas.getBoundingClientRect();
+      const scaleX = CW / rect.width;
+      const scaleY = CH / rect.height;
+      const mx = (e.clientX - rect.left) * scaleX;
+      const my = (e.clientY - rect.top)  * scaleY;
       const hit = this.pets.find(p => p.hitTest(mx, my));
       if (hit) showTooltip(e, hit.tooltipName);
       else hideTooltip();
@@ -1399,10 +1402,12 @@ function startMirror(id) {
 function _spotlightMousemove(e) {
   const cell = cells.find(c => c.student.id === selected);
   if (!cell) return;
-  const rect = e.currentTarget.getBoundingClientRect();
-  const mx   = (e.clientX - rect.left) / 2;
-  const my   = (e.clientY - rect.top)  / 2;
-  const hit  = cell.pets.find(p => p.hitTest(mx, my));
+  const rect   = e.currentTarget.getBoundingClientRect();
+  const scaleX = CW / rect.width;
+  const scaleY = CH / rect.height;
+  const mx     = (e.clientX - rect.left) * scaleX;
+  const my     = (e.clientY - rect.top)  * scaleY;
+  const hit    = cell.pets.find(p => p.hitTest(mx, my));
   if (hit) showTooltip(e, hit.tooltipName);
   else hideTooltip();
 }
