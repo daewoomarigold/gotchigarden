@@ -426,6 +426,37 @@ header {
   text-transform: uppercase;
   white-space: nowrap;
 }
+.bg-card {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  cursor: pointer;
+  border: 2px solid var(--border);
+  border-radius: 5px;
+  overflow: hidden;
+  transition: border-color 0.12s;
+  background: var(--raised);
+}
+.bg-card:hover  { border-color: var(--cyan); }
+.bg-card.active { border-color: var(--yellow); }
+.bg-card-preview {
+  width: 100%;
+  aspect-ratio: 1;
+  object-fit: cover;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+  display: block;
+}
+.bg-card-label {
+  font-size: 9px;
+  color: var(--muted);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  padding: 0 6px 6px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 </style>
 </head>
 <body>
@@ -516,15 +547,34 @@ header {
       <div class="spotlight-section">
         <div class="spotlight-section-head">Tama Shop</div>
         <div class="shop-grid">
-          <button class="shop-btn" disabled>
+          <button class="shop-btn" id="btn-open-bg-picker" onclick="openBgPicker()">
             <span class="shop-icon">🖼</span>
             <span class="shop-label">Background</span>
-            <span class="shop-cost muted">Coming soon</span>
+            <span class="shop-cost" style="color:var(--cyan);font-size:9px;">Pick one</span>
           </button>
         </div>
       </div>
 
     </div>
+  </div>
+</div>
+
+<!-- Background picker overlay -->
+<div class="overlay" id="overlay-bg-picker" onclick="closeOnBackdrop(event,'overlay-bg-picker')">
+  <div class="panel" style="width:520px;max-width:95vw;">
+    <div class="panel-title">Choose Background</div>
+    <div id="bg-picker-grid" style="
+      display:grid;
+      grid-template-columns:repeat(auto-fill,minmax(140px,1fr));
+      gap:10px;
+      max-height:60vh;
+      overflow-y:auto;
+      margin:12px 0;
+      padding-right:4px;
+    ">
+      <!-- populated by JS -->
+    </div>
+    <button class="btn full" onclick="closeOverlay('overlay-bg-picker')">Close</button>
   </div>
 </div>
 
@@ -1609,6 +1659,96 @@ document.getElementById('btn-do-award-all').addEventListener('click', () => {
   closeOverlay('overlay-award-all');
   toast(`★ +${amt} pts awarded to all`);
 });
+
+// ─── BACKGROUND PICKER ───────────────────────────────────────────────────
+let bgManifest = null; // cached manifest
+
+async function loadBgManifest() {
+  if (bgManifest) return bgManifest;
+  const resp = await fetch(`${PAGES_BASE}/${BG_PATH}/manifest.json`);
+  if (!resp.ok) throw new Error(`Could not load background manifest (${resp.status})`);
+  bgManifest = await resp.json();
+  return bgManifest;
+}
+
+async function openBgPicker() {
+  if (!selected) return;
+  openOverlay('overlay-bg-picker');
+
+  const grid = document.getElementById('bg-picker-grid');
+  grid.innerHTML = '<div style="color:var(--muted);font-size:11px;padding:8px;">Loading...</div>';
+
+  try {
+    const manifest = await loadBgManifest();
+    const student  = STUDENTS.find(s => s.id === selected);
+    grid.innerHTML  = '';
+
+    manifest.backgrounds.forEach(bg => {
+      const card = document.createElement('div');
+      card.className = 'bg-card' + (student.bgFile === bg.file ? ' active' : '');
+
+      // Preview image — stretched to square
+      const img = document.createElement('canvas');
+      img.className = 'bg-card-preview';
+      img.width  = 140;
+      img.height = 140;
+      const ictx = img.getContext('2d');
+      ictx.imageSmoothingEnabled = false;
+
+      // Load and draw preview
+      fetchImage(BG_PATH, bg.file).then(bgImg => {
+        ictx.drawImage(bgImg, 0, 0, 140, 140);
+      }).catch(() => {
+        ictx.fillStyle = '#333';
+        ictx.fillRect(0, 0, 140, 140);
+        ictx.fillStyle = '#666';
+        ictx.font = '10px monospace';
+        ictx.fillText('No preview', 8, 74);
+      });
+
+      const label = document.createElement('div');
+      label.className   = 'bg-card-label';
+      label.textContent = bg.name;
+
+      card.appendChild(img);
+      card.appendChild(label);
+
+      card.addEventListener('click', () => applyBackground(bg));
+      grid.appendChild(card);
+    });
+  } catch(e) {
+    grid.innerHTML = `<div style="color:var(--red);font-size:11px;padding:8px;">⚠ ${e.message}</div>`;
+  }
+}
+
+async function applyBackground(bg) {
+  if (!selected) return;
+  const cell    = cells.find(c => c.student.id === selected);
+  const student = STUDENTS.find(s => s.id === selected);
+  if (!cell) return;
+
+  // Update student data — future: persist to DB via bgId
+  student.bgFile = bg.file;
+  student.bgId   = bg.id; // store ID for future DB saves
+
+  // Reload background canvas
+  try {
+    const bgImg = await fetchImage(BG_PATH, bg.file);
+    cell.bgCanvas = document.createElement('canvas');
+    cell.bgCanvas.width  = bgImg.naturalWidth  || bgImg.width;
+    cell.bgCanvas.height = bgImg.naturalHeight || bgImg.height;
+    cell.bgCanvas.getContext('2d').drawImage(bgImg, 0, 0);
+  } catch(e) {
+    toast('⚠ Could not load background');
+    return;
+  }
+
+  // Update active state in picker grid
+  document.querySelectorAll('.bg-card').forEach(c => c.classList.remove('active'));
+  event.currentTarget?.classList.add('active');
+
+  toast(`🖼 Background changed to ${bg.name}`);
+}
 
 // ─── BROADCAST ────────────────────────────────────────────────────────────
 document.querySelectorAll('[data-anim]').forEach(btn => {
