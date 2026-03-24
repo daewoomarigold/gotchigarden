@@ -561,6 +561,18 @@ header {
   </div>
 </div>
 
+<!-- Buy confirmation dialog -->
+<div class="overlay" id="overlay-buy-confirm" onclick="closeOnBackdrop(event,'overlay-buy-confirm')">
+  <div class="panel" style="width:320px;text-align:center;gap:16px;">
+    <div class="panel-title">Confirm Purchase</div>
+    <div id="buy-confirm-text" style="font-size:12px;color:var(--muted);line-height:1.6;"></div>
+    <div class="btn-row">
+      <button class="btn yellow full" id="btn-buy-confirm-yes">✓ Buy</button>
+      <button class="btn full" onclick="closeOverlay('overlay-buy-confirm')">✕ Cancel</button>
+    </div>
+  </div>
+</div>
+
 <!-- Background picker overlay -->
 <div class="overlay" id="overlay-bg-picker" onclick="closeOnBackdrop(event,'overlay-bg-picker')">
   <div class="panel" style="width:520px;max-width:95vw;">
@@ -962,6 +974,9 @@ function buildBgCanvas(bgImg) {
   c.width   = CW; c.height = CH;
   const ctx = c.getContext('2d');
   ctx.imageSmoothingEnabled = false;
+  // Fill solid first so no previous content bleeds through transparent bg pixels
+  ctx.fillStyle = '#87CEEB';
+  ctx.fillRect(0, 0, CW, CH);
   ctx.drawImage(bgImg, 0, 0, CW, CH);
   return c;
 }
@@ -1758,34 +1773,44 @@ async function openBgPicker() {
   }
 }
 
-async function purchaseBackground(bg, price) {
+function purchaseBackground(bg, price) {
   const student = STUDENTS.find(s => s.id === selected);
   if (!student) return;
 
-  if (student.unlockedBgs.includes(bg.id)) {
-    toast('Already unlocked!');
-    return;
-  }
-  if (student.gotchiPoints < price) {
-    toast(`⚠ Not enough GotchiPts (need ${price})`);
-    return;
-  }
+  if (student.unlockedBgs.includes(bg.id)) { toast('Already unlocked!'); return; }
+  if (student.gotchiPoints < price) { toast(`⚠ Not enough GotchiPts (need ${price})`); return; }
 
-  // Deduct points and unlock
-  student.gotchiPoints -= price;
-  student.unlockedBgs.push(bg.id);
+  // Show confirmation dialog
+  document.getElementById('buy-confirm-text').innerHTML =
+    `Are you sure you want to buy<br>
+     <strong style="color:var(--text);">${bg.name}</strong><br>
+     for <strong style="color:var(--yellow);">${price} GotchiPt${price!==1?'s':''}</strong>?<br>
+     <span style="font-size:10px;color:var(--muted);">Balance after: ${student.gotchiPoints - price} pts</span>`;
 
-  // Update pts display
-  const el = document.getElementById('pts-' + student.id);
-  if (el) el.textContent = student.gotchiPoints + ' pts';
-  document.getElementById('sel-pts').textContent = student.gotchiPoints;
-  updateHeader();
+  // Wire confirm button
+  const confirmBtn = document.getElementById('btn-buy-confirm-yes');
+  const handler = async () => {
+    confirmBtn.removeEventListener('click', handler);
+    closeOverlay('overlay-buy-confirm');
 
-  toast(`✓ Unlocked ${bg.name}!`);
+    // Deduct and unlock
+    student.gotchiPoints -= price;
+    student.unlockedBgs.push(bg.id);
 
-  // Re-render picker so card shows as unlocked, then auto-apply
-  await openBgPicker();
-  await applyBackground(bg);
+    // Update pts displays
+    const el = document.getElementById('pts-' + student.id);
+    if (el) el.textContent = student.gotchiPoints + ' pts';
+    document.getElementById('sel-pts').textContent = student.gotchiPoints;
+    updateHeader();
+
+    toast(`✓ Unlocked ${bg.name}!`);
+
+    // Re-open picker (now unlocked) then auto-apply
+    await openBgPicker();
+    await applyBackground(bg);
+  };
+  confirmBtn.addEventListener('click', handler);
+  openOverlay('overlay-buy-confirm');
 }
 
 async function applyBackground(bg) {
