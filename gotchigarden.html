@@ -439,6 +439,8 @@ header {
 }
 .bg-card:hover  { border-color: var(--cyan); }
 .bg-card.active { border-color: var(--yellow); }
+.bg-card.locked { opacity: 0.7; cursor: not-allowed; }
+.bg-card.locked:hover { border-color: var(--border); }
 .bg-card-preview {
   width: 100%;
   aspect-ratio: 1;
@@ -639,22 +641,24 @@ function rawUrl(folder, filename) {
 // All students start as eggs — tamas are earned by hatching
 // eggVariant: null = assigned randomly on load from egg JSON
 // charId: null = no tama yet
+const DEFAULT_BG_ID   = 'bg_001';
+
 const STUDENTS = [
-  { id:1,  name:'Alice',   charId:null, eggVariant:null, bgFile:DEFAULT_BG, gotchiPoints:120 },
-  { id:2,  name:'Ben',     charId:null, eggVariant:null, bgFile:DEFAULT_BG, gotchiPoints:85  },
-  { id:3,  name:'Chloe',   charId:null, eggVariant:null, bgFile:DEFAULT_BG, gotchiPoints:210 },
-  { id:4,  name:'Dylan',   charId:null, eggVariant:null, bgFile:DEFAULT_BG, gotchiPoints:55  },
-  { id:5,  name:'Eva',     charId:null, eggVariant:null, bgFile:DEFAULT_BG, gotchiPoints:175 },
-  { id:6,  name:'Finn',    charId:null, eggVariant:null, bgFile:DEFAULT_BG, gotchiPoints:90  },
-  { id:7,  name:'Grace',   charId:null, eggVariant:null, bgFile:DEFAULT_BG, gotchiPoints:140 },
-  { id:8,  name:'Henry',   charId:null, eggVariant:null, bgFile:DEFAULT_BG, gotchiPoints:30  },
-  { id:9,  name:'Iris',    charId:null, eggVariant:null, bgFile:DEFAULT_BG, gotchiPoints:200 },
-  { id:10, name:'Jake',    charId:null, eggVariant:null, bgFile:DEFAULT_BG, gotchiPoints:65  },
-  { id:11, name:'Kira',    charId:null, eggVariant:null, bgFile:DEFAULT_BG, gotchiPoints:155 },
-  { id:12, name:'Luca',    charId:null, eggVariant:null, bgFile:DEFAULT_BG, gotchiPoints:110 },
-  { id:13, name:'Maya',    charId:null, eggVariant:null, bgFile:DEFAULT_BG, gotchiPoints:240 },
-  { id:14, name:'Noah',    charId:null, eggVariant:null, bgFile:DEFAULT_BG, gotchiPoints:45  },
-  { id:15, name:'Olivia',  charId:null, eggVariant:null, bgFile:DEFAULT_BG, gotchiPoints:185 },
+  { id:1,  name:'Alice',  charId:null, eggVariant:null, bgFile:DEFAULT_BG, bgId:DEFAULT_BG_ID, unlockedBgs:[DEFAULT_BG_ID], gotchiPoints:120 },
+  { id:2,  name:'Ben',    charId:null, eggVariant:null, bgFile:DEFAULT_BG, bgId:DEFAULT_BG_ID, unlockedBgs:[DEFAULT_BG_ID], gotchiPoints:85  },
+  { id:3,  name:'Chloe',  charId:null, eggVariant:null, bgFile:DEFAULT_BG, bgId:DEFAULT_BG_ID, unlockedBgs:[DEFAULT_BG_ID], gotchiPoints:210 },
+  { id:4,  name:'Dylan',  charId:null, eggVariant:null, bgFile:DEFAULT_BG, bgId:DEFAULT_BG_ID, unlockedBgs:[DEFAULT_BG_ID], gotchiPoints:55  },
+  { id:5,  name:'Eva',    charId:null, eggVariant:null, bgFile:DEFAULT_BG, bgId:DEFAULT_BG_ID, unlockedBgs:[DEFAULT_BG_ID], gotchiPoints:175 },
+  { id:6,  name:'Finn',   charId:null, eggVariant:null, bgFile:DEFAULT_BG, bgId:DEFAULT_BG_ID, unlockedBgs:[DEFAULT_BG_ID], gotchiPoints:90  },
+  { id:7,  name:'Grace',  charId:null, eggVariant:null, bgFile:DEFAULT_BG, bgId:DEFAULT_BG_ID, unlockedBgs:[DEFAULT_BG_ID], gotchiPoints:140 },
+  { id:8,  name:'Henry',  charId:null, eggVariant:null, bgFile:DEFAULT_BG, bgId:DEFAULT_BG_ID, unlockedBgs:[DEFAULT_BG_ID], gotchiPoints:30  },
+  { id:9,  name:'Iris',   charId:null, eggVariant:null, bgFile:DEFAULT_BG, bgId:DEFAULT_BG_ID, unlockedBgs:[DEFAULT_BG_ID], gotchiPoints:200 },
+  { id:10, name:'Jake',   charId:null, eggVariant:null, bgFile:DEFAULT_BG, bgId:DEFAULT_BG_ID, unlockedBgs:[DEFAULT_BG_ID], gotchiPoints:65  },
+  { id:11, name:'Kira',   charId:null, eggVariant:null, bgFile:DEFAULT_BG, bgId:DEFAULT_BG_ID, unlockedBgs:[DEFAULT_BG_ID], gotchiPoints:155 },
+  { id:12, name:'Luca',   charId:null, eggVariant:null, bgFile:DEFAULT_BG, bgId:DEFAULT_BG_ID, unlockedBgs:[DEFAULT_BG_ID], gotchiPoints:110 },
+  { id:13, name:'Maya',   charId:null, eggVariant:null, bgFile:DEFAULT_BG, bgId:DEFAULT_BG_ID, unlockedBgs:[DEFAULT_BG_ID], gotchiPoints:240 },
+  { id:14, name:'Noah',   charId:null, eggVariant:null, bgFile:DEFAULT_BG, bgId:DEFAULT_BG_ID, unlockedBgs:[DEFAULT_BG_ID], gotchiPoints:45  },
+  { id:15, name:'Olivia', charId:null, eggVariant:null, bgFile:DEFAULT_BG, bgId:DEFAULT_BG_ID, unlockedBgs:[DEFAULT_BG_ID], gotchiPoints:185 },
 ];
 
 // Assign random enabled tama to each student from tamadex
@@ -953,7 +957,18 @@ async function triggerEvolve(studentId, petIdx = 0) {
   cellAnnounce(cell, `🌟 Evolved into ${tamaEntry.displayName}!`, 10000);
 }
 
-function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+function buildBgCanvas(bgImg) {
+  const tw  = bgImg.naturalWidth  || bgImg.width;
+  const th  = bgImg.naturalHeight || bgImg.height;
+  const c   = document.createElement('canvas');
+  c.width   = CW; c.height = CH;
+  const ctx = c.getContext('2d');
+  ctx.imageSmoothingEnabled = false;
+  for (let y = 0; y < CH; y += th)
+    for (let x = 0; x < CW; x += tw)
+      ctx.drawImage(bgImg, x, y);
+  return c;
+}
 
 // ─── EGG ASSETS ───────────────────────────────────────────────────────────
 let eggJSON  = null;  // loaded from TAM-000-001.json
@@ -1282,10 +1297,7 @@ class GotchiCell {
   async _load() {
     try {
       const bgImg = await fetchImage(BG_PATH, this.student.bgFile);
-      this.bgCanvas = document.createElement('canvas');
-      this.bgCanvas.width  = bgImg.naturalWidth  || bgImg.width;
-      this.bgCanvas.height = bgImg.naturalHeight || bgImg.height;
-      this.bgCanvas.getContext('2d').drawImage(bgImg, 0, 0);
+      this.bgCanvas = buildBgCanvas(bgImg);
 
       // Build initial pets — all students start with one egg
       await this._addEgg(this.student.eggVariant);
@@ -1684,35 +1696,45 @@ async function openBgPicker() {
     grid.innerHTML  = '';
 
     manifest.backgrounds.forEach(bg => {
-      const card = document.createElement('div');
-      card.className = 'bg-card' + (student.bgFile === bg.file ? ' active' : '');
+      const student  = STUDENTS.find(s => s.id === selected);
+      const isActive = student.bgId === bg.id;
+      const isLocked = !student.unlockedBgs.includes(bg.id);
 
-      // Preview image — stretched to square
-      const img = document.createElement('canvas');
+      const card = document.createElement('div');
+      card.className    = 'bg-card' + (isActive ? ' active' : '') + (isLocked ? ' locked' : '');
+      card.dataset.bgId = bg.id;
+
+      // Preview canvas
+      const img  = document.createElement('canvas');
       img.className = 'bg-card-preview';
-      img.width  = 140;
-      img.height = 140;
+      img.width  = 140; img.height = 140;
       const ictx = img.getContext('2d');
       ictx.imageSmoothingEnabled = false;
 
-      // Load and draw preview
       fetchImage(BG_PATH, bg.file).then(bgImg => {
         ictx.drawImage(bgImg, 0, 0, 140, 140);
+        // Dim locked backgrounds
+        if (isLocked) {
+          ictx.fillStyle = 'rgba(0,0,0,0.55)';
+          ictx.fillRect(0, 0, 140, 140);
+          ictx.fillStyle = '#fff';
+          ictx.font = 'bold 11px monospace';
+          ictx.textAlign = 'center';
+          ictx.fillText('🔒 Locked', 70, 74);
+        }
       }).catch(() => {
-        ictx.fillStyle = '#333';
-        ictx.fillRect(0, 0, 140, 140);
-        ictx.fillStyle = '#666';
-        ictx.font = '10px monospace';
+        ictx.fillStyle = '#333'; ictx.fillRect(0,0,140,140);
+        ictx.fillStyle = '#666'; ictx.font = '10px monospace';
         ictx.fillText('No preview', 8, 74);
       });
 
       const label = document.createElement('div');
       label.className   = 'bg-card-label';
-      label.textContent = bg.name;
+      label.textContent = isLocked ? `🔒 ${bg.name}` : bg.name;
+      if (isLocked) label.style.color = 'var(--muted)';
 
       card.appendChild(img);
       card.appendChild(label);
-
       card.addEventListener('click', () => applyBackground(bg));
       grid.appendChild(card);
     });
@@ -1725,27 +1747,30 @@ async function applyBackground(bg) {
   if (!selected) return;
   const cell    = cells.find(c => c.student.id === selected);
   const student = STUDENTS.find(s => s.id === selected);
-  if (!cell) return;
+  if (!cell || !student) return;
 
-  // Update student data — future: persist to DB via bgId
+  // Only apply if unlocked — future: shop will add to unlockedBgs
+  if (!student.unlockedBgs.includes(bg.id)) {
+    toast('🔒 Background not unlocked yet');
+    return;
+  }
+
+  // Swap — completely replace the old bgCanvas
   student.bgFile = bg.file;
-  student.bgId   = bg.id; // store ID for future DB saves
+  student.bgId   = bg.id; // future: persist to DB
 
-  // Reload background canvas
   try {
-    const bgImg = await fetchImage(BG_PATH, bg.file);
-    cell.bgCanvas = document.createElement('canvas');
-    cell.bgCanvas.width  = bgImg.naturalWidth  || bgImg.width;
-    cell.bgCanvas.height = bgImg.naturalHeight || bgImg.height;
-    cell.bgCanvas.getContext('2d').drawImage(bgImg, 0, 0);
+    const bgImg   = await fetchImage(BG_PATH, bg.file);
+    cell.bgCanvas = buildBgCanvas(bgImg);
   } catch(e) {
     toast('⚠ Could not load background');
     return;
   }
 
-  // Update active state in picker grid
-  document.querySelectorAll('.bg-card').forEach(c => c.classList.remove('active'));
-  event.currentTarget?.classList.add('active');
+  // Update active state in picker
+  document.querySelectorAll('.bg-card').forEach(c =>
+    c.classList.toggle('active', c.dataset.bgId === bg.id)
+  );
 
   toast(`🖼 Background changed to ${bg.name}`);
 }
