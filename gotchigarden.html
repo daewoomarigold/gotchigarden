@@ -17,7 +17,9 @@
   --yellow:  #ffe066;
   --green:   #6bffb8;
   --red:     #ff6b6b;
-  --cw: 300px; --ch: 300px; --np: 22px; --gap: 10px;
+  --np: 22px; --gap: 8px;
+  /* --cw and --ch are set dynamically by JS based on viewport */
+  --cw: 200px; --ch: 200px;
 }
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -141,7 +143,7 @@ header {
 }
 
 .spotlight-cell-wrap {
-  width: 600px; height: 600px;
+  width: min(600px, 60vw); height: min(600px, 60vw);
   overflow: hidden;
 }
 
@@ -149,7 +151,7 @@ header {
   display: block;
   image-rendering: pixelated;
   image-rendering: crisp-edges;
-  width: 600px; height: 600px;
+  width: min(600px, 60vw); height: min(600px, 60vw);
 }
 
 .spotlight-right {
@@ -1040,7 +1042,43 @@ const ANIMATION_DEFS = {
   },
 };
 
-const CW = 300, CH = 300;
+// ─── RESPONSIVE CELL SIZE ─────────────────────────────────────────────────
+// CW/CH are computed from viewport so the 5×3 grid always fits the screen
+let CW = 200, CH = 200;
+
+function computeCellSize() {
+  const HDR     = 44;   // header height px
+  const GAP     = 8;    // gap between cells
+  const NP      = 22;   // name plate height
+  const COLS    = 5, ROWS = 3;
+  const PADDING = 16;   // breathing room around grid
+
+  const availW = window.innerWidth  - PADDING * 2 - GAP * (COLS - 1);
+  const availH = window.innerHeight - HDR - PADDING * 2 - GAP * (ROWS - 1) - NP * ROWS;
+
+  const cellW  = Math.floor(availW / COLS);
+  const cellH  = Math.floor(availH / ROWS);
+  const size   = Math.max(80, Math.min(cellW, cellH)); // square, min 80px
+
+  CW = size; CH = size;
+
+  // Update CSS custom properties so layout reacts
+  const root = document.documentElement;
+  root.style.setProperty('--cw', size + 'px');
+  root.style.setProperty('--ch', size + 'px');
+  root.style.setProperty('--gap', GAP + 'px');
+}
+
+// Recompute on load and resize — debounced rebuild so canvas sizes update
+let _resizeTimer = null;
+window.addEventListener('resize', () => {
+  computeCellSize();
+  clearTimeout(_resizeTimer);
+  _resizeTimer = setTimeout(() => {
+    if (cells.length) buildGrid();
+  }, 250);
+});
+computeCellSize();
 
 // ─── ASSET CACHE ──────────────────────────────────────────────────────────
 // Cache fetched JSONs and images so shared characters don't re-download
@@ -1588,14 +1626,16 @@ let _mirrorRaf = null;
 function startMirror(id) {
   stopMirror();
   const spotlight = document.getElementById('spotlight-canvas');
-  const ctx       = spotlight.getContext('2d');
+  spotlight.width  = CW * 2;
+  spotlight.height = CH * 2;
+  const ctx = spotlight.getContext('2d');
   ctx.imageSmoothingEnabled = false;
 
   function frame() {
     const cell = cells.find(c => c.student.id === id);
     if (cell?.canvas) {
-      ctx.clearRect(0, 0, 600, 600);
-      ctx.drawImage(cell.canvas, 0, 0, 600, 600);
+      ctx.clearRect(0, 0, spotlight.width, spotlight.height);
+      ctx.drawImage(cell.canvas, 0, 0, spotlight.width, spotlight.height);
     }
     _mirrorRaf = requestAnimationFrame(frame);
   }
