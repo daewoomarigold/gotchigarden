@@ -794,6 +794,7 @@ document.getElementById('class-selector').addEventListener('change', async e => 
     return;
   }
   buildGrid();
+  startRealtimeListeners();
   toast(`📚 Loaded ${STUDENTS.length} students`);
 });
 
@@ -1755,6 +1756,108 @@ class GotchiCell {
   }
 }
 
+// ─── REAL-TIME LISTENERS ──────────────────────────────────────────────────
+let _realtimeChannel = null;
+
+function startRealtimeListeners() {
+  // Tear down any existing channel first
+  if (_realtimeChannel) {
+    db.removeChannel(_realtimeChannel);
+    _realtimeChannel = null;
+  }
+
+  if (!CLASS_ID) return;
+
+  _realtimeChannel = db
+    .channel(`class-${CLASS_ID}`)
+
+    // ── Student changes (points, bg, color) ────────────────────────────
+    .on('postgres_changes', {
+      event:  'UPDATE',
+      schema: 'public',
+      table:  'students',
+      filter: `class_id=eq.${CLASS_ID}`,
+    }, payload => {
+      const updated = payload.new;
+      const student = STUDENTS.find(s => s.id === updated.id);
+      if (!student) return;
+
+      // Points changed externally (e.g. teacher dashboard awarded pts)
+      if (updated.gotchi_pts !== student.gotchiPoints) {
+        const delta = updated.gotchi_pts - student.gotchiPoints;
+        student.gotchiPoints = updated.gotchi_pts;
+
+        // Update grid cell label
+        const el = document.getElementById('pts-' + student.id);
+        if (el) el.textContent = student.gotchiPoints + ' pts';
+
+        // Flash the dot and trigger a reaction if points were awarded
+        const dot = document.getElementById('dot-' + student.id);
+        if (dot) { dot.classList.add('flash'); setTimeout(() => dot.classList.remove('flash'), 600); }
+
+        // Broadcast wave to that student's pets if they got points
+        if (delta > 0) {
+          const cell = cells.find(c => c.student.id === student.id);
+          if (cell) cell.forceAnimation('wave');
+          setTimeout(() => {
+            const cell = cells.find(c => c.student.id === student.id);
+            if (cell) cell.forceAnimation(null);
+          }, 2500);
+        }
+
+        // Update spotlight if this student is selected
+        if (selected === student.id) {
+          document.getElementById('sel-pts').textContent = student.gotchiPoints;
+        }
+      }
+
+      // Background changed externally
+      if (updated.bg_id && updated.bg_id !== student.bgId) {
+        student.bgId    = updated.bg_id;
+        student.bgColor = updated.bg_color || student.bgColor;
+        student.unlockedBgs = updated.unlocked_bgs || student.unlockedBgs;
+        // Reload bg canvas
+        loadBgManifest().then(manifest => {
+          const bg = manifest.backgrounds.find(b => b.id === updated.bg_id);
+          if (!bg) return;
+          student.bgFile = bg.file;
+          fetchImage(BG_PATH, bg.file).then(bgImg => {
+            const cell = cells.find(c => c.student.id === student.id);
+            if (cell) cell.bgCanvas = buildBgCanvas(bgImg, student.bgColor || DEFAULT_BG_COLOR);
+          });
+        });
+      }
+    })
+
+    // ── Pet changes (hatch, evolve from another session) ───────────────
+    .on('postgres_changes', {
+      event:  'UPDATE',
+      schema: 'public',
+      table:  'pets',
+    }, payload => {
+      const updated = payload.new;
+      const student = STUDENTS.find(s => s.id === updated.student_id);
+      if (!student) return;
+      const cell = cells.find(c => c.student.id === updated.student_id);
+      if (!cell) return;
+
+      // Find the in-memory pet by dbId
+      const pet = cell.pets.find(p => p.dbId === updated.id);
+      if (!pet) return;
+
+      // Stage changed — reload the cell if needed
+      if (pet.stage !== updated.stage) {
+        console.log(`Real-time: pet ${updated.id} changed stage ${pet.stage} → ${updated.stage}`);
+        // For now toast — full reload on next refresh
+        toast(`✨ ${student.name}'s pet evolved!`);
+      }
+    })
+
+    .subscribe(status => {
+      console.log('Real-time status:', status);
+    });
+}
+
 // ─── GRID ─────────────────────────────────────────────────────────────────
 let cells    = [];
 let selected = null;
@@ -1792,6 +1895,7 @@ async function init() {
   }
 
   buildGrid();
+  startRealtimeListeners();
 }
 // ─── SELECTION ────────────────────────────────────────────────────────────
 function selectStudent(id) {
