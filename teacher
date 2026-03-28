@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Marigold Core — Teacher Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@400;700&family=DM+Mono:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root {
+  --bg:#0e0e1a; --surface:#1a1a2e; --raised:#22223a;
+  --border:#2e2e4e; --border2:#4a4a7a; --text:#e0e0f0;
+  --muted:#7070a0; --accent:#ff6eb4; --cyan:#4ef0d8;
+  --yellow:#ffe066; --green:#6bffb8; --red:#ff6b6b;
+  --purple:#a78bfa; --orange:#ff9f6b;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;overflow:hidden;}
+body{background:var(--bg);color:var(--text);font-family:'DM Mono',monospace;font-size:12px;display:flex;flex-direction:column;}
+
+/* Login */
+#login-screen{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:var(--bg);gap:24px;z-index:999;}
+#login-screen.hidden{display:none;}
+.login-logo{font-family:'Pixelify Sans',monospace;font-size:2.5rem;color:var(--accent);letter-spacing:3px;}
+.login-sub{font-size:10px;color:var(--muted);letter-spacing:3px;text-transform:uppercase;margin-top:-16px;}
+.login-card{background:var(--surface);border:1px solid var(--border2);border-radius:10px;padding:32px 40px;display:flex;flex-direction:column;align-items:center;gap:16px;width:340px;}
+.login-title{font-family:'Pixelify Sans',monospace;font-size:1rem;color:var(--text);letter-spacing:1px;}
+.login-desc{font-size:10px;color:var(--muted);text-align:center;line-height:1.8;}
+.btn-google{display:flex;align-items:center;gap:10px;background:#fff;color:#333;border:none;border-radius:6px;padding:10px 20px;font-family:'DM Mono',monospace;font-size:12px;font-weight:500;cursor:pointer;transition:opacity 0.15s;width:100%;justify-content:center;}
+.btn-google:hover{opacity:0.9;}
+.btn-google svg{width:18px;height:18px;}
+.login-error{font-size:10px;color:var(--red);text-align:center;display:none;}
+.login-error.show{display:block;}
+
+/* App */
+#app{display:flex;flex-direction:column;height:100%;}
+#app.hidden{display:none;}
+header{height:48px;background:var(--surface);border-bottom:1px solid var(--border2);display:flex;align-items:center;padding:0 20px;gap:16px;flex-shrink:0;z-index:50;}
+.hdr-logo{font-family:'Pixelify Sans',monospace;font-size:1rem;color:var(--accent);letter-spacing:2px;}
+.hdr-sep{width:1px;height:20px;background:var(--border2);}
+.hdr-class-label{font-size:10px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;}
+.hdr-flex{flex:1;}
+.hdr-user{font-size:10px;color:var(--muted);display:flex;align-items:center;gap:8px;}
+.hdr-user-dot{width:7px;height:7px;border-radius:50%;background:var(--green);}
+.main-layout{display:flex;flex:1;overflow:hidden;}
+
+/* Sidebar */
+.sidebar{width:220px;background:var(--surface);border-right:1px solid var(--border2);display:flex;flex-direction:column;flex-shrink:0;overflow-y:auto;}
+.sidebar-section{padding:12px 14px;border-bottom:1px solid var(--border);}
+.sidebar-head{font-size:9px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:8px;}
+.class-btn{display:block;width:100%;background:none;border:1px solid var(--border);color:var(--text);font-family:'DM Mono',monospace;font-size:11px;padding:7px 10px;border-radius:4px;cursor:pointer;text-align:left;margin-bottom:4px;transition:all 0.12s;}
+.class-btn:hover{border-color:var(--cyan);color:var(--cyan);}
+.class-btn.active{border-color:var(--yellow);color:var(--yellow);background:rgba(255,224,102,0.06);}
+.btn-new-class{display:block;width:100%;background:none;border:1px dashed var(--border2);color:var(--muted);font-family:'DM Mono',monospace;font-size:10px;padding:6px 10px;border-radius:4px;cursor:pointer;text-align:left;margin-top:4px;transition:all 0.12s;}
+.btn-new-class:hover{border-color:var(--green);color:var(--green);}
+.sidebar-stats{display:flex;flex-direction:column;gap:8px;padding:12px 14px;}
+.stat-row{display:flex;justify-content:space-between;align-items:center;}
+.stat-label{font-size:10px;color:var(--muted);}
+.stat-value{font-family:'Pixelify Sans',monospace;font-size:1rem;color:var(--yellow);}
+.btn-signout{margin:auto 14px 14px;background:none;border:1px solid var(--border);color:var(--muted);font-family:'DM Mono',monospace;font-size:10px;padding:6px 10px;border-radius:4px;cursor:pointer;transition:all 0.12s;text-align:left;}
+.btn-signout:hover{border-color:var(--red);color:var(--red);}
+
+/* Content */
+.content{flex:1;display:flex;flex-direction:column;overflow:hidden;}
+.toolbar{padding:10px 16px;background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;flex-shrink:0;}
+.toolbar input[type="text"]{background:var(--raised);border:1px solid var(--border);color:var(--text);font-family:'DM Mono',monospace;font-size:11px;padding:6px 10px;border-radius:4px;outline:none;width:200px;}
+.toolbar input[type="text"]:focus{border-color:var(--cyan);}
+.btn{background:none;border:1px solid var(--border);color:var(--text);font-family:'DM Mono',monospace;font-size:11px;padding:6px 12px;border-radius:4px;cursor:pointer;transition:all 0.12s;}
+.btn:hover{border-color:var(--cyan);color:var(--cyan);}
+.btn.green{border-color:var(--green);color:var(--green);}
+.btn.green:hover{background:rgba(107,255,184,0.08);}
+.btn.yellow{border-color:var(--yellow);color:var(--yellow);}
+.btn.yellow:hover{background:rgba(255,224,102,0.08);}
+.btn.red{border-color:var(--red);color:var(--red);}
+.btn.red:hover{background:rgba(255,107,107,0.08);}
+.btn-flex{flex:1;}
+.table-wrap{flex:1;overflow-y:auto;padding:16px;}
+table{width:100%;border-collapse:collapse;}
+thead th{font-size:9px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;padding:6px 10px;text-align:left;border-bottom:1px solid var(--border2);position:sticky;top:0;background:var(--bg);}
+tbody tr{border-bottom:1px solid var(--border);transition:background 0.1s;}
+tbody tr:hover{background:var(--raised);}
+td{padding:8px 10px;font-size:11px;color:var(--text);vertical-align:middle;}
+td.muted{color:var(--muted);}
+.pts-controls{display:flex;align-items:center;gap:4px;}
+.pts-btn{background:none;border:1px solid var(--border);color:var(--muted);font-family:'DM Mono',monospace;font-size:10px;width:22px;height:22px;border-radius:3px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.1s;}
+.pts-btn.plus:hover{border-color:var(--green);color:var(--green);}
+.pts-btn.minus:hover{border-color:var(--red);color:var(--red);}
+.pts-input{background:var(--raised);border:1px solid var(--border);color:var(--yellow);font-family:'Pixelify Sans',monospace;font-size:0.9rem;width:62px;text-align:center;padding:2px 4px;border-radius:3px;outline:none;}
+.pts-input:focus{border-color:var(--yellow);}
+.pet-chips{display:flex;gap:4px;flex-wrap:wrap;}
+.pet-chip{font-size:9px;padding:2px 6px;border-radius:10px;border:1px solid var(--border2);color:var(--muted);letter-spacing:0.5px;text-transform:uppercase;}
+.pet-chip.egg{border-color:var(--yellow);color:var(--yellow);}
+.pet-chip.baby{border-color:var(--cyan);color:var(--cyan);}
+.pet-chip.adult{border-color:var(--green);color:var(--green);}
+.action-btns{display:flex;gap:4px;}
+.row-btn{background:none;border:1px solid var(--border);color:var(--muted);font-family:'DM Mono',monospace;font-size:9px;padding:3px 7px;border-radius:3px;cursor:pointer;transition:all 0.1s;}
+.row-btn:hover{border-color:var(--cyan);color:var(--cyan);}
+.row-btn.danger:hover{border-color:var(--red);color:var(--red);}
+.empty-state{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--muted);gap:12px;}
+.empty-icon{font-size:2.5rem;}
+.empty-text{font-size:11px;letter-spacing:1px;}
+
+/* Modal */
+.modal-backdrop{display:none;position:fixed;inset:0;background:rgba(10,4,20,0.85);backdrop-filter:blur(3px);align-items:center;justify-content:center;z-index:200;}
+.modal-backdrop.open{display:flex;}
+.modal{background:var(--surface);border:1px solid var(--border2);border-radius:10px;padding:24px;width:400px;display:flex;flex-direction:column;gap:14px;}
+.modal-title{font-family:'Pixelify Sans',monospace;font-size:1rem;color:var(--text);letter-spacing:1px;}
+.field{display:flex;flex-direction:column;gap:5px;}
+.field label{font-size:9px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;}
+.field input,.field select{background:var(--raised);border:1px solid var(--border);color:var(--text);font-family:'DM Mono',monospace;font-size:11px;padding:7px 10px;border-radius:4px;outline:none;}
+.field input:focus,.field select:focus{border-color:var(--cyan);}
+.modal-btns{display:flex;gap:8px;justify-content:flex-end;margin-top:4px;}
+.award-banner{background:var(--raised);border-top:1px solid var(--border);padding:10px 16px;display:flex;align-items:center;gap:10px;flex-shrink:0;}
+.award-banner label{font-size:10px;color:var(--muted);}
+.award-banner input[type="number"]{background:var(--surface);border:1px solid var(--border);color:var(--yellow);font-family:'Pixelify Sans',monospace;font-size:1rem;width:70px;text-align:center;padding:4px 6px;border-radius:4px;outline:none;}
+.award-banner input[type="number"]:focus{border-color:var(--yellow);}
+#toast{position:fixed;bottom:16px;left:50%;transform:translateX(-50%) translateY(40px);background:var(--cyan);color:var(--bg);padding:7px 18px;border-radius:4px;font-size:11px;letter-spacing:1px;opacity:0;transition:all 0.22s;pointer-events:none;white-space:nowrap;z-index:999;}
+#toast.show{transform:translateX(-50%) translateY(0);opacity:1;}
+::-webkit-scrollbar{width:4px;}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px;}
+</style>
+</head>
+<body>
+
+<div id="login-screen">
+  <div class="login-logo">★ MARIGOLD</div>
+  <div class="login-sub">Teacher Dashboard</div>
+  <div class="login-card">
+    <div class="login-title">Sign in to continue</div>
+    <div class="login-desc">Access is restricted to whitelisted<br>teacher accounts only.</div>
+    <button class="btn-google" id="btn-google-login">
+      <svg viewBox="0 0 24 24"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
+      Sign in with Google
+    </button>
+    <div class="login-error" id="login-error">⚠ Your account is not whitelisted as a teacher.</div>
+  </div>
+</div>
+
+<div id="app" class="hidden">
+  <header>
+    <div class="hdr-logo">★ MARIGOLD CORE</div>
+    <div class="hdr-sep"></div>
+    <div class="hdr-class-label" id="hdr-class-label">No class selected</div>
+    <div class="hdr-flex"></div>
+    <div class="hdr-user">
+      <div class="hdr-user-dot"></div>
+      <span id="hdr-user-email">—</span>
+    </div>
+  </header>
+
+  <div class="main-layout">
+    <div class="sidebar">
+      <div class="sidebar-section">
+        <div class="sidebar-head">Classes</div>
+        <div id="class-list"></div>
+        <button class="btn-new-class" id="btn-new-class">+ New Class</button>
+      </div>
+      <div class="sidebar-stats" id="sidebar-stats" style="display:none;">
+        <div class="sidebar-head">Class Stats</div>
+        <div class="stat-row"><span class="stat-label">Students</span><span class="stat-value" id="stat-count">—</span></div>
+        <div class="stat-row"><span class="stat-label">Top pts</span><span class="stat-value" id="stat-top">—</span></div>
+        <div class="stat-row"><span class="stat-label">Avg pts</span><span class="stat-value" id="stat-avg">—</span></div>
+      </div>
+      <div style="flex:1;"></div>
+      <button class="btn-signout" id="btn-signout">↩ Sign out</button>
+    </div>
+
+    <div class="content">
+      <div class="empty-state" id="empty-state">
+        <div class="empty-icon">★</div>
+        <div class="empty-text">Select or create a class to begin</div>
+      </div>
+
+      <div id="student-panel" style="display:none;flex-direction:column;flex:1;overflow:hidden;">
+        <div class="toolbar">
+          <input type="text" id="search-input" placeholder="Search students...">
+          <div class="btn-flex"></div>
+          <button class="btn green" id="btn-add-student">+ Add Student</button>
+          <button class="btn yellow" id="btn-award-all-open">★ Award All</button>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Name</th><th>Email</th><th>GotchiPts</th><th>Pets</th><th>Actions</th></tr></thead>
+            <tbody id="student-tbody"></tbody>
+          </table>
+        </div>
+        <div class="award-banner" id="award-banner" style="display:none;">
+          <label>Award all students:</label>
+          <input type="number" id="award-all-amount" value="10" min="1" max="9999">
+          <label>pts</label>
+          <button class="btn yellow" id="btn-do-award-all">★ Award</button>
+          <button class="btn red" id="btn-do-deduct-all">− Deduct</button>
+          <div style="flex:1;"></div>
+          <button class="btn" id="btn-award-banner-close">✕</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Add Student Modal -->
+<div class="modal-backdrop" id="modal-add-student">
+  <div class="modal">
+    <div class="modal-title">Add Student</div>
+    <div class="field"><label>Name *</label><input type="text" id="new-student-name" placeholder="e.g. Alice"></div>
+    <div class="field"><label>Email (optional)</label><input type="text" id="new-student-email" placeholder="student@school.com"></div>
+    <div class="field"><label>Starting GotchiPts</label><input type="number" id="new-student-pts" value="0" min="0"></div>
+    <div class="modal-btns">
+      <button class="btn" id="btn-cancel-add">Cancel</button>
+      <button class="btn green" id="btn-confirm-add">+ Add</button>
+    </div>
+  </div>
+</div>
+
+<!-- New Class Modal -->
+<div class="modal-backdrop" id="modal-new-class">
+  <div class="modal">
+    <div class="modal-title">New Class</div>
+    <div class="field"><label>Class Name *</label><input type="text" id="new-class-name" placeholder="e.g. Grade 1 — Period 2"></div>
+    <div class="modal-btns">
+      <button class="btn" id="btn-cancel-class">Cancel</button>
+      <button class="btn green" id="btn-confirm-class">Create</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+'use strict';
+const SUPABASE_URL  = 'https://jhjgdcobpzfrvbmxumsc.supabase.co';
+const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpoamdkY29icHpmcnZibXh1bXNjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ2NzYzOTksImV4cCI6MjA5MDI1MjM5OX0.N_FlCBAusOVM6oKgxBJdHMhimLNpklJIiTCYav3R4F8';
+const db = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+
+let currentUser=null, currentClassId=null, students=[], classes=[];
+
+async function init() {
+  const { data:{ session } } = await db.auth.getSession();
+  if (session?.user) await handleUser(session.user);
+  db.auth.onAuthStateChange(async (event, session) => {
+    if (event==='SIGNED_IN' && session?.user) await handleUser(session.user);
+    else if (event==='SIGNED_OUT') showLogin();
+  });
+}
+
+async function handleUser(user) {
+  const { data, error } = await db.from('teachers').select('id').eq('email', user.email).single();
+  if (error || !data) {
+    document.getElementById('login-error').classList.add('show');
+    await db.auth.signOut(); return;
+  }
+  currentUser = user;
+  document.getElementById('hdr-user-email').textContent = user.email;
+  showApp();
+  await loadClasses();
+}
+
+document.getElementById('btn-google-login').addEventListener('click', async () => {
+  const { error } = await db.auth.signInWithOAuth({ provider:'google', options:{ redirectTo: window.location.href } });
+  if (error) toast('⚠ ' + error.message);
+});
+document.getElementById('btn-signout').addEventListener('click', async () => { await db.auth.signOut(); });
+function showLogin() { document.getElementById('login-screen').classList.remove('hidden'); document.getElementById('app').classList.add('hidden'); }
+function showApp()   { document.getElementById('login-screen').classList.add('hidden');    document.getElementById('app').classList.remove('hidden'); }
+
+async function loadClasses() {
+  const { data } = await db.from('classes').select('*').order('name');
+  classes = data || []; renderClassList();
+}
+
+function renderClassList() {
+  const list = document.getElementById('class-list');
+  list.innerHTML = '';
+  classes.forEach(cls => {
+    const btn = document.createElement('button');
+    btn.className = 'class-btn' + (cls.id===currentClassId?' active':'');
+    btn.textContent = cls.name;
+    btn.addEventListener('click', () => selectClass(cls));
+    list.appendChild(btn);
+  });
+}
+
+async function selectClass(cls) {
+  currentClassId = cls.id;
+  document.getElementById('hdr-class-label').textContent = cls.name;
+  document.getElementById('empty-state').style.display   = 'none';
+  document.getElementById('student-panel').style.display = 'flex';
+  document.getElementById('sidebar-stats').style.display = 'flex';
+  renderClassList();
+  await loadStudents();
+}
+
+document.getElementById('btn-new-class').addEventListener('click', () => {
+  document.getElementById('new-class-name').value = '';
+  document.getElementById('modal-new-class').classList.add('open');
+});
+document.getElementById('btn-cancel-class').addEventListener('click', () => document.getElementById('modal-new-class').classList.remove('open'));
+document.getElementById('btn-confirm-class').addEventListener('click', async () => {
+  const name = document.getElementById('new-class-name').value.trim();
+  if (!name) return;
+  const { data, error } = await db.from('classes').insert({ name }).select().single();
+  if (error) { toast('⚠ ' + error.message); return; }
+  document.getElementById('modal-new-class').classList.remove('open');
+  toast('✓ Class created');
+  await loadClasses();
+  selectClass(data);
+});
+
+async function loadStudents() {
+  if (!currentClassId) return;
+  const { data, error } = await db.from('students').select('*, pets(*)').eq('class_id', currentClassId).order('name');
+  if (error) { toast('⚠ Could not load students'); return; }
+  students = data || [];
+  renderStudents();
+  updateStats();
+}
+
+function renderStudents(filter='') {
+  const tbody = document.getElementById('student-tbody');
+  tbody.innerHTML = '';
+  const filtered = students.filter(s =>
+    s.name.toLowerCase().includes(filter.toLowerCase()) ||
+    (s.email||'').toLowerCase().includes(filter.toLowerCase())
+  );
+  if (!filtered.length) {
+    tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;color:var(--muted);padding:24px;">${filter?'No students match your search':'No students yet — add one to get started'}</td></tr>`;
+    return;
+  }
+  filtered.forEach(s => {
+    const tr = document.createElement('tr');
+    const pets = s.pets || [];
+    const petHTML = pets.length ? pets.map(p=>`<span class="pet-chip ${p.stage}">${p.stage}</span>`).join('') : `<span style="color:var(--muted);font-size:10px;">none</span>`;
+    tr.innerHTML = `
+      <td><strong>${s.name}</strong></td>
+      <td class="muted">${s.email||'—'}</td>
+      <td><div class="pts-controls">
+        <button class="pts-btn minus" data-id="${s.id}">−</button>
+        <input class="pts-input" type="number" value="${s.gotchi_pts}" data-id="${s.id}" min="0">
+        <button class="pts-btn plus" data-id="${s.id}">+</button>
+      </div></td>
+      <td><div class="pet-chips">${petHTML}</div></td>
+      <td><div class="action-btns"><button class="row-btn danger" data-id="${s.id}">✕ Remove</button></div></td>`;
+    tbody.appendChild(tr);
+  });
+  tbody.querySelectorAll('.pts-input').forEach(input => {
+    input.addEventListener('change', async () => {
+      const val = Math.max(0, parseInt(input.value)||0);
+      input.value = val;
+      await updatePts(input.dataset.id, val);
+    });
+  });
+  tbody.querySelectorAll('.pts-btn.plus').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const s = students.find(x=>x.id===btn.dataset.id);
+      await updatePts(btn.dataset.id, (s.gotchi_pts||0)+10);
+    });
+  });
+  tbody.querySelectorAll('.pts-btn.minus').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const s = students.find(x=>x.id===btn.dataset.id);
+      await updatePts(btn.dataset.id, Math.max(0,(s.gotchi_pts||0)-10));
+    });
+  });
+  tbody.querySelectorAll('.row-btn.danger').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      if (!confirm('Remove this student? This cannot be undone.')) return;
+      const { error } = await db.from('students').delete().eq('id', btn.dataset.id);
+      if (error) { toast('⚠ '+error.message); return; }
+      toast('Student removed');
+      await loadStudents();
+    });
+  });
+}
+
+async function updatePts(studentId, newPts) {
+  const { error } = await db.from('students').update({ gotchi_pts: newPts }).eq('id', studentId);
+  if (error) { toast('⚠ '+error.message); return; }
+  const s = students.find(x=>x.id===studentId);
+  if (s) s.gotchi_pts = newPts;
+  // Update the input in place
+  const input = document.querySelector(`.pts-input[data-id="${studentId}"]`);
+  if (input) input.value = newPts;
+  updateStats();
+  toast('✓ Points updated');
+}
+
+function updateStats() {
+  const count = students.length;
+  const top   = count ? Math.max(...students.map(s=>s.gotchi_pts||0)) : 0;
+  const avg   = count ? Math.round(students.reduce((a,s)=>a+(s.gotchi_pts||0),0)/count) : 0;
+  document.getElementById('stat-count').textContent = count;
+  document.getElementById('stat-top').textContent   = top;
+  document.getElementById('stat-avg').textContent   = avg;
+}
+
+document.getElementById('search-input').addEventListener('input', e => renderStudents(e.target.value));
+
+document.getElementById('btn-add-student').addEventListener('click', () => {
+  ['new-student-name','new-student-email'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('new-student-pts').value='0';
+  document.getElementById('modal-add-student').classList.add('open');
+});
+document.getElementById('btn-cancel-add').addEventListener('click', () => document.getElementById('modal-add-student').classList.remove('open'));
+document.getElementById('btn-confirm-add').addEventListener('click', async () => {
+  const name  = document.getElementById('new-student-name').value.trim();
+  const email = document.getElementById('new-student-email').value.trim();
+  const pts   = parseInt(document.getElementById('new-student-pts').value)||0;
+  if (!name) { toast('⚠ Name is required'); return; }
+  const { error } = await db.from('students').insert({
+    name, email: email||null, class_id: currentClassId,
+    gotchi_pts: pts, bg_id:'bg_052', bg_color:'#87CEEB', unlocked_bgs:['bg_052']
+  });
+  if (error) { toast('⚠ '+error.message); return; }
+  document.getElementById('modal-add-student').classList.remove('open');
+  toast(`✓ ${name} added`);
+  await loadStudents();
+});
+
+document.getElementById('btn-award-all-open').addEventListener('click', () => {
+  const b = document.getElementById('award-banner');
+  b.style.display = b.style.display==='none'?'flex':'none';
+});
+document.getElementById('btn-award-banner-close').addEventListener('click', () => { document.getElementById('award-banner').style.display='none'; });
+document.getElementById('btn-do-award-all').addEventListener('click',  () => awardAll(1));
+document.getElementById('btn-do-deduct-all').addEventListener('click', () => awardAll(-1));
+
+async function awardAll(sign) {
+  const amt = parseInt(document.getElementById('award-all-amount').value)||10;
+  for (const s of students) {
+    const newPts = Math.max(0,(s.gotchi_pts||0)+amt*sign);
+    await db.from('students').update({gotchi_pts:newPts}).eq('id',s.id);
+    s.gotchi_pts = newPts;
+  }
+  toast(`${sign>0?'★':'−'} ${amt} pts ${sign>0?'awarded to':'deducted from'} all students`);
+  renderStudents(document.getElementById('search-input').value);
+  updateStats();
+}
+
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent=msg; el.classList.add('show');
+  clearTimeout(el._t); el._t=setTimeout(()=>el.classList.remove('show'),2200);
+}
+
+init();
+</script>
+</body>
+</html>
