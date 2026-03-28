@@ -115,6 +115,12 @@ td.muted{color:var(--muted);}
 .award-banner label{font-size:10px;color:var(--muted);}
 .award-banner input[type="number"]{background:var(--surface);border:1px solid var(--border);color:var(--yellow);font-family:'Pixelify Sans',monospace;font-size:1rem;width:70px;text-align:center;padding:4px 6px;border-radius:4px;outline:none;}
 .award-banner input[type="number"]:focus{border-color:var(--yellow);}
+.tab-btn{background:none;border:1px solid var(--border);color:var(--muted);font-family:'DM Mono',monospace;font-size:10px;padding:5px 12px;border-radius:4px;cursor:pointer;transition:all 0.12s;}
+.tab-btn.active{border-color:var(--cyan);color:var(--cyan);background:rgba(78,240,216,0.06);}
+.csv-group{background:var(--raised);border:1px solid var(--border);border-radius:5px;padding:8px 10px;}
+.csv-group-head{font-size:10px;color:var(--yellow);margin-bottom:4px;display:flex;justify-content:space-between;}
+.csv-student-row{font-size:10px;color:var(--muted);padding:2px 0;border-bottom:1px solid var(--border);}
+.csv-student-row:last-child{border-bottom:none;}
 #toast{position:fixed;bottom:16px;left:50%;transform:translateX(-50%) translateY(40px);background:var(--cyan);color:var(--bg);padding:7px 18px;border-radius:4px;font-size:11px;letter-spacing:1px;opacity:0;transition:all 0.22s;pointer-events:none;white-space:nowrap;z-index:999;}
 #toast.show{transform:translateX(-50%) translateY(0);opacity:1;}
 ::-webkit-scrollbar{width:4px;}
@@ -215,9 +221,47 @@ td.muted{color:var(--muted);}
 
 <!-- New Class Modal -->
 <div class="modal-backdrop" id="modal-new-class">
-  <div class="modal">
+  <div class="modal" style="width:520px;max-width:95vw;">
     <div class="modal-title">New Class</div>
-    <div class="field"><label>Class Name *</label><input type="text" id="new-class-name" placeholder="e.g. Grade 1 — Period 2"></div>
+
+    <!-- Mode tabs -->
+    <div style="display:flex;gap:4px;border-bottom:1px solid var(--border);padding-bottom:12px;">
+      <button class="tab-btn active" id="tab-manual" onclick="switchTab('manual')">✎ Manual</button>
+      <button class="tab-btn" id="tab-csv" onclick="switchTab('csv')">↑ Import CSV</button>
+    </div>
+
+    <!-- Manual tab -->
+    <div id="pane-manual">
+      <div class="field">
+        <label>Class Name *</label>
+        <input type="text" id="new-class-name" placeholder="e.g. Grade 2 — Marigold">
+      </div>
+    </div>
+
+    <!-- CSV tab -->
+    <div id="pane-csv" style="display:none;flex-direction:column;gap:12px;">
+      <div style="font-size:10px;color:var(--muted);line-height:1.8;">
+        Upload a CSV with columns: <span style="color:var(--cyan);">UUID, Name, Korean Name, Grade, English Class, Korean Class, Class Number, Active</span><br>
+        Students will be grouped by <strong style="color:var(--text);">Korean Class</strong> — each group becomes a separate class.
+      </div>
+
+      <div id="csv-drop-zone" style="
+        border:2px dashed var(--border2);border-radius:6px;
+        padding:24px;text-align:center;cursor:pointer;
+        transition:border-color 0.15s;
+      ">
+        <div style="font-size:1.5rem;margin-bottom:6px;">📄</div>
+        <div style="font-size:11px;color:var(--muted);">Drop CSV here or <span style="color:var(--cyan);text-decoration:underline;cursor:pointer;" id="csv-browse-link">browse</span></div>
+        <input type="file" id="csv-file-input" accept=".csv" style="display:none;">
+      </div>
+
+      <!-- Preview table -->
+      <div id="csv-preview" style="display:none;flex-direction:column;gap:8px;">
+        <div id="csv-preview-head" style="font-size:10px;color:var(--muted);"></div>
+        <div id="csv-class-groups" style="display:flex;flex-direction:column;gap:6px;max-height:240px;overflow-y:auto;"></div>
+      </div>
+    </div>
+
     <div class="modal-btns">
       <button class="btn" id="btn-cancel-class">Cancel</button>
       <button class="btn green" id="btn-confirm-class">Create</button>
@@ -305,21 +349,178 @@ async function selectClass(cls) {
   await loadStudents();
 }
 
+// ─── NEW CLASS MODAL ──────────────────────────────────────────────────────
+let csvGroups = {}; // { koreanClass: [{ uuid, name, classNumber }] }
+let activeTab = 'manual';
+
+function switchTab(tab) {
+  activeTab = tab;
+  document.getElementById('pane-manual').style.display = tab==='manual' ? 'block' : 'none';
+  document.getElementById('pane-csv').style.display    = tab==='csv'    ? 'flex'  : 'none';
+  document.getElementById('tab-manual').classList.toggle('active', tab==='manual');
+  document.getElementById('tab-csv').classList.toggle('active',    tab==='csv');
+  document.getElementById('btn-confirm-class').textContent = tab==='manual' ? 'Create' : '↑ Import Classes';
+}
+
 document.getElementById('btn-new-class').addEventListener('click', () => {
   document.getElementById('new-class-name').value = '';
+  document.getElementById('csv-preview').style.display = 'none';
+  csvGroups = {};
+  switchTab('manual');
   document.getElementById('modal-new-class').classList.add('open');
 });
-document.getElementById('btn-cancel-class').addEventListener('click', () => document.getElementById('modal-new-class').classList.remove('open'));
+document.getElementById('btn-cancel-class').addEventListener('click', () => {
+  document.getElementById('modal-new-class').classList.remove('open');
+});
+
+// CSV file handling
+const csvInput    = document.getElementById('csv-file-input');
+const csvDropZone = document.getElementById('csv-drop-zone');
+
+document.getElementById('csv-browse-link').addEventListener('click', () => csvInput.click());
+csvDropZone.addEventListener('click', () => csvInput.click());
+csvDropZone.addEventListener('dragover', e => { e.preventDefault(); csvDropZone.style.borderColor = 'var(--cyan)'; });
+csvDropZone.addEventListener('dragleave', () => { csvDropZone.style.borderColor = 'var(--border2)'; });
+csvDropZone.addEventListener('drop', e => {
+  e.preventDefault();
+  csvDropZone.style.borderColor = 'var(--border2)';
+  const file = e.dataTransfer.files[0];
+  if (file) parseCSV(file);
+});
+csvInput.addEventListener('change', e => {
+  if (e.target.files[0]) parseCSV(e.target.files[0]);
+});
+
+function parseCSV(file) {
+  const reader = new FileReader();
+  reader.onload = e => {
+    const lines = e.target.result
+      .replace(/^\uFEFF/, '') // strip BOM
+      .split('\n')
+      .map(l => l.trim())
+      .filter(l => l);
+
+    const headers = lines[0].split(',').map(h => h.trim());
+    const idx = {
+      uuid:        headers.findIndex(h => h.toLowerCase() === 'uuid'),
+      name:        headers.findIndex(h => h.toLowerCase() === 'name'),
+      grade:       headers.findIndex(h => h.toLowerCase() === 'grade'),
+      engClass:    headers.findIndex(h => h.toLowerCase() === 'english class'),
+      korClass:    headers.findIndex(h => h.toLowerCase() === 'korean class'),
+      classNum:    headers.findIndex(h => h.toLowerCase() === 'class number'),
+      active:      headers.findIndex(h => h.toLowerCase() === 'active'),
+    };
+
+    csvGroups = {};
+    let grade = '', engClass = '';
+
+    lines.slice(1).forEach(line => {
+      const cols = line.split(',').map(c => c.trim());
+      if (idx.active >= 0 && cols[idx.active]?.toLowerCase() !== 'yes') return;
+      const korClass = cols[idx.korClass] || 'Unknown';
+      grade    = cols[idx.grade]    || grade;
+      engClass = cols[idx.engClass] || engClass;
+      if (!csvGroups[korClass]) csvGroups[korClass] = { students: [], grade, engClass };
+      csvGroups[korClass].students.push({
+        id:   cols[idx.uuid],
+        name: cols[idx.name],
+        num:  cols[idx.classNum],
+      });
+    });
+
+    renderCSVPreview(grade, engClass);
+  };
+  reader.readAsText(file);
+}
+
+function renderCSVPreview(grade, engClass) {
+  const preview = document.getElementById('csv-preview');
+  const head    = document.getElementById('csv-preview-head');
+  const groups  = document.getElementById('csv-class-groups');
+  const total   = Object.values(csvGroups).reduce((a, g) => a + g.students.length, 0);
+
+  head.innerHTML = `Grade <strong style="color:var(--text);">${grade}</strong> — 
+    <strong style="color:var(--text);">${engClass}</strong> — 
+    <span style="color:var(--green);">${total} students</span> across 
+    <span style="color:var(--yellow);">${Object.keys(csvGroups).length} classes</span>`;
+
+  groups.innerHTML = '';
+  Object.entries(csvGroups).forEach(([korClass, group]) => {
+    const className = `Grade ${grade} ${engClass} — ${korClass}`;
+    const div = document.createElement('div');
+    div.className = 'csv-group';
+    div.innerHTML = `
+      <div class="csv-group-head">
+        <span>📚 ${className}</span>
+        <span style="color:var(--muted);">${group.students.length} students</span>
+      </div>
+      ${group.students.map(s =>
+        `<div class="csv-student-row">#${s.num} — ${s.name}</div>`
+      ).join('')}`;
+    groups.appendChild(div);
+  });
+
+  preview.style.display = 'flex';
+}
+
+// Confirm — manual or CSV
 document.getElementById('btn-confirm-class').addEventListener('click', async () => {
+  if (activeTab === 'manual') {
+    await createManualClass();
+  } else {
+    await importCSVClasses();
+  }
+});
+
+async function createManualClass() {
   const name = document.getElementById('new-class-name').value.trim();
-  if (!name) return;
+  if (!name) { toast('⚠ Class name is required'); return; }
   const { data, error } = await db.from('classes').insert({ name }).select().single();
   if (error) { toast('⚠ ' + error.message); return; }
   document.getElementById('modal-new-class').classList.remove('open');
   toast('✓ Class created');
   await loadClasses();
   selectClass(data);
-});
+}
+
+async function importCSVClasses() {
+  if (!Object.keys(csvGroups).length) { toast('⚠ No CSV data to import'); return; }
+  const btn = document.getElementById('btn-confirm-class');
+  btn.disabled = true; btn.textContent = 'Importing...';
+
+  let lastClass = null;
+  for (const [korClass, group] of Object.entries(csvGroups)) {
+    const className = `Grade ${group.grade} ${group.engClass} — ${korClass}`;
+
+    // Create class
+    const { data: cls, error: clsErr } = await db
+      .from('classes').insert({ name: className }).select().single();
+    if (clsErr) { toast('⚠ ' + clsErr.message); break; }
+
+    // Insert students with their UUIDs preserved
+    const studentRows = group.students.map(s => ({
+      id:           s.id,
+      name:         s.name,
+      class_id:     cls.id,
+      gotchi_pts:   0,
+      bg_id:        'bg_052',
+      bg_color:     '#87CEEB',
+      unlocked_bgs: ['bg_052'],
+    }));
+
+    const { error: stuErr } = await db.from('students').insert(studentRows);
+    if (stuErr) { toast('⚠ Students: ' + stuErr.message); break; }
+
+    lastClass = cls;
+  }
+
+  btn.disabled = false;
+  document.getElementById('modal-new-class').classList.remove('open');
+  const count = Object.keys(csvGroups).length;
+  toast(`✓ Imported ${count} class${count!==1?'es':''}`);
+  await loadClasses();
+  if (lastClass) selectClass(lastClass);
+}
 
 async function loadStudents() {
   if (!currentClassId) return;
