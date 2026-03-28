@@ -345,6 +345,11 @@ async function selectClass(cls) {
   document.getElementById('empty-state').style.display   = 'none';
   document.getElementById('student-panel').style.display = 'flex';
   document.getElementById('sidebar-stats').style.display = 'flex';
+  // Clear immediately so stale data doesn't linger
+  students = [];
+  document.getElementById('student-tbody').innerHTML =
+    `<tr><td colspan="5" style="text-align:center;color:var(--muted);padding:24px;">Loading ${cls.name}...</td></tr>`;
+  document.getElementById('search-input').value = '';
   renderClassList();
   await loadStudents();
 }
