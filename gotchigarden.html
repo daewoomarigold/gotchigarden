@@ -393,9 +393,9 @@ header {
 /* ── Cell announcements ── */
 .cell-announcement {
   position: absolute;
-  bottom: 28%;
+  top: 8%;
   left: 50%;
-  transform: translateX(-50%) translateY(6px);
+  transform: translateX(-50%) translateY(-6px);
   background: #fff;
   border: 2px solid #333;
   border-radius: 8px;
@@ -418,9 +418,9 @@ header {
 
 #spotlight-announce {
   position: absolute;
-  bottom: 28%;
+  top: 8%;
   left: 50%;
-  transform: translateX(-50%) translateY(6px);
+  transform: translateX(-50%) translateY(-6px);
   background: #fff;
   border: 3px solid #333;
   border-radius: 10px;
@@ -549,7 +549,25 @@ header {
       <!-- Student header -->
       <div class="spotlight-header">
         <div class="spotlight-name" id="sel-name">—</div>
-        <button class="spotlight-close" onclick="closeOverlay('overlay-student')">✕</button>
+        <div style="display:flex;gap:6px;align-items:center;position:relative;">
+          <button class="spotlight-close" id="btn-debug-toggle" title="Debug tools">⚙</button>
+          <button class="spotlight-close" onclick="closeOverlay('overlay-student')">✕</button>
+          <!-- Debug dropdown -->
+          <div id="debug-dropdown" style="
+            display:none;position:absolute;top:calc(100% + 6px);right:0;
+            background:var(--surface);border:1px solid var(--red);border-radius:6px;
+            padding:8px;display:none;flex-direction:column;gap:6px;
+            min-width:180px;z-index:50;box-shadow:0 4px 16px rgba(0,0,0,0.5);
+          ">
+            <div style="font-size:9px;color:var(--red);letter-spacing:2px;text-transform:uppercase;padding-bottom:4px;border-bottom:1px solid var(--border);">⚙ Debug</div>
+            <button class="btn btn-full" id="btn-debug-evolve"
+              style="border-color:var(--cyan);color:var(--cyan);">↑ Force Evolve</button>
+            <button class="btn btn-full" id="btn-debug-undo"
+              style="border-color:var(--muted);color:var(--muted);">↩ Undo Evolution</button>
+            <button class="btn btn-full" id="btn-debug-reset"
+              style="border-color:var(--red);color:var(--red);">🥚 Reset to Egg</button>
+          </div>
+        </div>
       </div>
 
       <!-- Stats -->
@@ -575,23 +593,6 @@ header {
         <div id="pet-actions-body" style="display:flex;flex-direction:column;gap:6px;">
           <!-- populated by JS -->
         </div>
-      </div>
-
-      <!-- Debug tools -->
-      <div class="spotlight-section" id="debug-section">
-        <div class="spotlight-section-head" style="color:var(--red);">⚙ Debug</div>
-        <button class="btn btn-full" id="btn-debug-evolve"
-          style="border-color:var(--cyan);color:var(--cyan);">
-          ↑ Force Evolve
-        </button>
-        <button class="btn btn-full" id="btn-debug-undo"
-          style="border-color:var(--muted);color:var(--muted);">
-          ↩ Undo Evolution
-        </button>
-        <button class="btn btn-full" id="btn-debug-reset"
-          style="border-color:var(--red);color:var(--red);">
-          🥚 Reset to Egg
-        </button>
       </div>
 
       <!-- Shop -->
@@ -1770,6 +1771,20 @@ document.getElementById('btn-add-egg').addEventListener('click', () => {
 });
 
 // ─── DEBUG TOOLS ──────────────────────────────────────────────────────────
+// Toggle debug dropdown
+const debugDropdown = document.getElementById('debug-dropdown');
+document.getElementById('btn-debug-toggle').addEventListener('click', e => {
+  e.stopPropagation();
+  const open = debugDropdown.style.display === 'flex';
+  debugDropdown.style.display = open ? 'none' : 'flex';
+});
+// Close dropdown when clicking outside
+document.addEventListener('click', e => {
+  if (!debugDropdown.contains(e.target) &&
+      e.target.id !== 'btn-debug-toggle') {
+    debugDropdown.style.display = 'none';
+  }
+});
 const evolutionHistory = {};
 
 function getEvolutionHistory(id) {
@@ -1786,6 +1801,7 @@ function snapshotPets(cell) {
 }
 
 document.getElementById('btn-debug-evolve').addEventListener('click', () => {
+  debugDropdown.style.display = 'none';
   if (!selected) return;
   const cell = cells.find(c => c.student.id === selected);
   if (!cell || !cell.pets.length) return;
@@ -1797,6 +1813,7 @@ document.getElementById('btn-debug-evolve').addEventListener('click', () => {
 });
 
 document.getElementById('btn-debug-undo').addEventListener('click', async () => {
+  debugDropdown.style.display = 'none';
   if (!selected) return;
   const history = getEvolutionHistory(selected);
   if (!history.length) { toast('Nothing to undo'); return; }
@@ -1813,6 +1830,7 @@ document.getElementById('btn-debug-undo').addEventListener('click', async () => 
 });
 
 document.getElementById('btn-debug-reset').addEventListener('click', async () => {
+  debugDropdown.style.display = 'none';
   if (!selected) return;
   const cell    = cells.find(c => c.student.id === selected);
   const student = STUDENTS.find(s => s.id === selected);
