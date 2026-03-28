@@ -235,17 +235,28 @@ const db = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
 
 let currentUser=null, currentClassId=null, students=[], classes=[];
 
+const TEACHER_URL = 'https://daewoomarigold.github.io/gotchigarden/teacher.html';
+
 async function init() {
-  const { data:{ session } } = await db.auth.getSession();
-  if (session?.user) await handleUser(session.user);
+  // Handle OAuth callback — Supabase exchanges the code for a session automatically
+  // but we need to listen for the resulting SIGNED_IN event
   db.auth.onAuthStateChange(async (event, session) => {
-    if (event==='SIGNED_IN' && session?.user) await handleUser(session.user);
-    else if (event==='SIGNED_OUT') showLogin();
+    console.log('Auth event:', event, session?.user?.email);
+    if (event === 'SIGNED_IN' && session?.user) {
+      await handleUser(session.user);
+    } else if (event === 'SIGNED_OUT') {
+      showLogin();
+    }
   });
+
+  // Also check for existing session on page load
+  const { data: { session } } = await db.auth.getSession();
+  if (session?.user) await handleUser(session.user);
 }
 
 async function handleUser(user) {
   const { data, error } = await db.from('teachers').select('id').eq('email', user.email).single();
+  console.log('Whitelist check:', user.email, data, error);
   if (error || !data) {
     document.getElementById('login-error').classList.add('show');
     await db.auth.signOut(); return;
@@ -257,7 +268,10 @@ async function handleUser(user) {
 }
 
 document.getElementById('btn-google-login').addEventListener('click', async () => {
-  const { error } = await db.auth.signInWithOAuth({ provider:'google', options:{ redirectTo: window.location.href } });
+  const { error } = await db.auth.signInWithOAuth({
+    provider: 'google',
+    options: { redirectTo: TEACHER_URL }
+  });
   if (error) toast('⚠ ' + error.message);
 });
 document.getElementById('btn-signout').addEventListener('click', async () => { await db.auth.signOut(); });
