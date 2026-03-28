@@ -863,8 +863,10 @@ async function triggerHatch(studentId, petIdx = 0) {
     });
     if (!sp) return;
     // Draw hatching egg at its own position with shake offset
+    const dw = Math.round(sp.w * SPRITE_SCALE);
+    const dh = Math.round(sp.h * SPRITE_SCALE);
     ctx.drawImage(pet.off, sp.x, sp.y, sp.w, sp.h,
-      pet.x + Math.round(offsetX), eggY, sp.w, sp.h);
+      pet.x + Math.round(offsetX), eggY, dw, dh);
   }
 
   // ── Step 4: shake ─────────────────────────────────────────────────────
@@ -1017,9 +1019,11 @@ async function triggerEvolve(studentId, petIdx = 0) {
     const bs = pet._body[bodyLabel] || Object.values(pet._body)[0];
     if (!bs) return;
     const px = Math.round(pet.x + offsetX), py = Math.round(pet.y);
+    const dw = Math.round(bs.w * SPRITE_SCALE);
+    const dh = Math.round(bs.h * SPRITE_SCALE);
     ctx.save();
-    if (pet.facingRight) { ctx.translate(px+bs.w/2,0); ctx.scale(-1,1); ctx.translate(-(px+bs.w/2),0); }
-    ctx.drawImage(pet.off, bs.x,bs.y,bs.w,bs.h, px,py,bs.w,bs.h);
+    if (pet.facingRight) { ctx.translate(px+dw/2,0); ctx.scale(-1,1); ctx.translate(-(px+dw/2),0); }
+    ctx.drawImage(pet.off, bs.x,bs.y,bs.w,bs.h, px,py,dw,dh);
     ctx.restore();
   }
 
@@ -1151,6 +1155,8 @@ const ANIMATION_DEFS = {
 // CW/CH are computed from viewport so the 5×3 grid always fits the screen
 let CW = 200, CH = 200;
 
+const SPRITE_SCALE = 0.65; // reduce all sprites by 35%
+
 function computeCellSize() {
   const HDR     = 44;   // header height px
   const GAP     = 8;    // gap between cells
@@ -1236,12 +1242,13 @@ class Pet {
       this._fps       = 2;
       this._animSeq   = eggJSON.animations.idle.sequence;
       // Fixed centred position — eggs don't move
-      const sp   = this.eggVariant.idleFrames[0];
+      const sp      = this.eggVariant.idleFrames[0];
       const zoneTop = Math.floor(CH * 0.65);
       const zoneH   = CH - zoneTop;
-      this.x = Math.round((CW - sp.w) / 2);
-      this.y = zoneTop + Math.round((zoneH - sp.h) / 2);
-      this.sw = sp.w; this.sh = sp.h;
+      this.sw = Math.round(sp.w * SPRITE_SCALE);
+      this.sh = Math.round(sp.h * SPRITE_SCALE);
+      this.x  = Math.round((CW - this.sw) / 2);
+      this.y  = zoneTop + Math.round((zoneH - this.sh) / 2);
     } else {
       this.charJSON = data.charJSON;
       this.off      = data.off;
@@ -1254,9 +1261,10 @@ class Pet {
       if (fb) fb.sprites.forEach(s => this._face[s.label] = s);
       if (data.charJSON.bodyAnimAnchors && bb)
         bb.sprites.forEach((s,i) => this._anch[s.label] = data.charJSON.bodyAnimAnchors[i] || {offsetX:0,offsetY:0,useFace:true});
-      // Spawn position
+      // Spawn position — sw/sh are scaled display dimensions
       const sp   = Object.values(this._body)[0];
-      this.sw    = sp?sp.w:36; this.sh = sp?sp.h:46;
+      this.sw    = Math.round((sp?sp.w:36) * SPRITE_SCALE);
+      this.sh    = Math.round((sp?sp.h:46) * SPRITE_SCALE);
       const minY = Math.floor(CH * 0.65);
       const maxY = CH - this.sh - 4;
       const angle = (Math.random()>.5?0:Math.PI) + (Math.random()-.5)*.6;
@@ -1297,8 +1305,10 @@ class Pet {
     const frameIdx = this._animSeq[this._seqIdx % this._animSeq.length];
     const sp       = overrideSp || this.eggVariant.idleFrames[frameIdx];
     if (!sp) return;
+    const dw = Math.round(sp.w * SPRITE_SCALE);
+    const dh = Math.round(sp.h * SPRITE_SCALE);
     ctx.drawImage(this.off, sp.x, sp.y, sp.w, sp.h,
-      this.x + Math.round(offsetX), this.y, sp.w, sp.h);
+      this.x + Math.round(offsetX), this.y, dw, dh);
   }
 
   // ── Tama update ─────────────────────────────────────────────────────────
@@ -1390,11 +1400,18 @@ class Pet {
     const fs  = (!this.isBaby&&fd.face) ? this._face[fd.face]||null : null;
     const an  = (!this.isBaby&&fd.face) ? this._anch[fd.body]||{offsetX:0,offsetY:0,useFace:true} : {offsetX:0,offsetY:0,useFace:false};
     const px  = Math.round(this.x), py = Math.round(this.y);
+    const dw  = Math.round(bs.w * SPRITE_SCALE);
+    const dh  = Math.round(bs.h * SPRITE_SCALE);
     ctx.save();
-    if (this.facingRight){ctx.translate(px+bs.w/2,0);ctx.scale(-1,1);ctx.translate(-(px+bs.w/2),0);}
-    ctx.drawImage(this.off,bs.x,bs.y,bs.w,bs.h,px,py,bs.w,bs.h);
-    if (!this.isBaby&&an.useFace&&fs)
-      ctx.drawImage(this.off,fs.x,fs.y,fs.w,fs.h,px+an.offsetX,py+an.offsetY,fs.w,fs.h);
+    if (this.facingRight){ctx.translate(px+dw/2,0);ctx.scale(-1,1);ctx.translate(-(px+dw/2),0);}
+    ctx.drawImage(this.off,bs.x,bs.y,bs.w,bs.h,px,py,dw,dh);
+    if (!this.isBaby&&an.useFace&&fs) {
+      const fw = Math.round(fs.w * SPRITE_SCALE);
+      const fh = Math.round(fs.h * SPRITE_SCALE);
+      const fox = Math.round(an.offsetX * SPRITE_SCALE);
+      const foy = Math.round(an.offsetY * SPRITE_SCALE);
+      ctx.drawImage(this.off,fs.x,fs.y,fs.w,fs.h,px+fox,py+foy,fw,fh);
+    }
     ctx.restore();
   }
 
