@@ -38,6 +38,7 @@ header {
   padding: 0 20px; flex-shrink: 0; z-index: 10;
 }
 .hdr-title { font-family:'Pixelify Sans',monospace; font-size:1.1rem; color:var(--accent); letter-spacing:2px; }
+.hdr-sep   { width:1px; height:20px; background:var(--border2); flex-shrink:0; }
 .hdr-meta  { font-size:10px; color:var(--muted); letter-spacing:1px; text-transform:uppercase; }
 .hdr-btns  { display:flex; gap:8px; }
 
@@ -517,7 +518,17 @@ header {
 
 <header>
   <div class="hdr-title">★ GOTCHIGARDEN</div>
+  <div class="hdr-sep"></div>
+  <select id="class-selector" style="
+    background:var(--raised);border:1px solid var(--border2);
+    color:var(--text);font-family:'DM Mono',monospace;
+    font-size:11px;padding:4px 10px;border-radius:4px;
+    outline:none;cursor:pointer;min-width:160px;
+  ">
+    <option value="">Loading classes...</option>
+  </select>
   <div class="hdr-meta" id="class-label"></div>
+  <div class="hdr-flex" style="flex:1;"></div>
   <div class="hdr-btns">
     <button class="btn" id="btn-teacher-menu" title="Teacher tools">⚙</button>
   </div>
@@ -709,6 +720,7 @@ header {
 <div id="tama-tooltip"></div>
 <div id="toast"></div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 'use strict';
 
@@ -730,28 +742,146 @@ function rawUrl(folder, filename) {
   return `${PAGES_BASE}/${folder}/${encodeURIComponent(filename)}`;
 }
 
-// ─── ROSTER ───────────────────────────────────────────────────────────────
-// All students start as eggs — tamas are earned by hatching
-// eggVariant: null = assigned randomly on load from egg JSON
-// charId: null = no tama yet
+// ─── SUPABASE ─────────────────────────────────────────────────────────────
+const SUPABASE_URL  = 'https://jhjgdcobpzfrvbmxumsc.supabase.co';
+const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpoamdkY29icHpmcnZibXh1bXNjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ2NzYzOTksImV4cCI6MjA5MDI1MjM5OX0.N_FlCBAusOVM6oKgxBJdHMhimLNpklJIiTCYav3R4F8';
+const db = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
 
-const STUDENTS = [
-  { id:1,  name:'Alice',  charId:null, eggVariant:null, bgFile:DEFAULT_BG, bgId:DEFAULT_BG_ID, bgColor:DEFAULT_BG_COLOR, unlockedBgs:[DEFAULT_BG_ID], gotchiPoints:120 },
-  { id:2,  name:'Ben',    charId:null, eggVariant:null, bgFile:DEFAULT_BG, bgId:DEFAULT_BG_ID, bgColor:DEFAULT_BG_COLOR, unlockedBgs:[DEFAULT_BG_ID], gotchiPoints:85  },
-  { id:3,  name:'Chloe',  charId:null, eggVariant:null, bgFile:DEFAULT_BG, bgId:DEFAULT_BG_ID, bgColor:DEFAULT_BG_COLOR, unlockedBgs:[DEFAULT_BG_ID], gotchiPoints:210 },
-  { id:4,  name:'Dylan',  charId:null, eggVariant:null, bgFile:DEFAULT_BG, bgId:DEFAULT_BG_ID, bgColor:DEFAULT_BG_COLOR, unlockedBgs:[DEFAULT_BG_ID], gotchiPoints:55  },
-  { id:5,  name:'Eva',    charId:null, eggVariant:null, bgFile:DEFAULT_BG, bgId:DEFAULT_BG_ID, bgColor:DEFAULT_BG_COLOR, unlockedBgs:[DEFAULT_BG_ID], gotchiPoints:175 },
-  { id:6,  name:'Finn',   charId:null, eggVariant:null, bgFile:DEFAULT_BG, bgId:DEFAULT_BG_ID, bgColor:DEFAULT_BG_COLOR, unlockedBgs:[DEFAULT_BG_ID], gotchiPoints:90  },
-  { id:7,  name:'Grace',  charId:null, eggVariant:null, bgFile:DEFAULT_BG, bgId:DEFAULT_BG_ID, bgColor:DEFAULT_BG_COLOR, unlockedBgs:[DEFAULT_BG_ID], gotchiPoints:140 },
-  { id:8,  name:'Henry',  charId:null, eggVariant:null, bgFile:DEFAULT_BG, bgId:DEFAULT_BG_ID, bgColor:DEFAULT_BG_COLOR, unlockedBgs:[DEFAULT_BG_ID], gotchiPoints:30  },
-  { id:9,  name:'Iris',   charId:null, eggVariant:null, bgFile:DEFAULT_BG, bgId:DEFAULT_BG_ID, bgColor:DEFAULT_BG_COLOR, unlockedBgs:[DEFAULT_BG_ID], gotchiPoints:200 },
-  { id:10, name:'Jake',   charId:null, eggVariant:null, bgFile:DEFAULT_BG, bgId:DEFAULT_BG_ID, bgColor:DEFAULT_BG_COLOR, unlockedBgs:[DEFAULT_BG_ID], gotchiPoints:65  },
-  { id:11, name:'Kira',   charId:null, eggVariant:null, bgFile:DEFAULT_BG, bgId:DEFAULT_BG_ID, bgColor:DEFAULT_BG_COLOR, unlockedBgs:[DEFAULT_BG_ID], gotchiPoints:155 },
-  { id:12, name:'Luca',   charId:null, eggVariant:null, bgFile:DEFAULT_BG, bgId:DEFAULT_BG_ID, bgColor:DEFAULT_BG_COLOR, unlockedBgs:[DEFAULT_BG_ID], gotchiPoints:110 },
-  { id:13, name:'Maya',   charId:null, eggVariant:null, bgFile:DEFAULT_BG, bgId:DEFAULT_BG_ID, bgColor:DEFAULT_BG_COLOR, unlockedBgs:[DEFAULT_BG_ID], gotchiPoints:240 },
-  { id:14, name:'Noah',   charId:null, eggVariant:null, bgFile:DEFAULT_BG, bgId:DEFAULT_BG_ID, bgColor:DEFAULT_BG_COLOR, unlockedBgs:[DEFAULT_BG_ID], gotchiPoints:45  },
-  { id:15, name:'Olivia', charId:null, eggVariant:null, bgFile:DEFAULT_BG, bgId:DEFAULT_BG_ID, bgColor:DEFAULT_BG_COLOR, unlockedBgs:[DEFAULT_BG_ID], gotchiPoints:185 },
-];
+// ── Active class — set by selector, persisted to localStorage ────────────
+let CLASS_ID = localStorage.getItem('gotchi_class_id') || null;
+
+async function loadClassList() {
+  const { data, error } = await db.from('classes').select('id, name').order('name');
+  if (error) { console.error('Could not load classes:', error); return; }
+
+  const sel = document.getElementById('class-selector');
+  sel.innerHTML = '<option value="">— Select a class —</option>';
+  (data || []).forEach(cls => {
+    const opt = document.createElement('option');
+    opt.value       = cls.id;
+    opt.textContent = cls.name;
+    if (cls.id === CLASS_ID) opt.selected = true;
+    sel.appendChild(opt);
+  });
+
+  // If we had a saved class, show its name
+  if (CLASS_ID) {
+    const cls = data.find(c => c.id === CLASS_ID);
+    if (cls) document.getElementById('class-label').textContent = cls.name;
+  }
+}
+
+document.getElementById('class-selector').addEventListener('change', async e => {
+  const id = e.target.value;
+  if (!id) return;
+  CLASS_ID = id;
+  localStorage.setItem('gotchi_class_id', id);
+  const name = e.target.options[e.target.selectedIndex].text;
+  document.getElementById('class-label').textContent = name;
+  // Reload the grid with the new class
+  stopMirror();
+  closeOverlay('overlay-student');
+  selected = null;
+  STUDENTS = [];
+  cells = [];
+  document.getElementById('classroom-grid').innerHTML =
+    '<div style="color:var(--muted);font-size:11px;padding:24px;">Loading...</div>';
+  try {
+    await loadRosterFromDB();
+  } catch(e) {
+    console.error('Failed to load roster:', e);
+    toast('⚠ Could not load class');
+    return;
+  }
+  buildGrid();
+  toast(`📚 Loaded ${STUDENTS.length} students`);
+});
+
+// ─── ROSTER ───────────────────────────────────────────────────────────────
+let STUDENTS = []; // populated from DB
+
+async function loadRosterFromDB() {
+  if (!CLASS_ID) {
+    console.warn('No CLASS_ID set — using empty roster');
+    return;
+  }
+
+  // Load students for this class
+  const { data: studentRows, error } = await db
+    .from('students')
+    .select('*, pets(*)')
+    .eq('class_id', CLASS_ID)
+    .order('name');
+
+  if (error) { console.error('Failed to load students:', error); toast('⚠ Could not load class'); return; }
+
+  // Map DB rows → STUDENTS format
+  STUDENTS = studentRows.map(s => ({
+    id:           s.id,
+    name:         s.name,
+    gotchiPoints: s.gotchi_pts || 0,
+    bgFile:       s.bg_id ? null : DEFAULT_BG, // resolved from manifest later
+    bgId:         s.bg_id        || DEFAULT_BG_ID,
+    bgColor:      s.bg_color     || DEFAULT_BG_COLOR,
+    unlockedBgs:  s.unlocked_bgs || [DEFAULT_BG_ID],
+    // Pet data from joined pets table — slot 0 is the primary pet
+    _dbPets:      (s.pets || []).sort((a, b) => a.slot - b.slot),
+  }));
+
+  // Resolve bg filenames from manifest if needed
+  try {
+    const manifest = await loadBgManifest();
+    STUDENTS.forEach(s => {
+      const bg = manifest.backgrounds.find(b => b.id === s.bgId);
+      s.bgFile = bg ? bg.file : DEFAULT_BG;
+    });
+  } catch(e) {
+    STUDENTS.forEach(s => { if (!s.bgFile) s.bgFile = DEFAULT_BG; });
+  }
+
+  // Ensure every student has at least one egg — initialize if missing
+  await ensureEggs();
+
+  console.log(`Loaded ${STUDENTS.length} students from DB`);
+}
+
+async function ensureEggs() {
+  // For any student with no pets in the DB, create their first egg
+  const studentsNeedingEgg = STUDENTS.filter(s => s._dbPets.length === 0);
+  if (!studentsNeedingEgg.length) return;
+
+  // Wait for egg assets to be loaded so we can pick a variant
+  if (!eggJSON) await loadEggAssets();
+
+  for (const student of studentsNeedingEgg) {
+    const variant = Math.floor(Math.random() * eggJSON.variants.length);
+    const { data, error } = await db.from('pets').insert({
+      student_id:  student.id,
+      stage:       'egg',
+      egg_variant: variant,
+      slot:        0,
+    }).select().single();
+    if (error) { console.error('Failed to create egg for', student.name, error); continue; }
+    student._dbPets = [data];
+    console.log(`Created egg for ${student.name} (variant ${variant})`);
+  }
+}
+
+// ─── DB WRITE-BACK HELPERS ────────────────────────────────────────────────
+async function dbUpdateStudent(studentId, fields) {
+  const { error } = await db.from('students').update(fields).eq('id', studentId);
+  if (error) console.error('DB update student failed:', error);
+}
+
+async function dbUpsertPet(petData) {
+  const { error } = await db.from('pets').upsert(petData);
+  if (error) console.error('DB upsert pet failed:', error);
+}
+
+async function dbDeletePet(petId) {
+  const { error } = await db.from('pets').delete().eq('id', petId);
+  if (error) console.error('DB delete pet failed:', error);
+}
 
 // Assign random enabled tama to each student from tamadex
 async function assignTamas() {
@@ -909,6 +1039,8 @@ async function triggerHatch(studentId, petIdx = 0) {
   });
 
   // ── Step 8: swap egg → tama, spawn at egg position ────────────────────
+  const eggPet = cell.pets[petIdx];
+  const eggDbId = eggPet?.dbId || null;
   cell.student.charId = tamaEntry.id;
   await cell.hatchEgg(petIdx, tamaEntry.id);
 
@@ -916,10 +1048,15 @@ async function triggerHatch(studentId, petIdx = 0) {
   const newPet = cell.pets[cell.pets.length-1];
   if (newPet) {
     newPet.x  = eggX;
-    newPet.y  = Math.min(eggY, newPet.maxY); // clamp to tama boundary
+    newPet.y  = Math.min(eggY, newPet.maxY);
     newPet.vx = 0; newPet.vy = 0;
     newPet.forceAnimation('wave');
     setTimeout(() => newPet.forceAnimation(null), 2500);
+    // Persist hatch to DB — update the existing pet row
+    if (eggDbId) {
+      newPet.dbId = eggDbId;
+      dbUpsertPet({ id: eggDbId, stage: 'baby', char_id: tamaEntry.id, egg_variant: null });
+    }
   }
 
   // Resume cell loop
@@ -1001,6 +1138,7 @@ async function triggerEvolve(studentId, petIdx = 0) {
   const ptEl = document.getElementById('pts-' + student.id);
   if (ptEl) ptEl.textContent = student.gotchiPoints + ' pts';
   document.getElementById('sel-pts').textContent = student.gotchiPoints;
+  dbUpdateStudent(student.id, { gotchi_pts: student.gotchiPoints });
 
   // Pause cell loop
   cell._hatching = true;
@@ -1067,6 +1205,7 @@ async function triggerEvolve(studentId, petIdx = 0) {
 
   // ── Step 5: swap pet, fade in new tama ───────────────────────────────
   const evolvePetIdx = cell.pets.indexOf(pet);
+  const oldDbId = pet.dbId || null;
   const spawnX  = pet.x, spawnY = pet.y;
   cell.pets.splice(evolvePetIdx, 1);
   await cell.addTama(tamaEntry.id);
@@ -1075,6 +1214,11 @@ async function triggerEvolve(studentId, petIdx = 0) {
     newPet.x  = spawnX;
     newPet.y  = Math.min(spawnY, newPet.maxY);
     newPet.vx = 0; newPet.vy = 0;
+    // Persist evolve to DB — update existing pet row with new stage/char
+    if (oldDbId) {
+      newPet.dbId = oldDbId;
+      dbUpsertPet({ id: oldDbId, stage: tamaEntry.stage || getNextStage(pet.stage), char_id: tamaEntry.id });
+    }
   }
 
   // Fade in
@@ -1487,8 +1631,20 @@ class GotchiCell {
       const bgImg = await fetchImage(BG_PATH, this.student.bgFile);
       this.bgCanvas = buildBgCanvas(bgImg, this.student.bgColor || DEFAULT_BG_COLOR);
 
-      // Build initial pets — all students start with one egg
-      await this._addEgg(this.student.eggVariant);
+      // Build pets from DB state
+      const dbPets = this.student._dbPets || [];
+      if (dbPets.length === 0) {
+        // Fallback — no DB pets, add a random egg
+        await this._addEgg(null);
+      } else {
+        for (const dbPet of dbPets) {
+          if (dbPet.stage === 'egg') {
+            await this._addEgg(dbPet.egg_variant, dbPet.id);
+          } else {
+            await this.addTama(dbPet.char_id, dbPet.id);
+          }
+        }
+      }
 
       this.loadingEl.style.display = 'none';
       this.canvas.style.display    = 'block';
@@ -1499,8 +1655,7 @@ class GotchiCell {
     }
   }
 
-  async _addEgg(eggVariant) {
-    // Build transparent egg offscreen canvas (shared sheet, per-cell canvas)
+  async _addEgg(eggVariant, dbId = null) {
     const off = document.createElement('canvas');
     off.width  = eggSheet.naturalWidth  || eggSheet.width;
     off.height = eggSheet.naturalHeight || eggSheet.height;
@@ -1511,10 +1666,13 @@ class GotchiCell {
     const d = imgData.data;
     for (let i=0;i<d.length;i+=4) if(d[i]<15&&d[i+1]<15&&d[i+2]<15) d[i+3]=0;
     oc.putImageData(imgData, 0, 0);
-    this.pets.push(new Pet('egg', { eggVariant, off }));
+    const pet = new Pet('egg', { eggVariant, off });
+    pet.dbId = dbId; // DB pets table row ID
+    this.pets.push(pet);
+    return pet;
   }
 
-  async addTama(charId) {
+  async addTama(charId, dbId = null) {
     const charJSON = await fetchJSON(charId);
     const sheetImg = await fetchImage(TAMA_PATH, charJSON.sheet);
     const off      = document.createElement('canvas');
@@ -1524,8 +1682,10 @@ class GotchiCell {
     oc.imageSmoothingEnabled = false;
     oc.drawImage(sheetImg, 0, 0);
     const gen = charJSON.generation || 'adult';
-    this.pets.push(new Pet(gen, { charJSON, off, gen }));
-    return this.pets[this.pets.length-1];
+    const pet = new Pet(gen, { charJSON, off, gen });
+    pet.dbId = dbId;
+    this.pets.push(pet);
+    return pet;
   }
 
   // Replace egg pet at index with a tama (used by hatch sequence)
@@ -1577,6 +1737,8 @@ class GotchiCell {
     if (dot) {dot.classList.add('flash');setTimeout(()=>dot.classList.remove('flash'),600);}
     if (selected===this.student.id) refreshStudentPanel();
     updateHeader();
+    // Persist to DB
+    dbUpdateStudent(this.student.id, { gotchi_pts: this.student.gotchiPoints });
   }
 }
 
@@ -1587,6 +1749,10 @@ let selected = null;
 function buildGrid() {
   const grid = document.getElementById('classroom-grid');
   grid.innerHTML = '';
+  if (!STUDENTS.length) {
+    grid.innerHTML = '<div style="color:var(--muted);font-size:11px;padding:32px;text-align:center;">Select a class to begin</div>';
+    return;
+  }
   cells = STUDENTS.map(s => new GotchiCell(grid, s));
   updateHeader();
 }
@@ -1598,6 +1764,20 @@ async function init() {
     console.error('Failed to load egg assets:', e);
     toast('⚠ Could not load egg assets');
   }
+
+  // Load class list into selector
+  await loadClassList();
+
+  // Auto-load previously selected class if any
+  if (CLASS_ID) {
+    try {
+      await loadRosterFromDB();
+    } catch(e) {
+      console.error('Failed to load roster:', e);
+      toast('⚠ Could not load class roster');
+    }
+  }
+
   buildGrid();
 }
 // ─── SELECTION ────────────────────────────────────────────────────────────
@@ -2023,6 +2203,12 @@ function purchaseBackground(bg, price) {
     document.getElementById('sel-pts').textContent = student.gotchiPoints;
     updateHeader();
 
+    // Persist to DB
+    dbUpdateStudent(student.id, {
+      gotchi_pts:   student.gotchiPoints,
+      unlocked_bgs: student.unlockedBgs,
+    });
+
     toast(`✓ Unlocked ${bg.name}!`);
 
     // Re-open picker (now unlocked) then auto-apply
@@ -2047,7 +2233,8 @@ async function applyBackground(bg) {
 
   // Swap — completely replace the old bgCanvas
   student.bgFile = bg.file;
-  student.bgId   = bg.id; // future: persist to DB
+  student.bgId   = bg.id;
+  dbUpdateStudent(student.id, { bg_id: bg.id, unlocked_bgs: student.unlockedBgs });
 
   try {
     const bgImg   = await fetchImage(BG_PATH, bg.file);
@@ -2069,6 +2256,7 @@ async function applyBackground(bg) {
 const cellColorPicker = document.getElementById('cell-color-picker');
 const cellColorHex    = document.getElementById('cell-color-hex');
 
+let _colorDebounce = null;
 cellColorPicker.addEventListener('input', async e => {
   if (!selected) return;
   const color   = e.target.value;
@@ -2079,9 +2267,14 @@ cellColorPicker.addEventListener('input', async e => {
   student.bgColor = color;
   cellColorHex.textContent = color.toUpperCase();
 
-  // Rebuild bgCanvas with new color — keep same bg image
   const bgImg   = await fetchImage(BG_PATH, student.bgFile);
   cell.bgCanvas = buildBgCanvas(bgImg, color);
+
+  // Debounce DB write — don't fire on every drag tick
+  clearTimeout(_colorDebounce);
+  _colorDebounce = setTimeout(() => {
+    dbUpdateStudent(student.id, { bg_color: color });
+  }, 600);
 });
 
 document.getElementById('btn-cell-color-reset').addEventListener('click', async () => {
@@ -2090,12 +2283,13 @@ document.getElementById('btn-cell-color-reset').addEventListener('click', async 
   const cell    = cells.find(c => c.student.id === selected);
   if (!student || !cell) return;
 
-  student.bgColor      = DEFAULT_BG_COLOR;
+  student.bgColor = DEFAULT_BG_COLOR;
   cellColorPicker.value = DEFAULT_BG_COLOR;
   cellColorHex.textContent = DEFAULT_BG_COLOR;
 
   const bgImg   = await fetchImage(BG_PATH, student.bgFile);
   cell.bgCanvas = buildBgCanvas(bgImg, DEFAULT_BG_COLOR);
+  dbUpdateStudent(student.id, { bg_color: DEFAULT_BG_COLOR });
 });
 
 // ─── BROADCAST ────────────────────────────────────────────────────────────
