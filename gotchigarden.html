@@ -1656,6 +1656,14 @@ class GotchiCell {
   }
 
   async _addEgg(eggVariant, dbId = null) {
+    // eggVariant may be an integer index (from DB) or a full variant object (in-memory)
+    // Resolve to the actual variant object from eggJSON
+    let variant = eggVariant;
+    if (typeof eggVariant === 'number' || eggVariant === null || eggVariant === undefined) {
+      const idx = (eggVariant != null) ? eggVariant : Math.floor(Math.random() * eggJSON.variants.length);
+      variant = eggJSON.variants[idx];
+    }
+
     const off = document.createElement('canvas');
     off.width  = eggSheet.naturalWidth  || eggSheet.width;
     off.height = eggSheet.naturalHeight || eggSheet.height;
@@ -1666,8 +1674,8 @@ class GotchiCell {
     const d = imgData.data;
     for (let i=0;i<d.length;i+=4) if(d[i]<15&&d[i+1]<15&&d[i+2]<15) d[i+3]=0;
     oc.putImageData(imgData, 0, 0);
-    const pet = new Pet('egg', { eggVariant, off });
-    pet.dbId = dbId; // DB pets table row ID
+    const pet = new Pet('egg', { eggVariant: variant, off });
+    pet.dbId = dbId;
     this.pets.push(pet);
     return pet;
   }
