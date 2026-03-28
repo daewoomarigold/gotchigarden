@@ -402,31 +402,33 @@ function parseCSV(file) {
 
     const headers = lines[0].split(',').map(h => h.trim());
     const idx = {
-      uuid:        headers.findIndex(h => h.toLowerCase() === 'uuid'),
-      name:        headers.findIndex(h => h.toLowerCase() === 'name'),
-      grade:       headers.findIndex(h => h.toLowerCase() === 'grade'),
-      engClass:    headers.findIndex(h => h.toLowerCase() === 'english class'),
-      korClass:    headers.findIndex(h => h.toLowerCase() === 'korean class'),
-      classNum:    headers.findIndex(h => h.toLowerCase() === 'class number'),
-      active:      headers.findIndex(h => h.toLowerCase() === 'active'),
+      uuid:     headers.findIndex(h => h.toLowerCase() === 'uuid'),
+      name:     headers.findIndex(h => h.toLowerCase() === 'name'),
+      grade:    headers.findIndex(h => h.toLowerCase() === 'grade'),
+      engClass: headers.findIndex(h => h.toLowerCase() === 'english class'),
+      classNum: headers.findIndex(h => h.toLowerCase() === 'class number'),
+      active:   headers.findIndex(h => h.toLowerCase() === 'active'),
     };
 
-    csvGroups = {};
     let grade = '', engClass = '';
+    const students = [];
 
     lines.slice(1).forEach(line => {
       const cols = line.split(',').map(c => c.trim());
       if (idx.active >= 0 && cols[idx.active]?.toLowerCase() !== 'yes') return;
-      const korClass = cols[idx.korClass] || 'Unknown';
       grade    = cols[idx.grade]    || grade;
       engClass = cols[idx.engClass] || engClass;
-      if (!csvGroups[korClass]) csvGroups[korClass] = { students: [], grade, engClass };
-      csvGroups[korClass].students.push({
+      students.push({
         id:   cols[idx.uuid],
         name: cols[idx.name],
         num:  cols[idx.classNum],
       });
     });
+
+    // One group = one class for the whole file
+    csvGroups = {
+      all: { students, grade, engClass }
+    };
 
     renderCSVPreview(grade, engClass);
   };
@@ -434,32 +436,25 @@ function parseCSV(file) {
 }
 
 function renderCSVPreview(grade, engClass) {
-  const preview = document.getElementById('csv-preview');
-  const head    = document.getElementById('csv-preview-head');
-  const groups  = document.getElementById('csv-class-groups');
-  const total   = Object.values(csvGroups).reduce((a, g) => a + g.students.length, 0);
+  const preview  = document.getElementById('csv-preview');
+  const head     = document.getElementById('csv-preview-head');
+  const groups   = document.getElementById('csv-class-groups');
+  const students = csvGroups.all.students;
+  const className = `Grade ${grade} — ${engClass}`;
 
-  head.innerHTML = `Grade <strong style="color:var(--text);">${grade}</strong> — 
-    <strong style="color:var(--text);">${engClass}</strong> — 
-    <span style="color:var(--green);">${total} students</span> across 
-    <span style="color:var(--yellow);">${Object.keys(csvGroups).length} classes</span>`;
+  head.innerHTML = `Class: <strong style="color:var(--text);">${className}</strong> — 
+    <span style="color:var(--green);">${students.length} students</span>`;
 
   groups.innerHTML = '';
-  Object.entries(csvGroups).forEach(([korClass, group]) => {
-    const className = `Grade ${grade} ${engClass} — ${korClass}`;
-    const div = document.createElement('div');
-    div.className = 'csv-group';
-    div.innerHTML = `
-      <div class="csv-group-head">
-        <span>📚 ${className}</span>
-        <span style="color:var(--muted);">${group.students.length} students</span>
-      </div>
-      ${group.students.map(s =>
-        `<div class="csv-student-row">#${s.num} — ${s.name}</div>`
-      ).join('')}`;
-    groups.appendChild(div);
-  });
-
+  const div = document.createElement('div');
+  div.className = 'csv-group';
+  div.innerHTML = `
+    <div class="csv-group-head">
+      <span>📚 ${className}</span>
+      <span style="color:var(--muted);">${students.length} students</span>
+    </div>
+    ${students.map(s => `<div class="csv-student-row">#${s.num} — ${s.name}</div>`).join('')}`;
+  groups.appendChild(div);
   preview.style.display = 'flex';
 }
 
@@ -484,42 +479,37 @@ async function createManualClass() {
 }
 
 async function importCSVClasses() {
-  if (!Object.keys(csvGroups).length) { toast('⚠ No CSV data to import'); return; }
+  if (!csvGroups.all?.students.length) { toast('⚠ No CSV data to import'); return; }
   const btn = document.getElementById('btn-confirm-class');
   btn.disabled = true; btn.textContent = 'Importing...';
 
-  let lastClass = null;
-  for (const [korClass, group] of Object.entries(csvGroups)) {
-    const className = `Grade ${group.grade} ${group.engClass} — ${korClass}`;
+  const { grade, engClass, students } = csvGroups.all;
+  const className = `Grade ${grade} — ${engClass}`;
 
-    // Create class
-    const { data: cls, error: clsErr } = await db
-      .from('classes').insert({ name: className }).select().single();
-    if (clsErr) { toast('⚠ ' + clsErr.message); break; }
+  // Create the single class
+  const { data: cls, error: clsErr } = await db
+    .from('classes').insert({ name: className }).select().single();
+  if (clsErr) { toast('⚠ ' + clsErr.message); btn.disabled = false; btn.textContent = '↑ Import Classes'; return; }
 
-    // Insert students with their UUIDs preserved
-    const studentRows = group.students.map(s => ({
-      id:           s.id,
-      name:         s.name,
-      class_id:     cls.id,
-      gotchi_pts:   0,
-      bg_id:        'bg_052',
-      bg_color:     '#87CEEB',
-      unlocked_bgs: ['bg_052'],
-    }));
+  // Insert all students with their UUIDs preserved
+  const studentRows = students.map(s => ({
+    id:           s.id,
+    name:         s.name,
+    class_id:     cls.id,
+    gotchi_pts:   0,
+    bg_id:        'bg_052',
+    bg_color:     '#87CEEB',
+    unlocked_bgs: ['bg_052'],
+  }));
 
-    const { error: stuErr } = await db.from('students').insert(studentRows);
-    if (stuErr) { toast('⚠ Students: ' + stuErr.message); break; }
-
-    lastClass = cls;
-  }
+  const { error: stuErr } = await db.from('students').insert(studentRows);
+  if (stuErr) { toast('⚠ Students: ' + stuErr.message); btn.disabled = false; btn.textContent = '↑ Import Classes'; return; }
 
   btn.disabled = false;
   document.getElementById('modal-new-class').classList.remove('open');
-  const count = Object.keys(csvGroups).length;
-  toast(`✓ Imported ${count} class${count!==1?'es':''}`);
+  toast(`✓ Imported ${className} with ${students.length} students`);
   await loadClasses();
-  if (lastClass) selectClass(lastClass);
+  selectClass(cls);
 }
 
 async function loadStudents() {
