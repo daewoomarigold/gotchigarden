@@ -145,6 +145,7 @@ header {
 .spotlight-cell-wrap {
   width: min(600px, 60vw); height: min(600px, 60vw);
   overflow: hidden;
+  position: relative;
 }
 
 #spotlight-canvas {
@@ -389,7 +390,56 @@ header {
 }
 #toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
 
-/* ── Pet roster portraits ── */
+/* ── Cell announcements ── */
+.cell-announcement {
+  position: absolute;
+  bottom: 28%;
+  left: 50%;
+  transform: translateX(-50%) translateY(6px);
+  background: #fff;
+  border: 2px solid #333;
+  border-radius: 8px;
+  padding: 4px 10px;
+  font-family: 'Pixelify Sans', monospace;
+  font-size: 11px;
+  color: #333;
+  white-space: nowrap;
+  box-shadow: 2px 2px 0 #333;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.25s, transform 0.25s;
+  z-index: 10;
+}
+.cell-announcement.visible {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+.cell-announcement.fading { opacity: 0; }
+
+#spotlight-announce {
+  position: absolute;
+  bottom: 28%;
+  left: 50%;
+  transform: translateX(-50%) translateY(6px);
+  background: #fff;
+  border: 3px solid #333;
+  border-radius: 10px;
+  padding: 8px 20px;
+  font-family: 'Pixelify Sans', monospace;
+  font-size: 18px;
+  color: #333;
+  white-space: nowrap;
+  box-shadow: 3px 3px 0 #333;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.25s, transform 0.25s;
+  z-index: 10;
+}
+#spotlight-announce.visible {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+#spotlight-announce.fading { opacity: 0; }
 .pet-portrait-btn {
   background: var(--raised);
   border: 2px solid var(--border);
@@ -489,6 +539,7 @@ header {
     <div class="spotlight-left">
       <div class="spotlight-cell-wrap">
         <canvas id="spotlight-canvas" width="600" height="600"></canvas>
+        <div id="spotlight-announce"></div>
       </div>
     </div>
 
@@ -878,10 +929,42 @@ async function triggerHatch(studentId, petIdx = 0) {
 }
 
 // ─── CELL ANNOUNCEMENT ────────────────────────────────────────────────────
-// Sets announcement state on the cell — _render draws it every frame automatically.
-// Appears in both grid view and spotlight mirror for free.
+// Renders as an HTML overlay on top of the cell VP — always crisp at any scale.
+// Appears in the grid view. The spotlight mirror won't show it (it reads the canvas)
+// but we also trigger a spotlight announcement separately for that.
 function cellAnnounce(cell, text, duration = 3000) {
-  cell._announcement = { text, startTs: performance.now(), duration };
+  // Remove any existing announcement for this cell
+  const existing = cell.vp.querySelector('.cell-announcement');
+  if (existing) existing.remove();
+
+  const el = document.createElement('div');
+  el.className = 'cell-announcement';
+  el.textContent = text;
+  cell.vp.appendChild(el);
+
+  // Animate in
+  requestAnimationFrame(() => el.classList.add('visible'));
+
+  // Fade out then remove
+  const fadeOutAt = duration - 400;
+  setTimeout(() => el.classList.add('fading'), fadeOutAt);
+  setTimeout(() => el.remove(), duration);
+
+  // Also show in spotlight if this cell is currently selected
+  if (selected === cell.student.id) {
+    spotlightAnnounce(text, duration);
+  }
+}
+
+function spotlightAnnounce(text, duration = 3000) {
+  const el = document.getElementById('spotlight-announce');
+  if (!el) return;
+  el.textContent = text;
+  el.classList.remove('fading');
+  el.classList.add('visible');
+  clearTimeout(el._t1); clearTimeout(el._t2);
+  el._t1 = setTimeout(() => el.classList.add('fading'), duration - 400);
+  el._t2 = setTimeout(() => el.classList.remove('visible', 'fading'), duration);
 }
 
 // ─── EVOLVE SEQUENCE (baby→adult, adult→variant) ──────────────────────────
@@ -1318,7 +1401,6 @@ class GotchiCell {
     this._lastRaf  = 0;
     this._forced   = null;
     this._hatching = false;
-    this._announcement = null; // { text, startTs, duration }
 
     this._buildDOM(container);
     this._load();
@@ -1426,32 +1508,6 @@ class GotchiCell {
       if (p.stage==='egg') p.drawEgg(ctx);
       else p.drawTama(ctx);
     });
-    // Draw announcement overlay on top if active
-    if (this._announcement) {
-      const { text, startTs, duration } = this._announcement;
-      const elapsed = performance.now() - startTs;
-      if (elapsed >= duration) { this._announcement = null; return; }
-      const fadeIn  = Math.min(elapsed / 300, 1);
-      const fadeOut = elapsed > duration - 400 ? Math.max(0, (duration - elapsed) / 400) : 1;
-      const alpha   = fadeIn * fadeOut;
-      const bw = Math.min(CW - 16, 180), bh = 28;
-      const bx = Math.round((CW - bw) / 2);
-      const by = Math.floor(CH * 0.55);
-      ctx.globalAlpha = alpha;
-      ctx.fillStyle   = '#fff';
-      ctx.strokeStyle = '#333';
-      ctx.lineWidth   = 2;
-      ctx.beginPath();
-      ctx.roundRect(bx, by, bw, bh, 6);
-      ctx.fill(); ctx.stroke();
-      ctx.fillStyle    = '#333';
-      ctx.font         = `bold ${Math.floor(bh * 0.5)}px "Pixelify Sans", monospace`;
-      ctx.textAlign    = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText(text, CW/2, by + bh/2, bw - 12);
-      ctx.globalAlpha  = 1;
-      ctx.textAlign    = 'left';
-    }
   }
 
   _loop(ts) {
