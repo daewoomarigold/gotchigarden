@@ -846,24 +846,17 @@ async function loadRosterFromDB() {
 }
 
 async function ensureEggs() {
-  // For any student with no pets in the DB, create their first egg
   const studentsNeedingEgg = STUDENTS.filter(s => s._dbPets.length === 0);
   if (!studentsNeedingEgg.length) return;
-
-  // Wait for egg assets to be loaded so we can pick a variant
   if (!eggJSON) await loadEggAssets();
 
   for (const student of studentsNeedingEgg) {
-    const variant = Math.floor(Math.random() * eggJSON.variants.length);
-    const { data, error } = await db.from('pets').insert({
-      student_id:  student.id,
-      stage:       'egg',
-      egg_variant: variant,
-      slot:        0,
-    }).select().single();
-    if (error) { console.error('Failed to create egg for', student.name, error); continue; }
-    student._dbPets = [data];
-    console.log(`Created egg for ${student.name} (variant ${variant})`);
+    const variantIdx = Math.floor(Math.random() * eggJSON.variants.length);
+    const data = await dbCreatePet(student.id, 0, 'egg', variantIdx);
+    if (data) {
+      student._dbPets = [data];
+      console.log(`Created egg for ${student.name} (variant ${variantIdx})`);
+    }
   }
 }
 
@@ -871,6 +864,18 @@ async function ensureEggs() {
 async function dbUpdateStudent(studentId, fields) {
   const { error } = await db.from('students').update(fields).eq('id', studentId);
   if (error) console.error('DB update student failed:', error);
+}
+
+async function dbCreatePet(studentId, slot, stage, eggVariantIdx = null, charId = null) {
+  const { data, error } = await db.from('pets').insert({
+    student_id:  studentId,
+    slot,
+    stage,
+    egg_variant: eggVariantIdx,
+    char_id:     charId,
+  }).select().single();
+  if (error) { console.error('DB create pet failed:', error); return null; }
+  return data; // returns full row including generated UUID
 }
 
 async function dbUpsertPet(petData) {
@@ -1983,11 +1988,15 @@ document.getElementById('btn-add-egg').addEventListener('click', () => {
     if (el) el.textContent = student.gotchiPoints + ' pts';
     document.getElementById('sel-pts').textContent = student.gotchiPoints;
     updateHeader();
+    dbUpdateStudent(student.id, { gotchi_pts: student.gotchiPoints });
 
-    const cell    = cells.find(c => c.student.id === selected);
-    const variant = eggJSON.variants[Math.floor(Math.random() * eggJSON.variants.length)];
-    await cell._addEgg(variant);
-    selectedPetIdx = cell.pets.length - 1;
+    const cell       = cells.find(c => c.student.id === selected);
+    const variantIdx = Math.floor(Math.random() * eggJSON.variants.length);
+    const slot       = cell.pets.length; // next available slot
+    const dbPet      = await dbCreatePet(student.id, slot, 'egg', variantIdx);
+    const variant    = eggJSON.variants[variantIdx];
+    const newPet     = await cell._addEgg(variant, dbPet?.id || null);
+    selectedPetIdx   = cell.pets.length - 1;
     refreshStudentPanel();
     toast('🥚 New egg added!');
   };
@@ -2058,11 +2067,25 @@ document.getElementById('btn-debug-undo').addEventListener('click', async () => 
   const history = getEvolutionHistory(selected);
   if (!history.length) { toast('Nothing to undo'); return; }
   const cell     = cells.find(c => c.student.id === selected);
+  const student  = STUDENTS.find(s => s.id === selected);
   const snapshot = history.pop();
+
+  // Delete current DB pets
+  const oldIds = cell.pets.map(p => p.dbId).filter(Boolean);
+  for (const id of oldIds) await dbDeletePet(id);
+
   cell.pets = [];
-  for (const s of snapshot) {
-    if (s.stage === 'egg') await cell._addEgg(s.eggVariant);
-    else await cell.addTama(s.charId);
+  for (let slot = 0; slot < snapshot.length; slot++) {
+    const s = snapshot[slot];
+    if (s.stage === 'egg') {
+      const variantIdx = s.eggVariant ? eggJSON.variants.indexOf(s.eggVariant) : 0;
+      const safeIdx = variantIdx >= 0 ? variantIdx : 0;
+      const dbPet = await dbCreatePet(student.id, slot, 'egg', safeIdx);
+      await cell._addEgg(s.eggVariant, dbPet?.id || null);
+    } else {
+      const dbPet = await dbCreatePet(student.id, slot, s.stage || 'baby', null, s.charId);
+      await cell.addTama(s.charId, dbPet?.id || null);
+    }
   }
   selectedPetIdx = 0;
   refreshStudentPanel();
@@ -2075,10 +2098,16 @@ document.getElementById('btn-debug-reset').addEventListener('click', async () =>
   const cell    = cells.find(c => c.student.id === selected);
   const student = STUDENTS.find(s => s.id === selected);
   getEvolutionHistory(selected).push(snapshotPets(cell));
+
+  // Delete all DB pets for this student
+  const oldIds = cell.pets.map(p => p.dbId).filter(Boolean);
+  for (const id of oldIds) await dbDeletePet(id);
+
   cell.pets = [];
-  const variant = eggJSON.variants[Math.floor(Math.random() * eggJSON.variants.length)];
-  student.eggVariant = variant;
-  await cell._addEgg(variant);
+  const variantIdx = Math.floor(Math.random() * eggJSON.variants.length);
+  const dbPet      = await dbCreatePet(student.id, 0, 'egg', variantIdx);
+  const variant    = eggJSON.variants[variantIdx];
+  await cell._addEgg(variant, dbPet?.id || null);
   selectedPetIdx = 0;
   refreshStudentPanel();
   toast('🥚 Reset to egg');
