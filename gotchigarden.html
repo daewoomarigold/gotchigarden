@@ -517,9 +517,9 @@ header {
 
 <header>
   <div class="hdr-title">★ GOTCHIGARDEN</div>
-  <div class="hdr-meta" id="class-label">loading...</div>
+  <div class="hdr-meta" id="class-label"></div>
   <div class="hdr-btns">
-    <button class="btn pink" onclick="openOverlay('overlay-broadcast')">⚡ Broadcast</button>
+    <button class="btn" id="btn-teacher-menu" title="Teacher tools">⚙</button>
   </div>
 </header>
 
@@ -527,8 +527,17 @@ header {
   <div class="classroom-grid" id="classroom-grid"></div>
 </div>
 
-<div class="fab-group">
-  <button class="fab yellow" onclick="openOverlay('overlay-award-all')">★ Award All</button>
+<!-- Teacher tools dropdown -->
+<div id="teacher-dropdown" style="
+  display:none;position:fixed;top:50px;right:16px;
+  background:var(--surface);border:1px solid var(--border2);
+  border-radius:8px;padding:10px;flex-direction:column;gap:6px;
+  min-width:200px;z-index:200;box-shadow:0 4px 20px rgba(0,0,0,0.6);
+">
+  <div style="font-size:9px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;padding-bottom:6px;border-bottom:1px solid var(--border);">⚙ Teacher Tools</div>
+  <button class="btn btn-full" onclick="openOverlay('overlay-broadcast');document.getElementById('teacher-dropdown').style.display='none';">⚡ Broadcast</button>
+  <button class="btn btn-full" onclick="openOverlay('overlay-award-all');document.getElementById('teacher-dropdown').style.display='none';">★ Award All</button>
+  <div style="font-size:9px;color:var(--muted);padding-top:4px;border-top:1px solid var(--border);">🔒 More features coming soon</div>
 </div>
 
 <!-- Student spotlight overlay -->
@@ -972,12 +981,24 @@ function spotlightAnnounce(text, duration = 3000) {
 async function triggerEvolve(studentId, petIdx = 0) {
   const cell = cells.find(c => c.student.id === studentId);
   if (!cell) return;
-  const pet = cell.pets[petIdx];
+  const pet     = cell.pets[petIdx];
+  const student = cell.student;
   if (!pet || (pet.stage !== 'baby' && pet.stage !== 'adult')) return;
+
+  // Check cost
+  if (student.gotchiPoints < EVOLVE_COST) {
+    toast(`⚠ Need ${EVOLVE_COST} GotchiPt to evolve`); return;
+  }
 
   // Step 0a: pick next stage in background
   const tamaEntry = await pickEvolution(pet.stage);
   if (!tamaEntry) { toast(`⚠ No ${getNextStage(pet.stage)} tamas available`); return; }
+
+  // Deduct cost
+  student.gotchiPoints -= EVOLVE_COST;
+  const ptEl = document.getElementById('pts-' + student.id);
+  if (ptEl) ptEl.textContent = student.gotchiPoints + ' pts';
+  document.getElementById('sel-pts').textContent = student.gotchiPoints;
 
   // Pause cell loop
   cell._hatching = true;
@@ -1671,7 +1692,7 @@ function buildPetActions(cell) {
       const btn = document.createElement('button');
       btn.className = 'btn btn-full';
       btn.style.cssText = 'border-color:var(--cyan);color:var(--cyan);';
-      btn.textContent = `✨ Evolve`;
+      btn.textContent = `✨ Evolve  (${EVOLVE_COST} pt)`;
       btn.addEventListener('click', () => triggerEvolve(selected, selectedPetIdx));
       body.appendChild(btn);
     }
@@ -1704,9 +1725,8 @@ function stopMirror() {
 }
 
 function updateHeader() {
-  const top = STUDENTS.reduce((a, b) => a.gotchiPoints > b.gotchiPoints ? a : b);
-  document.getElementById('class-label').textContent =
-    `${STUDENTS.length} students · top: ${top.name} (${top.gotchiPoints} pts)`;
+  // Class label reserved for class name (e.g. "Grade 1") — set via backend later
+  // document.getElementById('class-label').textContent = ...
 }
 
 // ─── OVERLAYS ─────────────────────────────────────────────────────────────
@@ -1770,7 +1790,22 @@ document.getElementById('btn-add-egg').addEventListener('click', () => {
   openOverlay('overlay-buy-confirm');
 });
 
+// ─── TEACHER MENU ─────────────────────────────────────────────────────────
+const teacherDropdown = document.getElementById('teacher-dropdown');
+document.getElementById('btn-teacher-menu').addEventListener('click', e => {
+  e.stopPropagation();
+  const open = teacherDropdown.style.display === 'flex';
+  teacherDropdown.style.display = open ? 'none' : 'flex';
+});
+document.addEventListener('click', e => {
+  if (!teacherDropdown.contains(e.target) &&
+      e.target.id !== 'btn-teacher-menu') {
+    teacherDropdown.style.display = 'none';
+  }
+});
+
 // ─── DEBUG TOOLS ──────────────────────────────────────────────────────────
+const EVOLVE_COST = 1; // pts — adjust later
 // Toggle debug dropdown
 const debugDropdown = document.getElementById('debug-dropdown');
 document.getElementById('btn-debug-toggle').addEventListener('click', e => {
