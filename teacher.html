@@ -325,11 +325,15 @@ document.addEventListener('visibilitychange', async () => {
 });
 
 async function handleUser(user) {
+  // Already loaded this user — skip to avoid duplicate calls
+  if (currentUser?.id === user.id) return;
+
   const { data, error } = await db.from('teachers').select('id').eq('email', user.email).single();
   console.log('Whitelist check:', user.email, data, error);
   if (error || !data) {
     document.getElementById('login-error').classList.add('show');
-    await db.auth.signOut(); return;
+    db.auth.signOut(); // don't await — avoids triggering another auth event loop
+    return;
   }
   currentUser = user;
   document.getElementById('hdr-user-email').textContent = user.email;
