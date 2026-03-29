@@ -512,6 +512,24 @@ header {
   overflow: hidden;
   text-overflow: ellipsis;
 }
+/* ── Auth gate — locked buttons ── */
+.auth-gated {
+  position: relative;
+  transition: opacity 0.2s;
+}
+.auth-gated.locked {
+  opacity: 0.45;
+  cursor: not-allowed !important;
+  pointer-events: none;
+}
+.auth-gated.locked::after {
+  content: '🔒';
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 10px;
+  pointer-events: none;
+}
 </style>
 </head>
 <body>
@@ -530,7 +548,17 @@ header {
   <div class="hdr-meta" id="class-label"></div>
   <div class="hdr-flex" style="flex:1;"></div>
   <div class="hdr-btns">
-    <button class="btn" id="btn-teacher-menu" title="Teacher tools">⚙</button>
+    <!-- Auth state — shown when logged out -->
+    <button class="btn" id="btn-hdr-signin" style="border-color:var(--cyan);color:var(--cyan);display:none;">
+      🔑 Sign in
+    </button>
+    <!-- Auth state — shown when logged in -->
+    <div id="hdr-auth-user" style="display:none;align-items:center;gap:8px;font-size:10px;color:var(--muted);">
+      <div style="width:7px;height:7px;border-radius:50%;background:var(--green);flex-shrink:0;"></div>
+      <span id="hdr-auth-email"></span>
+      <button class="btn" id="btn-hdr-signout" style="font-size:9px;padding:3px 8px;">↩</button>
+    </div>
+    <button class="btn" id="btn-teacher-menu" title="Teacher tools" style="display:none;">⚙</button>
   </div>
 </header>
 
@@ -570,7 +598,7 @@ header {
       <div class="spotlight-header">
         <div class="spotlight-name" id="sel-name">—</div>
         <div style="display:flex;gap:6px;align-items:center;position:relative;">
-          <button class="spotlight-close" id="btn-debug-toggle" title="Debug tools">⚙</button>
+          <button class="spotlight-close auth-gated locked" id="btn-debug-toggle" title="Debug tools">⚙</button>
           <button class="spotlight-close" onclick="closeOverlay('overlay-student')">✕</button>
           <!-- Debug dropdown -->
           <div id="debug-dropdown" style="
@@ -619,12 +647,12 @@ header {
       <div class="spotlight-section">
         <div class="spotlight-section-head">Tama Shop</div>
         <div class="shop-grid">
-          <button class="shop-btn" id="btn-open-bg-picker" onclick="openBgPicker()">
+          <button class="shop-btn auth-gated locked" id="btn-open-bg-picker" onclick="openBgPicker()">
             <span class="shop-icon">🖼</span>
             <span class="shop-label">Background</span>
             <span class="shop-cost" style="color:var(--cyan);font-size:9px;">Pick one</span>
           </button>
-          <button class="shop-btn" id="btn-add-egg">
+          <button class="shop-btn auth-gated locked" id="btn-add-egg">
             <span class="shop-icon">🥚</span>
             <span class="shop-label">New Egg</span>
             <span class="shop-cost" style="color:var(--yellow);font-size:9px;">1 pt</span>
@@ -633,7 +661,7 @@ header {
       </div>
 
       <!-- Cell color -->
-      <div class="spotlight-section">
+      <div class="spotlight-section auth-gated locked" id="cell-color-section">
         <div class="spotlight-section-head">Cell Color</div>
         <div style="display:flex;align-items:center;gap:10px;margin-top:2px;">
           <input type="color" id="cell-color-picker" value="#87CEEB"
@@ -1301,6 +1329,71 @@ const ANIMATION_DEFS = {
   },
 };
 
+// ─── AUTH ─────────────────────────────────────────────────────────────────
+let currentUser = null; // null = logged out
+
+// All elements with class="auth-gated" are locked/unlocked together
+function setAuthState(user) {
+  currentUser = user;
+  const authed = !!user;
+
+  // Lock/unlock all gated elements
+  document.querySelectorAll('.auth-gated').forEach(el => {
+    el.classList.toggle('locked', !authed);
+  });
+
+  // Header — show/hide sign-in vs user display
+  document.getElementById('btn-hdr-signin').style.display    = authed ? 'none'         : 'flex';
+  document.getElementById('hdr-auth-user').style.display     = authed ? 'flex'         : 'none';
+  document.getElementById('btn-teacher-menu').style.display  = authed ? 'inline-flex'  : 'none';
+
+  if (authed) {
+    document.getElementById('hdr-auth-email').textContent = user.email;
+  }
+}
+
+async function initAuth() {
+  // Check existing session
+  const { data: { session } } = await db.auth.getSession();
+  if (session?.user) await handleAuthUser(session.user);
+  else setAuthState(null);
+
+  // Listen for auth changes
+  db.auth.onAuthStateChange(async (event, session) => {
+    if (event === 'SIGNED_IN' && session?.user) {
+      await handleAuthUser(session.user);
+    } else if (event === 'SIGNED_OUT') {
+      setAuthState(null);
+    }
+  });
+}
+
+async function handleAuthUser(user) {
+  // Check whitelist
+  const { data } = await db.from('teachers').select('id').eq('email', user.email).single();
+  if (data) {
+    setAuthState(user);
+  } else {
+    // Not a whitelisted teacher — sign them out silently
+    await db.auth.signOut();
+    setAuthState(null);
+    toast('⚠ Account not whitelisted — view only');
+  }
+}
+
+document.getElementById('btn-hdr-signin').addEventListener('click', async () => {
+  const { error } = await db.auth.signInWithOAuth({
+    provider: 'google',
+    options: { redirectTo: 'https://daewoomarigold.github.io/gotchigarden/gotchigarden.html' }
+  });
+  if (error) toast('⚠ ' + error.message);
+});
+
+document.getElementById('btn-hdr-signout').addEventListener('click', async () => {
+  await db.auth.signOut();
+  toast('Signed out');
+});
+
 // ─── RESPONSIVE CELL SIZE ─────────────────────────────────────────────────
 // CW/CH are computed from viewport so the 5×3 grid always fits the screen
 let CW = 200, CH = 200;
@@ -1874,6 +1967,9 @@ function buildGrid() {
 }
 
 async function init() {
+  // Start auth — sets locked state immediately, then resolves async
+  initAuth();
+
   try {
     await loadEggAssets();
   } catch(e) {
@@ -1995,7 +2091,7 @@ function buildPetActions(cell) {
 
   if (pet.stage === 'egg') {
     const btn = document.createElement('button');
-    btn.className = 'btn btn-full';
+    btn.className = 'btn btn-full auth-gated' + (currentUser ? '' : ' locked');
     btn.style.cssText = 'border-color:var(--yellow);color:var(--yellow);';
     btn.textContent = '🥚 Hatch Egg';
     btn.addEventListener('click', () => triggerHatch(selected, selectedPetIdx));
@@ -2004,7 +2100,7 @@ function buildPetActions(cell) {
     const nextStage = getNextStage(pet.stage);
     if (nextStage) {
       const btn = document.createElement('button');
-      btn.className = 'btn btn-full';
+      btn.className = 'btn btn-full auth-gated' + (currentUser ? '' : ' locked');
       btn.style.cssText = 'border-color:var(--cyan);color:var(--cyan);';
       btn.textContent = `✨ Evolve  (${EVOLVE_COST} pt)`;
       btn.addEventListener('click', () => triggerEvolve(selected, selectedPetIdx));
