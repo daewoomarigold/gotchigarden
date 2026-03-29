@@ -952,6 +952,27 @@ async function loadTamaDex() {
 // For now all candidates within a stage are equally weighted.
 // Future: assign weights per character for routing paths.
 
+// ─── FOOD SYSTEM ──────────────────────────────────────────────────────────
+const FOODS = [
+  { id: 'food_basic_a',   name: 'Basic Food A',   tier: 'basic',   cost: 2,  icon: '🍙', desc: 'Standard evolution path' },
+  { id: 'food_basic_b',   name: 'Basic Food B',   tier: 'basic',   cost: 2,  icon: '🍎', desc: 'Standard evolution path' },
+  { id: 'food_premium_a', name: 'Premium Food A', tier: 'premium', cost: 8,  icon: '🍱', desc: 'Variant-capable evolution path' },
+  { id: 'food_premium_b', name: 'Premium Food B', tier: 'premium', cost: 8,  icon: '🍣', desc: 'Variant-capable evolution path' },
+];
+
+// A tama is variant-capable if a sibling with same family# but slot > 000 exists
+function isVariantCapable(charId, dex) {
+  const parts = charId.split('-');
+  if (parts.length < 4 || parts[1] !== '002') return false;
+  const family = parts[2];
+  const slot   = parts[3];
+  if (slot !== '000') return false; // this IS a variant, not a base adult
+  return dex.characters.some(c => {
+    const cp = c.id.split('-');
+    return cp[1] === '002' && cp[2] === family && cp[3] !== '000';
+  });
+}
+
 function getNextStage(currentStage) {
   switch (currentStage) {
     case 'egg':   return 'baby';
@@ -962,7 +983,6 @@ function getNextStage(currentStage) {
 }
 
 function getTamIdStage(id) {
-  // TAM-000 = egg, TAM-001 = baby, TAM-002-xxx-000 = adult, TAM-002-xxx-00x = variant
   const parts = id.split('-');
   if (parts[1] === '000') return 'egg';
   if (parts[1] === '001') return 'baby';
@@ -970,23 +990,38 @@ function getTamIdStage(id) {
   return 'adult';
 }
 
-async function pickEvolution(currentStage) {
+// petFedWith: the food id the pet was fed, or null (only relevant for baby→adult)
+async function pickEvolution(currentStage, petFedWith = null) {
   const dex       = await loadTamaDex();
   const nextStage = getNextStage(currentStage);
   if (!nextStage) return null;
 
-  const pool = dex.characters.filter(c =>
+  let pool = dex.characters.filter(c =>
     c.enabled && getTamIdStage(c.id) === nextStage
   );
 
-  // Diagnostic — remove once working
-  console.log(`pickEvolution('${currentStage}') → nextStage='${nextStage}'`);
-  console.log(`  All enabled:`, dex.characters.filter(c=>c.enabled).map(c=>`${c.id}(${getTamIdStage(c.id)})`));
-  console.log(`  Pool:`, pool.map(c=>c.id));
+  // For baby→adult, filter by food tier
+  if (currentStage === 'baby' && nextStage === 'adult' && petFedWith) {
+    const food = FOODS.find(f => f.id === petFedWith);
+    if (food) {
+      if (food.tier === 'premium') {
+        // Premium food → variant-capable adults only
+        pool = pool.filter(c => isVariantCapable(c.id, dex));
+      } else {
+        // Basic food → standard adults only (no variant path)
+        pool = pool.filter(c => !isVariantCapable(c.id, dex));
+      }
+    }
+  }
+
+  console.log(`pickEvolution('${currentStage}', fed:'${petFedWith}') → pool:`, pool.map(c=>c.id));
 
   if (!pool.length) {
-    console.warn(`No enabled ${nextStage} tamas found in tamadex`);
-    return null;
+    // Fallback to any adult if the filtered pool is empty (e.g. no variants enabled yet)
+    const fallback = dex.characters.filter(c => c.enabled && getTamIdStage(c.id) === nextStage);
+    if (!fallback.length) { console.warn(`No enabled ${nextStage} tamas`); return null; }
+    console.warn(`Food pool empty, falling back to full ${nextStage} pool`);
+    return fallback[Math.floor(Math.random() * fallback.length)];
   }
 
   return pool[Math.floor(Math.random() * pool.length)];
@@ -1158,13 +1193,18 @@ async function triggerEvolve(studentId, petIdx = 0) {
   const student = cell.student;
   if (!pet || (pet.stage !== 'baby' && pet.stage !== 'adult')) return;
 
+  // Baby must be fed before evolving
+  if (pet.stage === 'baby' && !pet.fedWith) {
+    toast('🍙 Feed me first!'); return;
+  }
+
   // Check cost
   if (student.gotchiPoints < EVOLVE_COST) {
     toast(`⚠ Need ${EVOLVE_COST} GotchiPt to evolve`); return;
   }
 
-  // Step 0a: pick next stage in background
-  const tamaEntry = await pickEvolution(pet.stage);
+  // Pick next stage — pass food for baby→adult branching
+  const tamaEntry = await pickEvolution(pet.stage, pet.fedWith || null);
   if (!tamaEntry) { toast(`⚠ No ${getNextStage(pet.stage)} tamas available`); return; }
 
   // Deduct cost
@@ -1733,14 +1773,14 @@ class GotchiCell {
       // Build pets from DB state
       const dbPets = this.student._dbPets || [];
       if (dbPets.length === 0) {
-        // Fallback — no DB pets, add a random egg
         await this._addEgg(null);
       } else {
         for (const dbPet of dbPets) {
           if (dbPet.stage === 'egg') {
             await this._addEgg(dbPet.egg_variant, dbPet.id);
           } else {
-            await this.addTama(dbPet.char_id, dbPet.id);
+            const pet = await this.addTama(dbPet.char_id, dbPet.id);
+            if (pet) pet.fedWith = dbPet.fed_with || null;
           }
         }
       }
@@ -2079,9 +2119,10 @@ function buildPetRoster(cell) {
 }
 
 function buildPetActions(cell) {
-  const pet  = cell.pets[selectedPetIdx];
-  const head = document.getElementById('pet-actions-head');
-  const body = document.getElementById('pet-actions-body');
+  const pet     = cell.pets[selectedPetIdx];
+  const student = cell.student;
+  const head    = document.getElementById('pet-actions-head');
+  const body    = document.getElementById('pet-actions-body');
   body.innerHTML = '';
 
   if (!pet) { head.textContent = 'Actions'; return; }
@@ -2089,6 +2130,7 @@ function buildPetActions(cell) {
   const name = pet.stage === 'egg' ? '???' : (pet.charJSON?.displayName || pet.stage);
   head.textContent = name;
 
+  // ── Egg: hatch button ────────────────────────────────────────────────
   if (pet.stage === 'egg') {
     const btn = document.createElement('button');
     btn.className = 'btn btn-full auth-gated' + (currentUser ? '' : ' locked');
@@ -2096,13 +2138,57 @@ function buildPetActions(cell) {
     btn.textContent = '🥚 Hatch Egg';
     btn.addEventListener('click', () => triggerHatch(selected, selectedPetIdx));
     body.appendChild(btn);
+
+  // ── Baby: food shop + conditional evolve ─────────────────────────────
+  } else if (pet.stage === 'baby') {
+
+    // Food shop — only if not yet fed
+    if (!pet.fedWith) {
+      const foodHead = document.createElement('div');
+      foodHead.style.cssText = 'font-size:9px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;margin-top:4px;';
+      foodHead.textContent = 'Feed your tama';
+      body.appendChild(foodHead);
+
+      FOODS.forEach(food => {
+        const btn = document.createElement('button');
+        btn.className = 'btn btn-full auth-gated' + (currentUser ? '' : ' locked');
+        const tierColor = food.tier === 'premium' ? 'var(--orange)' : 'var(--green)';
+        btn.style.cssText = `border-color:${tierColor};color:${tierColor};display:flex;justify-content:space-between;align-items:center;`;
+        btn.innerHTML = `<span>${food.icon} ${food.name}</span><span style="font-size:9px;opacity:0.8;">${food.cost}pt</span>`;
+        btn.title = food.desc;
+        btn.addEventListener('click', () => purchaseFood(food, pet));
+        body.appendChild(btn);
+      });
+
+    } else {
+      // Already fed — show what they ate
+      const food = FOODS.find(f => f.id === pet.fedWith);
+      const fedDiv = document.createElement('div');
+      fedDiv.style.cssText = 'font-size:10px;color:var(--green);padding:4px 0;';
+      fedDiv.textContent = `${food?.icon || '🍙'} Fed: ${food?.name || pet.fedWith}`;
+      body.appendChild(fedDiv);
+    }
+
+    // Evolve button — only if fed
+    const nextStage = getNextStage(pet.stage);
+    if (nextStage) {
+      const isFed = !!pet.fedWith;
+      const btn   = document.createElement('button');
+      btn.className = 'btn btn-full auth-gated' + (!currentUser || !isFed ? ' locked' : '');
+      btn.style.cssText = `border-color:${isFed ? 'var(--cyan)' : 'var(--muted)'};color:${isFed ? 'var(--cyan)' : 'var(--muted)'};margin-top:4px;`;
+      btn.textContent = isFed ? `✨ Evolve (${EVOLVE_COST} pt)` : '🍙 Feed me first!';
+      btn.addEventListener('click', () => triggerEvolve(selected, selectedPetIdx));
+      body.appendChild(btn);
+    }
+
+  // ── Adult: evolve to variant ─────────────────────────────────────────
   } else {
     const nextStage = getNextStage(pet.stage);
     if (nextStage) {
       const btn = document.createElement('button');
       btn.className = 'btn btn-full auth-gated' + (currentUser ? '' : ' locked');
       btn.style.cssText = 'border-color:var(--cyan);color:var(--cyan);';
-      btn.textContent = `✨ Evolve  (${EVOLVE_COST} pt)`;
+      btn.textContent = `✨ Evolve (${EVOLVE_COST} pt)`;
       btn.addEventListener('click', () => triggerEvolve(selected, selectedPetIdx));
       body.appendChild(btn);
     }
@@ -2319,6 +2405,51 @@ document.getElementById('btn-do-award-all').addEventListener('click', () => {
   closeOverlay('overlay-award-all');
   toast(`★ +${amt} pts awarded to all`);
 });
+
+// ─── FOOD PURCHASE & FEEDING ──────────────────────────────────────────────
+function purchaseFood(food, pet) {
+  if (!selected || !currentUser) return;
+  const student = STUDENTS.find(s => s.id === selected);
+  if (!student) return;
+
+  if (pet.fedWith) { toast('Already fed!'); return; }
+  if (pet.stage !== 'baby') { toast('Only babies can be fed'); return; }
+  if (student.gotchiPoints < food.cost) {
+    toast(`⚠ Need ${food.cost} pts for ${food.name}`); return;
+  }
+
+  // Confirmation
+  document.getElementById('buy-confirm-text').innerHTML =
+    `Feed <strong style="color:var(--text);">${food.icon} ${food.name}</strong><br>
+     to your baby tama?<br>
+     <span style="font-size:10px;color:var(--orange);">${food.tier === 'premium' ? '✨ Unlocks variant-capable evolution path' : 'Standard evolution path'}</span><br>
+     <span style="font-size:10px;color:var(--muted);">Cost: ${food.cost} pt · Balance after: ${student.gotchiPoints - food.cost} pts</span>`;
+
+  const confirmBtn = document.getElementById('btn-buy-confirm-yes');
+  const handler = async () => {
+    confirmBtn.removeEventListener('click', handler);
+    closeOverlay('overlay-buy-confirm');
+
+    // Deduct points
+    student.gotchiPoints -= food.cost;
+    const ptEl = document.getElementById('pts-' + student.id);
+    if (ptEl) ptEl.textContent = student.gotchiPoints + ' pts';
+    document.getElementById('sel-pts').textContent = student.gotchiPoints;
+    dbUpdateStudent(student.id, { gotchi_pts: student.gotchiPoints });
+
+    // Feed the pet
+    pet.fedWith = food.id;
+    if (pet.dbId) dbUpsertPet({ id: pet.dbId, fed_with: food.id });
+
+    // Refresh actions panel
+    const cell = cells.find(c => c.student.id === selected);
+    if (cell) buildPetActions(cell);
+
+    toast(`${food.icon} ${food.name} fed!`);
+  };
+  confirmBtn.addEventListener('click', handler);
+  openOverlay('overlay-buy-confirm');
+}
 
 // ─── BACKGROUND PICKER ───────────────────────────────────────────────────
 let bgManifest = null; // cached manifest
