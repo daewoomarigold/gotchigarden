@@ -773,7 +773,13 @@ function rawUrl(folder, filename) {
 // ─── SUPABASE ─────────────────────────────────────────────────────────────
 const SUPABASE_URL  = 'https://jhjgdcobpzfrvbmxumsc.supabase.co';
 const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpoamdkY29icHpmcnZibXh1bXNjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ2NzYzOTksImV4cCI6MjA5MDI1MjM5OX0.N_FlCBAusOVM6oKgxBJdHMhimLNpklJIiTCYav3R4F8';
-const db = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+const db = supabase.createClient(SUPABASE_URL, SUPABASE_ANON, {
+  auth: {
+    autoRefreshToken:   true,
+    persistSession:     true,
+    detectSessionInUrl: true,
+  }
+});
 
 // ── Active class — set by selector, persisted to localStorage ────────────
 let CLASS_ID = localStorage.getItem('gotchi_class_id') || null;
@@ -1402,6 +1408,8 @@ async function initAuth() {
   db.auth.onAuthStateChange(async (event, session) => {
     if (event === 'SIGNED_IN' && session?.user) {
       await handleAuthUser(session.user);
+    } else if (event === 'TOKEN_REFRESHED' && session?.user) {
+      currentUser = session.user; // silently update — no UI change needed
     } else if (event === 'SIGNED_OUT') {
       setAuthState(null);
     }
@@ -1432,6 +1440,17 @@ document.getElementById('btn-hdr-signin').addEventListener('click', async () => 
 document.getElementById('btn-hdr-signout').addEventListener('click', async () => {
   await db.auth.signOut();
   toast('Signed out');
+});
+
+// Re-validate when tab becomes visible — Chrome suspends background tabs
+document.addEventListener('visibilitychange', async () => {
+  if (document.visibilityState !== 'visible') return;
+  const { data: { session } } = await db.auth.getSession();
+  if (!session && currentUser) {
+    currentUser = null;
+    setAuthState(null);
+    toast('⚠ Session expired — please sign in again');
+  }
 });
 
 // ─── RESPONSIVE CELL SIZE ─────────────────────────────────────────────────
