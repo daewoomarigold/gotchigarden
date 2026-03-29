@@ -655,7 +655,7 @@ header {
           <button class="shop-btn auth-gated locked" id="btn-add-egg">
             <span class="shop-icon">🥚</span>
             <span class="shop-label">New Egg</span>
-            <span class="shop-cost" style="color:var(--yellow);font-size:9px;">1 pt</span>
+            <span class="shop-cost" style="color:var(--yellow);font-size:9px;">5 pts</span>
           </button>
         </div>
       </div>
@@ -2251,25 +2251,23 @@ document.getElementById('btn-add-egg').addEventListener('click', () => {
   const student = STUDENTS.find(s => s.id === selected);
   if (!student) return;
 
-  const EGG_PRICE = 1;
-  if (student.gotchiPoints < EGG_PRICE) {
-    toast(`⚠ Not enough GotchiPts (need ${EGG_PRICE})`);
+  if (student.gotchiPoints < PRICES.egg) {
+    toast(`⚠ Not enough GotchiPts (need ${PRICES.egg})`);
     return;
   }
 
-  // Show confirmation
   document.getElementById('buy-confirm-text').innerHTML =
     `Are you sure you want to buy a<br>
      <strong style="color:var(--text);">New Egg</strong><br>
-     for <strong style="color:var(--yellow);">${EGG_PRICE} GotchiPt</strong>?<br>
-     <span style="font-size:10px;color:var(--muted);">Balance after: ${student.gotchiPoints - EGG_PRICE} pts</span>`;
+     for <strong style="color:var(--yellow);">${PRICES.egg} GotchiPts</strong>?<br>
+     <span style="font-size:10px;color:var(--muted);">Balance after: ${student.gotchiPoints - PRICES.egg} pts</span>`;
 
   const confirmBtn = document.getElementById('btn-buy-confirm-yes');
   const handler = async () => {
     confirmBtn.removeEventListener('click', handler);
     closeOverlay('overlay-buy-confirm');
 
-    student.gotchiPoints -= EGG_PRICE;
+    student.gotchiPoints -= PRICES.egg;
     const el = document.getElementById('pts-' + student.id);
     if (el) el.textContent = student.gotchiPoints + ' pts';
     document.getElementById('sel-pts').textContent = student.gotchiPoints;
@@ -2278,10 +2276,10 @@ document.getElementById('btn-add-egg').addEventListener('click', () => {
 
     const cell       = cells.find(c => c.student.id === selected);
     const variantIdx = Math.floor(Math.random() * eggJSON.variants.length);
-    const slot       = cell.pets.length; // next available slot
+    const slot       = cell.pets.length;
     const dbPet      = await dbCreatePet(student.id, slot, 'egg', variantIdx);
     const variant    = eggJSON.variants[variantIdx];
-    const newPet     = await cell._addEgg(variant, dbPet?.id || null);
+    await cell._addEgg(variant, dbPet?.id || null);
     selectedPetIdx   = cell.pets.length - 1;
     refreshStudentPanel();
     toast('🥚 New egg added!');
@@ -2305,7 +2303,16 @@ document.addEventListener('click', e => {
 });
 
 // ─── DEBUG TOOLS ──────────────────────────────────────────────────────────
-const EVOLVE_COST = 1; // pts — adjust later
+// ─── ECONOMY ──────────────────────────────────────────────────────────────
+const PRICES = {
+  evolve:     3,   // baby → adult
+  egg:        5,   // new egg from shop
+  bg_basic:   5,   // standard background
+  bg_rare:    15,  // rare background (future)
+  prize:      20,  // physical prize machine redemption (future)
+};
+// Food prices live in FOODS array above
+const EVOLVE_COST = PRICES.evolve; // alias used throughout
 // Toggle debug dropdown
 const debugDropdown = document.getElementById('debug-dropdown');
 document.getElementById('btn-debug-toggle').addEventListener('click', e => {
@@ -2524,11 +2531,10 @@ async function openBgPicker() {
           font-size:9px;border-radius:3px;cursor:pointer;
           letter-spacing:1px;
         `;
-        const BG_PRICE = 1;
-        buyBtn.textContent = `BUY • ${BG_PRICE} pt`;
+        buyBtn.textContent = `BUY • ${PRICES.bg_basic} pt`;
         buyBtn.addEventListener('click', e => {
           e.stopPropagation();
-          purchaseBackground(bg, BG_PRICE);
+          purchaseBackground(bg, PRICES.bg_basic);
         });
         card.appendChild(buyBtn);
       }
