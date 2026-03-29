@@ -516,6 +516,7 @@ header h1 {
   <button class="btn" id="btn-export-dex" disabled style="border-color:var(--purple);color:var(--purple);">★ Export TamaDex</button>
   <button class="btn" id="btn-eggs-mode" style="border-color:var(--orange);color:var(--orange);">🥚 Egg Editor</button>
   <button class="btn" id="btn-manifest-mode" style="border-color:var(--cyan);color:var(--cyan);">📋 Manifest</button>
+  <button class="btn" id="btn-preview-mode" style="border-color:var(--green);color:var(--green);">🔍 JSON Preview</button>
   <div class="header-sep"></div>
   <div class="header-status" id="header-status">Open a folder containing sprite sheet PNGs and character JSONs</div>
 </header>
@@ -593,7 +594,61 @@ header h1 {
     </div>
   </div>
 
-  <!-- ── Egg Editor (full-area overlay within workspace) ── -->
+  <!-- ── JSON Preview Mode ── -->
+  <div id="json-preview-editor" style="display:none;flex:1;flex-direction:column;overflow:hidden;">
+
+    <div style="padding:10px 16px;background:var(--surface);border-bottom:1px solid var(--border2);display:flex;align-items:center;gap:10px;flex-shrink:0;">
+      <span style="font-family:'Pixelify Sans',monospace;font-size:1rem;color:var(--green);">🔍 JSON Preview</span>
+      <span style="font-size:9px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;">Verify corrected JSONs against sprite sheets</span>
+      <div style="flex:1;"></div>
+      <button class="btn" id="btn-preview-load-json">↑ Load JSON</button>
+      <input type="file" id="preview-json-input" accept=".json" style="display:none;">
+      <button class="btn" id="btn-preview-load-sheet">↑ Load Sheet PNG</button>
+      <input type="file" id="preview-sheet-input" accept=".png,.jpg" style="display:none;">
+      <button class="btn" id="btn-preview-close">✕ Close</button>
+    </div>
+
+    <div style="display:flex;flex:1;overflow:hidden;">
+
+      <!-- Canvas area -->
+      <div style="flex:1;overflow:auto;padding:16px;background:var(--bg);position:relative;" id="preview-canvas-wrap">
+        <div id="preview-empty" style="color:var(--muted);font-size:11px;padding:32px;text-align:center;line-height:2;">
+          Load a <strong style="color:var(--text);">JSON file</strong> and its matching <strong style="color:var(--text);">sprite sheet PNG</strong> to preview bounding boxes and face anchors.<br>
+          Problem sprites will be highlighted automatically.
+        </div>
+        <canvas id="preview-canvas" style="display:none;image-rendering:pixelated;image-rendering:crisp-edges;cursor:crosshair;"></canvas>
+      </div>
+
+      <!-- Right panel: info + legend -->
+      <div style="width:260px;background:var(--surface);border-left:1px solid var(--border2);padding:14px;display:flex;flex-direction:column;gap:12px;flex-shrink:0;overflow-y:auto;">
+
+        <div class="section-head">File Info</div>
+        <div id="preview-file-info" style="font-size:10px;color:var(--muted);line-height:1.8;">No files loaded</div>
+
+        <div class="section-head">Legend</div>
+        <div style="display:flex;flex-direction:column;gap:5px;font-size:10px;">
+          <div style="display:flex;align-items:center;gap:8px;"><div style="width:14px;height:14px;border:2px solid #4ef0d8;flex-shrink:0;"></div> body_anim</div>
+          <div style="display:flex;align-items:center;gap:8px;"><div style="width:14px;height:14px;border:2px solid #ffe066;flex-shrink:0;"></div> face_small</div>
+          <div style="display:flex;align-items:center;gap:8px;"><div style="width:14px;height:14px;border:2px solid #ff6eb4;flex-shrink:0;"></div> base</div>
+          <div style="display:flex;align-items:center;gap:8px;"><div style="width:14px;height:14px;border:2px solid #a78bfa;flex-shrink:0;"></div> small_anim</div>
+          <div style="display:flex;align-items:center;gap:8px;"><div style="width:14px;height:14px;border:2px solid #6bffb8;flex-shrink:0;"></div> body_zoom / face_zoom</div>
+          <div style="display:flex;align-items:center;gap:8px;"><div style="width:14px;height:14px;border:2px solid #ff6b6b;background:rgba(255,107,107,0.2);flex-shrink:0;"></div> ⚠ Problem sprite</div>
+          <div style="display:flex;align-items:center;gap:8px;"><div style="width:14px;height:3px;background:#ff9f6b;flex-shrink:0;"></div> Face anchor</div>
+        </div>
+
+        <div class="section-head">Band Toggle</div>
+        <div id="preview-band-toggles" style="display:flex;flex-direction:column;gap:5px;font-size:10px;"></div>
+
+        <div class="section-head">Selected Sprite</div>
+        <div id="preview-selected-info" style="font-size:10px;color:var(--muted);line-height:1.8;font-family:'DM Mono',monospace;">Click a sprite to inspect</div>
+
+        <div class="section-head">Validation</div>
+        <div id="preview-validation" style="font-size:10px;line-height:1.8;"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Egg Editor ── -->
   <div id="egg-editor" style="display:none;flex:1;flex-direction:column;overflow:hidden;">
     <div style="padding:12px 16px;background:var(--surface);border-bottom:1px solid var(--border2);display:flex;align-items:center;gap:12px;flex-shrink:0;">
       <span style="font-family:'Pixelify Sans',monospace;font-size:1rem;color:var(--orange);">🥚 Egg Editor</span>
@@ -1958,6 +2013,241 @@ function exportTamaDex() {
 document.getElementById('btn-export-dex').addEventListener('click', exportTamaDex);
 document.getElementById('btn-open-folder').addEventListener('click', openFolder);
 document.getElementById('btn-manifest-mode').addEventListener('click', openManifestEditor);
+document.getElementById('btn-preview-mode').addEventListener('click', openPreviewMode);
+
+// ═══════════════════════════════════════════════════════════════════════════
+// JSON PREVIEW MODE
+// ═══════════════════════════════════════════════════════════════════════════
+
+const PREVIEW = { json: null, img: null, visibleBands: new Set(), scale: 2 };
+
+const BAND_COLORS = {
+  base:       '#ff6eb4',
+  body_anim:  '#4ef0d8',
+  face_small: '#ffe066',
+  small_anim: '#a78bfa',
+  body_zoom:  '#6bffb8',
+  face_zoom:  '#6bffb8',
+};
+
+function openPreviewMode() {
+  document.getElementById('json-preview-editor').style.display = 'flex';
+  document.getElementById('editor-area').style.display          = 'none';
+  document.getElementById('char-list').style.display            = 'none';
+}
+function closePreviewMode() {
+  document.getElementById('json-preview-editor').style.display = 'none';
+  document.getElementById('editor-area').style.display          = 'flex';
+  document.getElementById('char-list').style.display            = 'flex';
+}
+document.getElementById('btn-preview-close').addEventListener('click', closePreviewMode);
+
+// File loading
+document.getElementById('btn-preview-load-json').addEventListener('click', () =>
+  document.getElementById('preview-json-input').click());
+document.getElementById('btn-preview-load-sheet').addEventListener('click', () =>
+  document.getElementById('preview-sheet-input').click());
+
+document.getElementById('preview-json-input').addEventListener('change', e => {
+  const file = e.target.files[0]; if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    try {
+      PREVIEW.json = JSON.parse(ev.target.result);
+      updatePreviewFileInfo();
+      if (PREVIEW.img) renderPreview();
+      toast(`JSON loaded: ${file.name}`);
+    } catch(err) { toast('⚠ Invalid JSON'); }
+  };
+  reader.readAsText(file);
+});
+
+document.getElementById('preview-sheet-input').addEventListener('change', e => {
+  const file = e.target.files[0]; if (!file) return;
+  const url = URL.createObjectURL(file);
+  const img = new Image();
+  img.onload = () => {
+    PREVIEW.img = img;
+    updatePreviewFileInfo();
+    if (PREVIEW.json) renderPreview();
+    toast(`Sheet loaded: ${file.name}`);
+  };
+  img.src = url;
+});
+
+function updatePreviewFileInfo() {
+  const el = document.getElementById('preview-file-info');
+  const lines = [];
+  if (PREVIEW.json) {
+    lines.push(`ID: ${PREVIEW.json.id || '—'}`);
+    lines.push(`Name: ${PREVIEW.json.displayName || '—'}`);
+    lines.push(`Bands: ${PREVIEW.json.bands?.length || 0}`);
+    if (PREVIEW.json._note) lines.push(`⚠ ${PREVIEW.json._note}`);
+  }
+  if (PREVIEW.img) lines.push(`Sheet: ${PREVIEW.img.width}×${PREVIEW.img.height}px`);
+  el.innerHTML = lines.map(l => `<div>${l}</div>`).join('');
+}
+
+function buildBandToggles() {
+  const container = document.getElementById('preview-band-toggles');
+  container.innerHTML = '';
+  if (!PREVIEW.json?.bands) return;
+
+  PREVIEW.visibleBands.clear();
+  PREVIEW.json.bands.forEach(band => {
+    PREVIEW.visibleBands.add(band.role);
+    const row = document.createElement('label');
+    row.style.cssText = 'display:flex;align-items:center;gap:6px;cursor:pointer;';
+    const cb = document.createElement('input');
+    cb.type = 'checkbox'; cb.checked = true;
+    cb.addEventListener('change', () => {
+      if (cb.checked) PREVIEW.visibleBands.add(band.role);
+      else PREVIEW.visibleBands.delete(band.role);
+      renderPreview();
+    });
+    const dot = document.createElement('div');
+    dot.style.cssText = `width:10px;height:10px;border:2px solid ${BAND_COLORS[band.role]||'#fff'};flex-shrink:0;`;
+    const lbl = document.createElement('span');
+    lbl.style.color = 'var(--text)';
+    lbl.textContent = band.role;
+    row.appendChild(cb); row.appendChild(dot); row.appendChild(lbl);
+    container.appendChild(row);
+  });
+}
+
+function runValidation() {
+  const el = document.getElementById('preview-validation');
+  if (!PREVIEW.json?.bands) { el.innerHTML = ''; return; }
+  const issues = [];
+
+  PREVIEW.json.bands.forEach(band => {
+    if (band.role === 'face_small') {
+      const count = band.sprites?.length || 0;
+      if (count < 16 || count > 18) {
+        issues.push(`<span style="color:var(--red);">⚠ face_small: ${count} sprites (expected 16-17)</span>`);
+      } else {
+        issues.push(`<span style="color:var(--green);">✓ face_small: ${count} sprites</span>`);
+      }
+      band.sprites?.forEach(s => {
+        if (s.w < 5) issues.push(`<span style="color:var(--red);">⚠ Stray: face[${s.index}] w=${s.w}px (${s.label||'?'})</span>`);
+        if (s.w > 44) issues.push(`<span style="color:var(--yellow);">⚡ Wide: face[${s.index}] w=${s.w}px — possible merge (${s.label||'?'})</span>`);
+      });
+    }
+    if (band.role === 'body_anim') {
+      const count = band.sprites?.length || 0;
+      if (count !== 9) issues.push(`<span style="color:var(--red);">⚠ body_anim: ${count} sprites (expected 9)</span>`);
+      else issues.push(`<span style="color:var(--green);">✓ body_anim: 9 sprites</span>`);
+    }
+  });
+
+  const hasAnchors = !!PREVIEW.json.bodyAnimAnchors?.length;
+  issues.push(hasAnchors
+    ? `<span style="color:var(--green);">✓ bodyAnimAnchors set</span>`
+    : `<span style="color:var(--red);">⚠ bodyAnimAnchors missing</span>`);
+
+  el.innerHTML = issues.join('<br>');
+}
+
+function renderPreview() {
+  if (!PREVIEW.json || !PREVIEW.img) return;
+  buildBandToggles();
+  runValidation();
+
+  const canvas = document.getElementById('preview-canvas');
+  const S = PREVIEW.scale;
+  canvas.width  = PREVIEW.img.width  * S;
+  canvas.height = PREVIEW.img.height * S;
+  canvas.style.display = 'block';
+  document.getElementById('preview-empty').style.display = 'none';
+
+  const ctx = canvas.getContext('2d');
+  ctx.imageSmoothingEnabled = false;
+
+  // Draw sheet at 2×
+  ctx.drawImage(PREVIEW.img, 0, 0, canvas.width, canvas.height);
+
+  // Draw band overlays
+  PREVIEW.json.bands?.forEach(band => {
+    if (!PREVIEW.visibleBands.has(band.role)) return;
+    const color = BAND_COLORS[band.role] || '#ffffff';
+
+    band.sprites?.forEach(sprite => {
+      const x = sprite.x * S, y = sprite.y * S;
+      const w = sprite.w * S, h = sprite.h * S;
+
+      // Problem detection
+      const isStray  = band.role === 'face_small' && sprite.w < 5;
+      const isWide   = band.role === 'face_small' && sprite.w > 44;
+      const isProblem = isStray || isWide;
+
+      // Fill tint
+      ctx.fillStyle = isProblem ? 'rgba(255,107,107,0.25)' : `${color}18`;
+      ctx.fillRect(x, y, w, h);
+
+      // Border
+      ctx.strokeStyle = isProblem ? '#ff6b6b' : color;
+      ctx.lineWidth   = isProblem ? 2 : 1;
+      ctx.strokeRect(x + 0.5, y + 0.5, w - 1, h - 1);
+
+      // Label
+      ctx.fillStyle = isProblem ? '#ff6b6b' : color;
+      ctx.font = `${Math.max(7, S * 4)}px monospace`;
+      const lbl = sprite.label || String(sprite.index);
+      ctx.fillText(lbl, x + 2, y + 9 * S / 2);
+    });
+
+    // Draw face anchors on body_anim
+    if (band.role === 'body_anim' && PREVIEW.json.bodyAnimAnchors) {
+      band.sprites?.forEach((sprite, i) => {
+        const anchor = PREVIEW.json.bodyAnimAnchors[i];
+        if (!anchor?.useFace) return;
+        const ax = (sprite.x + anchor.offsetX) * S;
+        const ay = (sprite.y + anchor.offsetY) * S;
+        // Crosshair
+        ctx.strokeStyle = '#ff9f6b';
+        ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.moveTo(ax - 6, ay); ctx.lineTo(ax + 6, ay); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(ax, ay - 6); ctx.lineTo(ax, ay + 6); ctx.stroke();
+        // Dot
+        ctx.fillStyle = '#ff9f6b';
+        ctx.beginPath(); ctx.arc(ax, ay, 2, 0, Math.PI * 2); ctx.fill();
+      });
+    }
+  });
+
+  // Click to inspect
+  canvas.onclick = e => {
+    const rect = canvas.getBoundingClientRect();
+    const mx = (e.clientX - rect.left) / S;
+    const my = (e.clientY - rect.top)  / S;
+    let hit = null;
+    PREVIEW.json.bands?.forEach(band => {
+      band.sprites?.forEach(sprite => {
+        if (mx >= sprite.x && mx <= sprite.x + sprite.w &&
+            my >= sprite.y && my <= sprite.y + sprite.h) {
+          hit = { band: band.role, sprite };
+        }
+      });
+    });
+    const info = document.getElementById('preview-selected-info');
+    if (hit) {
+      const s = hit.sprite;
+      const isStray = hit.band === 'face_small' && s.w < 5;
+      const isWide  = hit.band === 'face_small' && s.w > 44;
+      info.innerHTML = `
+        <div style="color:var(--text);">Band: ${hit.band}</div>
+        <div>Index: ${s.index}</div>
+        <div>Label: ${s.label || '—'}</div>
+        <div>x: ${s.x}  y: ${s.y}</div>
+        <div>w: ${s.w}  h: ${s.h}</div>
+        ${isStray ? '<div style="color:var(--red);">⚠ Stray pixel!</div>' : ''}
+        ${isWide  ? '<div style="color:var(--yellow);">⚡ Possibly merged!</div>' : ''}
+      `;
+    } else {
+      info.textContent = 'Click a sprite to inspect';
+    }
+  };
+}
 
 // ═══════════════════════════════════════════════════════════════════════════
 // MANIFEST GENERATOR
