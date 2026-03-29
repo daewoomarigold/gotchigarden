@@ -275,28 +275,54 @@ td.muted{color:var(--muted);}
 'use strict';
 const SUPABASE_URL  = 'https://jhjgdcobpzfrvbmxumsc.supabase.co';
 const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpoamdkY29icHpmcnZibXh1bXNjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ2NzYzOTksImV4cCI6MjA5MDI1MjM5OX0.N_FlCBAusOVM6oKgxBJdHMhimLNpklJIiTCYav3R4F8';
-const db = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+
+// Enable autoRefreshToken and persistSession so the SDK handles token renewal
+const db = supabase.createClient(SUPABASE_URL, SUPABASE_ANON, {
+  auth: {
+    autoRefreshToken:  true,
+    persistSession:    true,
+    detectSessionInUrl: true,
+  }
+});
 
 let currentUser=null, currentClassId=null, students=[], classes=[];
 
 const TEACHER_URL = 'https://daewoomarigold.github.io/gotchigarden/teacher.html';
 
 async function init() {
-  // Handle OAuth callback — Supabase exchanges the code for a session automatically
-  // but we need to listen for the resulting SIGNED_IN event
   db.auth.onAuthStateChange(async (event, session) => {
     console.log('Auth event:', event, session?.user?.email);
     if (event === 'SIGNED_IN' && session?.user) {
       await handleUser(session.user);
+    } else if (event === 'TOKEN_REFRESHED' && session?.user) {
+      // Token silently refreshed — update currentUser reference
+      currentUser = session.user;
     } else if (event === 'SIGNED_OUT') {
       showLogin();
     }
   });
 
-  // Also check for existing session on page load
+  // Check session on page load
   const { data: { session } } = await db.auth.getSession();
   if (session?.user) await handleUser(session.user);
 }
+
+// ── Re-validate session when tab becomes visible again ────────────────────
+// Chrome suspends background tabs, which can interrupt the refresh cycle.
+// When the user switches back, proactively get a fresh session.
+document.addEventListener('visibilitychange', async () => {
+  if (document.visibilityState !== 'visible') return;
+  const { data: { session }, error } = await db.auth.getSession();
+  if (error || !session) {
+    // Session truly expired — send back to login
+    if (currentUser) { currentUser = null; showLogin(); toast('⚠ Session expired — please sign in again'); }
+    return;
+  }
+  // Session still valid — silently update user reference
+  if (session.user && !currentUser) {
+    await handleUser(session.user);
+  }
+});
 
 async function handleUser(user) {
   const { data, error } = await db.from('teachers').select('id').eq('email', user.email).single();
@@ -309,6 +335,23 @@ async function handleUser(user) {
   document.getElementById('hdr-user-email').textContent = user.email;
   showApp();
   await loadClasses();
+}
+
+// Wrapper that refreshes session and retries once on a 401/403
+async function dbQuery(fn) {
+  try {
+    const result = await fn();
+    if (result.error?.status === 401 || result.error?.status === 403) {
+      // Try refreshing the session first
+      const { data: { session } } = await db.auth.refreshSession();
+      if (!session) { showLogin(); return result; }
+      return await fn(); // retry once
+    }
+    return result;
+  } catch(e) {
+    console.error('DB query error:', e);
+    return { data: null, error: e };
+  }
 }
 
 document.getElementById('btn-google-login').addEventListener('click', async () => {
