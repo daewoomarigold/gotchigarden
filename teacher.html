@@ -187,13 +187,13 @@ td.muted{color:var(--muted);}
         </div>
         <div class="table-wrap">
           <table>
-            <thead><tr><th>Name</th><th>Email</th><th>GotchiPts</th><th>Pets</th><th>Actions</th></tr></thead>
+            <thead><tr><th>Name</th><th>GotchiPts</th><th>Pets</th><th>Actions</th></tr></thead>
             <tbody id="student-tbody"></tbody>
           </table>
         </div>
         <div class="award-banner" id="award-banner" style="display:none;">
           <label>Award all students:</label>
-          <input type="number" id="award-all-amount" value="10" min="1" max="9999">
+          <input type="number" id="award-all-amount" value="1" min="1" max="9999">
           <label>pts</label>
           <button class="btn yellow" id="btn-do-award-all">★ Award</button>
           <button class="btn red" id="btn-do-deduct-all">− Deduct</button>
@@ -530,11 +530,10 @@ function renderStudents(filter='') {
   const tbody = document.getElementById('student-tbody');
   tbody.innerHTML = '';
   const filtered = students.filter(s =>
-    s.name.toLowerCase().includes(filter.toLowerCase()) ||
-    (s.email||'').toLowerCase().includes(filter.toLowerCase())
+    s.name.toLowerCase().includes(filter.toLowerCase())
   );
   if (!filtered.length) {
-    tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;color:var(--muted);padding:24px;">${filter?'No students match your search':'No students yet — add one to get started'}</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;color:var(--muted);padding:24px;">${filter?'No students match your search':'No students yet — add one to get started'}</td></tr>`;
     return;
   }
   filtered.forEach(s => {
@@ -543,11 +542,12 @@ function renderStudents(filter='') {
     const petHTML = pets.length ? pets.map(p=>`<span class="pet-chip ${p.stage}">${p.stage}</span>`).join('') : `<span style="color:var(--muted);font-size:10px;">none</span>`;
     tr.innerHTML = `
       <td><strong>${s.name}</strong></td>
-      <td class="muted">${s.email||'—'}</td>
       <td><div class="pts-controls">
-        <button class="pts-btn minus" data-id="${s.id}">−</button>
+        <button class="pts-btn minus" data-id="${s.id}" data-amt="10">−</button>
+        <button class="pts-btn minus" data-id="${s.id}" data-amt="1" style="font-size:8px;">-1</button>
         <input class="pts-input" type="number" value="${s.gotchi_pts}" data-id="${s.id}" min="0">
-        <button class="pts-btn plus" data-id="${s.id}">+</button>
+        <button class="pts-btn plus" data-id="${s.id}" data-amt="1" style="font-size:8px;border-color:var(--green);color:var(--green);">+1</button>
+        <button class="pts-btn plus" data-id="${s.id}" data-amt="10">+</button>
       </div></td>
       <td><div class="pet-chips">${petHTML}</div></td>
       <td><div class="action-btns"><button class="row-btn danger" data-id="${s.id}">✕ Remove</button></div></td>`;
@@ -562,14 +562,16 @@ function renderStudents(filter='') {
   });
   tbody.querySelectorAll('.pts-btn.plus').forEach(btn => {
     btn.addEventListener('click', async () => {
-      const s = students.find(x=>x.id===btn.dataset.id);
-      await updatePts(btn.dataset.id, (s.gotchi_pts||0)+10);
+      const s   = students.find(x=>x.id===btn.dataset.id);
+      const amt = parseInt(btn.dataset.amt) || 10;
+      await updatePts(btn.dataset.id, (s.gotchi_pts||0) + amt);
     });
   });
   tbody.querySelectorAll('.pts-btn.minus').forEach(btn => {
     btn.addEventListener('click', async () => {
-      const s = students.find(x=>x.id===btn.dataset.id);
-      await updatePts(btn.dataset.id, Math.max(0,(s.gotchi_pts||0)-10));
+      const s   = students.find(x=>x.id===btn.dataset.id);
+      const amt = parseInt(btn.dataset.amt) || 10;
+      await updatePts(btn.dataset.id, Math.max(0,(s.gotchi_pts||0) - amt));
     });
   });
   tbody.querySelectorAll('.row-btn.danger').forEach(btn => {
