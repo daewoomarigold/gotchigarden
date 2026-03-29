@@ -311,16 +311,23 @@ async function init() {
 // Chrome suspends background tabs, which can interrupt the refresh cycle.
 // When the user switches back, proactively get a fresh session.
 document.addEventListener('visibilitychange', async () => {
-  if (document.visibilityState !== 'visible') return;
-  const { data: { session }, error } = await db.auth.getSession();
-  if (error || !session) {
-    // Session truly expired — send back to login
-    if (currentUser) { currentUser = null; showLogin(); toast('⚠ Session expired — please sign in again'); }
-    return;
-  }
-  // Session still valid — silently update user reference
-  if (session.user && !currentUser) {
-    await handleUser(session.user);
+  if (document.visibilityState !== 'visible' || !currentUser) return;
+  console.log('Tab visible — refreshing session...');
+  try {
+    // Force a token refresh — this re-establishes the connection
+    const { data: { session }, error } = await db.auth.refreshSession();
+    if (error || !session) {
+      console.warn('Session lost on tab return:', error);
+      currentUser = null;
+      showLogin();
+      toast('⚠ Session expired — please sign in again');
+      return;
+    }
+    console.log('Session refreshed OK');
+    // Reload current student data so UI reflects latest DB state
+    if (currentClassId) await loadStudents();
+  } catch(e) {
+    console.error('Tab visibility refresh error:', e);
   }
 });
 
@@ -634,10 +641,18 @@ function renderStudents(filter='') {
 
 async function updatePts(studentId, newPts) {
   const { error } = await db.from('students').update({ gotchi_pts: newPts }).eq('id', studentId);
-  if (error) { toast('⚠ '+error.message); return; }
+  if (error) {
+    console.error('updatePts error:', error);
+    toast('⚠ '+error.message);
+    // If auth error, try refreshing session then retry
+    if (error.status === 401 || error.status === 403 || error.code === 'PGRST301') {
+      await db.auth.refreshSession();
+      const { error: e2 } = await db.from('students').update({ gotchi_pts: newPts }).eq('id', studentId);
+      if (e2) { toast('⚠ Still failing — try reloading'); return; }
+    } else { return; }
+  }
   const s = students.find(x=>x.id===studentId);
   if (s) s.gotchi_pts = newPts;
-  // Update the input in place
   const input = document.querySelector(`.pts-input[data-id="${studentId}"]`);
   if (input) input.value = newPts;
   updateStats();
