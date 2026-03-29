@@ -472,6 +472,7 @@ header h1 {
 }
 .btn:hover   { border-color: var(--cyan); color: var(--cyan); background: rgba(78,240,216,.06); }
 .btn:disabled { opacity: 0.35; cursor: not-allowed; }
+.btn-xs { padding: 2px 7px; font-size: 9px; letter-spacing: 0.5px; }
 .btn-primary { border-color: var(--cyan);   color: var(--cyan); }
 .btn-pink    { border-color: var(--pink);   color: var(--pink); }
 .btn-pink:hover { background: rgba(255,110,180,.06); }
@@ -1011,6 +1012,84 @@ function detectSprites(pixels, w, bandRow1, bandRow2, colGapMin, prevBandEnd=0) 
   });
 }
 
+// ── Accent-aware face_small post-processing ──────────────────────────────────
+// Applies learned rules from sprite analysis:
+// 1. Merge accent pixels (bottom-heavy groups, gap ≤ 8) into preceding sprite
+// 2. Trim to exactly 16 sprites
+// 3. Flag wide sprites as "verify" rather than errors (they may be legitimate)
+function refineFaceSmall(sprites, pixels, w, bandRow1, bandRow2) {
+  if (!sprites.length) return sprites;
+  const bandH = bandRow2 - bandRow1 + 1;
+
+  // Step 1: collect raw groups with tighter gap to expose accents
+  const colMax = new Float32Array(w);
+  for (let x=0;x<w;x++) {
+    let mx=0;
+    for (let y=bandRow1;y<=bandRow2;y++) { const v=lum(pixels,(y*w+x)*4); if(v>mx)mx=v; }
+    colMax[x]=mx;
+  }
+  const tightGap = 2;
+  const raw=[]; let cs=-1;
+  for (let x=0;x<w;x++) {
+    if (colMax[x]>BG_THRESH) { if(cs===-1) cs=x; }
+    else if (cs!==-1) {
+      // gap started — check how long
+      let gapEnd=x;
+      while (gapEnd<w && colMax[gapEnd]<=BG_THRESH) gapEnd++;
+      if (gapEnd-x >= tightGap) { raw.push([cs,x-1]); cs=gapEnd<w?gapEnd:-1; x=gapEnd-1; }
+    }
+  }
+  if (cs!==-1) raw.push([cs,w-1]);
+
+  // Step 2: is a group an accent? (content only in lower 40% of band)
+  function isAccent(x1, x2) {
+    const threshold = bandRow1 + Math.floor(bandH * 0.4);
+    let hasTop=false, hasBottom=false;
+    for (let x=x1;x<=x2;x++) {
+      for (let y=bandRow1;y<=bandRow2;y++) {
+        if (lum(pixels,(y*w+x)*4)>BG_THRESH) {
+          if (y < threshold) hasTop=true;
+          else hasBottom=true;
+        }
+      }
+    }
+    return !hasTop && hasBottom; // only bottom content = accent
+  }
+
+  // Step 3: merge accents into preceding group
+  const merged=[];
+  let i=0;
+  while (i<raw.length) {
+    let [x1,x2]=raw[i];
+    // Look ahead for small groups that are accents within 8px gap
+    while (i+1<raw.length) {
+      const [nx1,nx2]=raw[i+1];
+      const gap=nx1-x2-1;
+      const w_next=nx2-nx1+1;
+      if (gap<=8 && w_next<=15 && isAccent(nx1,nx2)) {
+        x2=nx2; i++; // absorb accent
+      } else break;
+    }
+    if (x2-x1+1>=3) merged.push([x1,x2]); // filter true strays < 3px
+    i++;
+  }
+
+  // Step 4: rebuild sprites from merged groups, capped at 16
+  const result=merged.slice(0,16).map(([x1,x2],idx)=>({
+    x:x1, y:bandRow1, w:x2-x1+1, h:bandH,
+    _verified: true,
+  }));
+
+  // Step 5: if we have fewer than 16, pad with original sprites to fill gaps
+  // (some tiny legitimate sprites may have been filtered — restore from originals)
+  if (result.length < 16 && sprites.length > result.length) {
+    // Use original sprites as fallback for missing slots
+    return sprites.slice(0,16).map((sp,idx)=>({...sp}));
+  }
+
+  return result;
+}
+
 function detectGeneration(bands, width, height) {
   const votes=[
     bands.length<=3?'baby':'adult',
@@ -1042,7 +1121,14 @@ function analyzeSheet(bitmap, rowGap=4, faceGap=8) {
     const isFace=role==='face_small'||role==='face_zoom';
     const colGap=isFace?faceGap:3;
     const prev=i>0?rawBands[i-1][1]:0;
-    const sprites=detectSprites(pixels,bitmap.width,r1,r2,colGap,prev);
+    let sprites=detectSprites(pixels,bitmap.width,r1,r2,colGap,prev);
+
+    // Apply accent-aware refinement to face_small — ensures 16 sprites,
+    // merges accents, trims phantoms
+    if (role==='face_small') {
+      sprites = refineFaceSmall(sprites, pixels, bitmap.width, r1, r2);
+    }
+
     // Apply frame labels
     const labels=FRAME_LABELS[gen]?.[role]||[];
     sprites.forEach((sp,si)=>{ if(labels[si]) sp.label=labels[si]; });
@@ -1495,9 +1581,7 @@ function renderSpritesTab(entry) {
     return;
   }
 
-  const S = 3; // display scale for sprite cards
-
-  // Build offscreen
+  const S = 3;
   const off = document.createElement('canvas');
   off.width=entry.bitmap.width; off.height=entry.bitmap.height;
   const oc=off.getContext('2d'); oc.imageSmoothingEnabled=false;
@@ -1508,16 +1592,18 @@ function renderSpritesTab(entry) {
     const meta = ROLE_META[role] || ROLE_META.unknown;
     const labels = FRAME_LABELS[entry.analysis.gen]?.[role] || [];
     const expected = meta.expected[entry.analysis.gen];
+    const isFace = role === 'face_small';
 
     const section = document.createElement('div');
     section.className = 'band-section';
 
-    // Band header
+    // ── Band header ──
     const head = document.createElement('div');
     head.className = 'band-head';
     head.style.borderLeftColor = meta.color;
 
-    const countClass = expected===null ? '' : band.sprites.length===expected ? 'ok' : 'warn';
+    const countOk = expected === null || band.sprites.length === expected;
+    const countClass = expected===null ? '' : countOk ? 'ok' : 'warn';
     head.innerHTML = `
       <span class="band-role-label" style="color:${meta.color}">${meta.label}</span>
       <span class="band-count ${countClass}">${band.sprites.length}${expected!==null?' / '+expected:''} sprites</span>
@@ -1530,10 +1616,68 @@ function renderSpritesTab(entry) {
       entry.markDirty();
       renderSpritesTab(entry);
     });
-
     section.appendChild(head);
 
-    // Sprites row
+    // ── Manual adjustment toolbar (face_small only) ──
+    if (isFace) {
+      const toolbar = document.createElement('div');
+      toolbar.style.cssText = 'display:flex;align-items:center;gap:8px;padding:6px 10px;background:var(--surface2);border-bottom:1px solid var(--border2);font-size:10px;flex-wrap:wrap;';
+
+      const statusColor = countOk ? 'var(--green)' : 'var(--red)';
+      toolbar.innerHTML = `
+        <span style="color:${statusColor};font-weight:600;">
+          ${countOk ? '✓' : '⚠'} ${band.sprites.length} / 16 face sprites
+        </span>
+        <span style="color:var(--muted);">|</span>
+        <span style="color:var(--muted);">Manual adjust:</span>
+        <button class="btn btn-xs" data-action="shift-left" title="Shift all label assignments left by 1">◀ Shift labels</button>
+        <button class="btn btn-xs" data-action="shift-right" title="Shift all label assignments right by 1">Shift labels ▶</button>
+        <button class="btn btn-xs" data-action="merge-wide" title="Find widest sprite and mark it as single (not merged)">⟺ Keep wide</button>
+        <button class="btn btn-xs" data-action="trim-last" title="Remove last sprite if phantom" ${band.sprites.length <= 16 ? 'disabled' : ''}>✂ Trim last</button>
+        <button class="btn btn-xs" data-action="trim-first" title="Remove first sprite if phantom stray" ${band.sprites.length <= 16 ? 'disabled' : ''}>✂ Trim first</button>
+        <span style="color:var(--muted);margin-left:auto;">Click sprite to edit label</span>
+      `;
+
+      toolbar.querySelectorAll('button[data-action]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const action = btn.dataset.action;
+          if (action === 'shift-left') {
+            // Remove first label, shift everything left, append blank at end
+            const sprs = band.sprites;
+            for (let i=0; i<sprs.length-1; i++) sprs[i].label = sprs[i+1].label || FACE_LABELS[i+1] || '';
+            sprs[sprs.length-1].label = '';
+            entry.markDirty(); renderSpritesTab(entry);
+          } else if (action === 'shift-right') {
+            // Shift labels right, blank first
+            const sprs = band.sprites;
+            for (let i=sprs.length-1; i>0; i--) sprs[i].label = sprs[i-1].label || FACE_LABELS[i-1] || '';
+            sprs[0].label = '';
+            entry.markDirty(); renderSpritesTab(entry);
+          } else if (action === 'merge-wide') {
+            // Re-apply accent merge on this band — re-runs refineFaceSmall
+            const pixels = entry.analysis.pixels;
+            const W = entry.analysis.w;
+            const refined = refineFaceSmall(band.sprites, pixels, W, band.rowStart, band.rowEnd);
+            if (refined.length <= 16) {
+              band.sprites = refined;
+              FACE_LABELS.forEach((lbl,i) => { if(band.sprites[i]) band.sprites[i].label = lbl; });
+            }
+            entry.markDirty(); renderSpritesTab(entry);
+          } else if (action === 'trim-last') {
+            band.sprites = band.sprites.slice(0, band.sprites.length - 1);
+            FACE_LABELS.forEach((lbl,i) => { if(band.sprites[i]) band.sprites[i].label = lbl; });
+            entry.markDirty(); renderSpritesTab(entry);
+          } else if (action === 'trim-first') {
+            band.sprites = band.sprites.slice(1);
+            FACE_LABELS.forEach((lbl,i) => { if(band.sprites[i]) band.sprites[i].label = lbl; });
+            entry.markDirty(); renderSpritesTab(entry);
+          }
+        });
+      });
+      section.appendChild(toolbar);
+    }
+
+    // ── Sprites row ──
     const row = document.createElement('div');
     row.className = 'sprites-row';
 
@@ -1542,6 +1686,12 @@ function renderSpritesTab(entry) {
       const card  = document.createElement('div');
       card.className = 'sprite-card';
 
+      // Highlight problems
+      const isStray = isFace && sp.w < 4;
+      const isWide  = isFace && sp.w > 44;
+      if (isStray) card.style.outline = '2px solid var(--red)';
+      if (isWide)  card.style.outline = '2px solid var(--yellow)';
+
       const c = document.createElement('canvas');
       c.className = 'sprite-canvas';
       c.width  = sp.w * S; c.height = sp.h * S;
@@ -1549,9 +1699,35 @@ function renderSpritesTab(entry) {
       ctx2.imageSmoothingEnabled = false;
       ctx2.drawImage(off, sp.x,sp.y,sp.w,sp.h, 0,0,sp.w*S,sp.h*S);
 
+      // Click to edit label inline
       const lbl = document.createElement('div');
       lbl.className = 'sprite-label';
       lbl.textContent = label;
+      lbl.title = `${sp.w}×${sp.h} @ (${sp.x},${sp.y})${isStray?' ⚠ STRAY':''}${isWide?' ⚡ WIDE':''}`;
+
+      if (isFace) {
+        lbl.style.cursor = 'pointer';
+        lbl.addEventListener('click', () => {
+          // Inline label editor
+          const sel = document.createElement('select');
+          sel.style.cssText = 'font-size:9px;width:100%;background:var(--bg);color:var(--text);border:1px solid var(--cyan);';
+          ['', ...FACE_LABELS].forEach(opt => {
+            const o = document.createElement('option');
+            o.value = opt; o.textContent = opt || '(blank)';
+            if (opt === sp.label) o.selected = true;
+            sel.appendChild(o);
+          });
+          sel.addEventListener('change', () => {
+            sp.label = sel.value;
+            lbl.textContent = sel.value || `#${si}`;
+            card.replaceChild(lbl, sel);
+            entry.markDirty();
+          });
+          sel.addEventListener('blur', () => { if (card.contains(sel)) card.replaceChild(lbl, sel); });
+          card.replaceChild(sel, lbl);
+          sel.focus();
+        });
+      }
 
       card.appendChild(c); card.appendChild(lbl);
       row.appendChild(card);
@@ -1561,6 +1737,12 @@ function renderSpritesTab(entry) {
     grid.appendChild(section);
   });
 }
+
+const FACE_LABELS = FRAME_LABELS.adult?.face_small || 
+  ['normal','blush','happy','annoyed','normal_2','wowed',
+   'neutral_eyes_closed','smile_eyes_closed','eyes_open_happy',
+   'eyes_closed_happy','sad_crying','disappointed','fever',
+   'surprised','worried','contemplating'];
 
 // ═══════════════════════════════════════════════════════════════════════════
 // ANCHOR EDITOR TAB
@@ -2123,14 +2305,14 @@ function runValidation() {
   PREVIEW.json.bands.forEach(band => {
     if (band.role === 'face_small') {
       const count = band.sprites?.length || 0;
-      if (count < 16 || count > 18) {
-        issues.push(`<span style="color:var(--red);">⚠ face_small: ${count} sprites (expected 16-17)</span>`);
+      if (count !== 16) {
+        issues.push(`<span style="color:var(--red);">⚠ face_small: ${count} sprites (expected exactly 16)</span>`);
       } else {
-        issues.push(`<span style="color:var(--green);">✓ face_small: ${count} sprites</span>`);
+        issues.push(`<span style="color:var(--green);">✓ face_small: 16 sprites</span>`);
       }
       band.sprites?.forEach(s => {
-        if (s.w < 5) issues.push(`<span style="color:var(--red);">⚠ Stray: face[${s.index}] w=${s.w}px (${s.label||'?'})</span>`);
-        if (s.w > 44) issues.push(`<span style="color:var(--yellow);">⚡ Wide: face[${s.index}] w=${s.w}px — possible merge (${s.label||'?'})</span>`);
+        if (s.w < 4) issues.push(`<span style="color:var(--red);">⚠ Stray: face[${s.index}] w=${s.w}px (${s.label||'?'})</span>`);
+        if (s.w > 44) issues.push(`<span style="color:var(--yellow);">⚡ Wide: face[${s.index}] w=${s.w}px — verify (${s.label||'?'})</span>`);
       });
     }
     if (band.role === 'body_anim') {
