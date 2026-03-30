@@ -512,6 +512,7 @@ header h1 {
   <h1>★ TAM SPRITE TOOL</h1>
   <span class="version-badge">v3</span>
   <button class="btn btn-primary" id="btn-open-folder">↑ Open Folder</button>
+  <button class="btn" id="btn-import-jsons" disabled style="border-color:var(--cyan);color:var(--cyan);">↺ Import JSON Set</button>
   <button class="btn btn-commit-all" id="btn-commit-all" disabled>↓ Commit All</button>
   <button class="btn" id="btn-export-dex" disabled style="border-color:var(--purple);color:var(--purple);">★ Export TamaDex</button>
   <button class="btn" id="btn-eggs-mode" style="border-color:var(--orange);color:var(--orange);">🥚 Egg Editor</button>
@@ -1486,6 +1487,7 @@ async function openFolder() {
   buildCharList();
   updateHeaderStatus();
   document.getElementById('btn-export-dex').disabled = false;
+  document.getElementById('btn-import-jsons').disabled = false;
   await tryLoadExistingDex();
 
   if (collection.length) {
@@ -1493,6 +1495,113 @@ async function openFolder() {
     const missing = collection.filter(c=>!c.bitmap).length;
     toast(`Loaded ${collection.length} characters${missing ? ` · ${missing} missing PNGs` : ''}`);
   }
+}
+
+async function importJsonSet() {
+  // Pick a folder containing only JSON files — PNGs stay from the existing session
+  let importDir;
+  try {
+    importDir = await window.showDirectoryPicker({ mode:'read' });
+  } catch(e) {
+    if (e.name !== 'AbortError') toast('❌ Could not open import folder');
+    return;
+  }
+
+  showLoading('Scanning import folder...');
+
+  // Collect JSON file handles
+  const jsonHandles = [];
+  for await (const [name, handle] of importDir.entries()) {
+    if (handle.kind === 'file' && name.toLowerCase().endsWith('.json')) {
+      jsonHandles.push(handle);
+    }
+  }
+
+  if (!jsonHandles.length) {
+    hideLoading();
+    toast('No JSON files found in folder');
+    return;
+  }
+
+  jsonHandles.sort((a,b) => a.name.localeCompare(b.name));
+
+  let updated = 0, added = 0, failed = 0;
+
+  for (let i = 0; i < jsonHandles.length; i++) {
+    const jh = jsonHandles[i];
+    setLoadingMsg(`Importing ${jh.name}...`, `${i}/${jsonHandles.length}`);
+    try {
+      const text = await (await jh.getFile()).text();
+      const json = JSON.parse(text);
+      const newId = json.id;
+
+      // Try to find existing entry by ID
+      const existing = collection.find(c => c.id === newId);
+
+      if (existing) {
+        // Hot-swap JSON data — preserve bitmap, handles, anchors
+        existing.json = json;
+        // Reset analysis so it re-runs against the new JSON's band data on next view
+        existing.analysis = null;
+        existing.userRoles = [];
+        // Update anchors from new JSON if present
+        existing.anchors = json.bodyAnimAnchors
+          ? JSON.parse(JSON.stringify(json.bodyAnimAnchors))
+          : existing.anchors;
+        existing.anchorsLocked = !!json.bodyAnimAnchors;
+        existing.dirty = false;
+        refreshListItem(existing.id);
+        updated++;
+      } else {
+        // New entry — no bitmap/PNG since we only have JSONs
+        // Try to find a PNG handle in the existing session by sheet name
+        const sheetName = (json.sheet || '').toLowerCase();
+        let ph = null;
+        // Search collection's pngHandles indirectly via existing entries
+        const sheetMatch = collection.find(c =>
+          (c.json.sheet || '').toLowerCase() === sheetName && c.pngHandle
+        );
+        if (sheetMatch) ph = sheetMatch.pngHandle;
+
+        let bitmap = null;
+        if (ph) {
+          try { bitmap = await loadBitmapFromHandle(ph); } catch(e) {}
+        }
+
+        // Use original dirHandle for write access if available, else use import handle
+        const writeHandle = dirHandle
+          ? await (async () => {
+              try {
+                return await dirHandle.getFileHandle(jh.name, { create: true });
+              } catch(e) { return jh; }
+            })()
+          : jh;
+
+        const entry = new CharEntry(writeHandle, json, ph, bitmap);
+        collection.push(entry);
+        added++;
+      }
+    } catch(e) {
+      console.warn('Import failed for', jh.name, e);
+      failed++;
+    }
+  }
+
+  // Re-sort collection by ID
+  collection.sort((a,b) => a.id.localeCompare(b.id));
+
+  hideLoading();
+  buildCharList();
+  updateHeaderStatus();
+
+  // Re-select the active entry if still present
+  if (activeId && collection.find(c => c.id === activeId)) {
+    selectChar(activeId);
+  } else if (collection.length) {
+    selectChar(collection[0].id);
+  }
+
+  toast(`↺ Import done — ${updated} updated · ${added} added${failed ? ` · ${failed} failed` : ''}`);
 }
 
 async function loadBitmapFromHandle(handle) {
@@ -2207,6 +2316,7 @@ function exportTamaDex() {
 
 document.getElementById('btn-export-dex').addEventListener('click', exportTamaDex);
 document.getElementById('btn-open-folder').addEventListener('click', openFolder);
+document.getElementById('btn-import-jsons').addEventListener('click', importJsonSet);
 document.getElementById('btn-manifest-mode').addEventListener('click', openManifestEditor);
 document.getElementById('btn-preview-mode').addEventListener('click', openPreviewMode);
 
