@@ -1343,6 +1343,7 @@ async function triggerEvolve(studentId, petIdx = 0, force = false) {
   const oldDbId = pet.dbId || null;
   const spawnX  = pet.x, spawnY = pet.y;
   cell.pets.splice(evolvePetIdx, 1);
+  repositionEggs(cell.pets);
   await cell.addTama(tamaEntry.id);
   const newPet  = cell.pets[cell.pets.length-1];
   if (newPet) {
@@ -1583,6 +1584,25 @@ async function fetchImage(folder, filename) {
   });
   imageCache[key] = img;
   return img;
+}
+
+// Spread all eggs in a cell's pet list evenly across the ground zone.
+// Called whenever an egg is added or removed so they never overlap.
+function repositionEggs(pets) {
+  const eggs = pets.filter(p => p.stage === 'egg');
+  if (!eggs.length) return;
+  const count   = eggs.length;
+  const zoneTop = Math.floor(CH * 0.65);
+  const zoneH   = CH - zoneTop;
+  const padding = 12; // px from left/right edge
+  const usable  = CW - padding * 2;
+  eggs.forEach((egg, i) => {
+    // Distribute centers evenly; single egg stays centered
+    const fraction = count === 1 ? 0.5 : i / (count - 1);
+    egg.x = Math.round(padding + fraction * usable - egg.sw / 2);
+    egg.x = Math.max(padding, Math.min(CW - egg.sw - padding, egg.x));
+    egg.y = zoneTop + Math.round((zoneH - egg.sh) / 2);
+  });
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -1905,6 +1925,8 @@ class GotchiCell {
     const pet = new Pet('egg', { eggVariant: variant, off });
     pet.dbId = dbId;
     this.pets.push(pet);
+    // Reposition ALL eggs in this cell so they spread evenly across the ground zone
+    repositionEggs(this.pets);
     return pet;
   }
 
@@ -1929,6 +1951,8 @@ class GotchiCell {
     const tamaPet = await this.addTama(charId);
     // Remove the egg from pets array
     this.pets.splice(petIdx, 1);
+    // Reflow any remaining eggs
+    repositionEggs(this.pets);
     // Move tama to same position as where egg was (it'll start wandering from there)
     return tamaPet;
   }
