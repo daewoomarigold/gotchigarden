@@ -503,6 +503,51 @@ header h1 {
 }
 #loading.show { display: flex; }
 #loading-msg { color: var(--cyan); }
+/* ── Growth Chart ── */
+.gc-col { display:flex;flex-direction:column;gap:8px;padding:0 8px; }
+.gc-col-head { font-size:9px;letter-spacing:1px;text-transform:uppercase;padding:4px 0 8px;font-weight:600; }
+.gc-col-sep { width:80px;flex-shrink:0; }
+.gc-drop-zone {
+  min-width:110px;min-height:80px;border:2px dashed var(--border);border-radius:6px;
+  display:flex;align-items:center;justify-content:center;
+  background:var(--bg);position:relative;cursor:pointer;transition:border-color .15s,background .15s;
+}
+.gc-drop-zone.over { border-color:var(--cyan);background:rgba(78,240,216,.07); }
+.gc-drop-zone.has-tama { border-style:solid;border-color:var(--border2); }
+.gc-drop-zone.gc-egg-zone { min-height:100px;min-width:100px;border-radius:50%; }
+.gc-drop-hint { font-size:9px;color:var(--muted);pointer-events:none; }
+.gc-slot {
+  border-radius:6px;border:1px solid var(--border2);background:var(--bg);
+  display:flex;flex-direction:column;align-items:center;padding:6px;gap:4px;
+  position:relative;cursor:pointer;transition:border-color .15s;min-width:110px;
+}
+.gc-slot:hover { border-color:var(--cyan); }
+.gc-slot.selected { border-color:var(--yellow);box-shadow:0 0 0 1px var(--yellow); }
+.gc-slot.connecting-source { border-color:var(--pink);box-shadow:0 0 0 2px var(--pink); }
+.gc-slot.connecting-target { border-color:var(--green); }
+.gc-slot canvas { image-rendering:pixelated; }
+.gc-slot-name { font-size:8px;color:var(--fg);text-align:center;line-height:1.2;max-width:100px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis; }
+.gc-slot-remove { position:absolute;top:2px;right:3px;font-size:9px;color:var(--muted);cursor:pointer;line-height:1; }
+.gc-slot-remove:hover { color:var(--red); }
+.gc-add-btn {
+  font-size:9px;color:var(--muted);background:none;border:1px dashed var(--border);
+  border-radius:4px;padding:4px 8px;cursor:pointer;transition:color .15s,border-color .15s;margin-top:4px;
+}
+.gc-add-btn:hover { color:var(--cyan);border-color:var(--cyan); }
+.gc-roster-chip {
+  cursor:grab;border-radius:4px;border:1px solid var(--border);background:var(--bg);
+  display:flex;flex-direction:column;align-items:center;padding:3px;gap:2px;
+  transition:border-color .15s;user-select:none;
+}
+.gc-roster-chip:hover { border-color:var(--cyan); }
+.gc-roster-chip canvas { image-rendering:pixelated; }
+.gc-roster-chip span { font-size:7px;color:var(--muted);max-width:48px;text-align:center;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis; }
+.gc-conn-label {
+  position:absolute;background:var(--surface);border:1px solid var(--border);
+  border-radius:4px;padding:3px 6px;font-size:8px;color:var(--fg);
+  cursor:pointer;transform:translate(-50%,-50%);white-space:nowrap;z-index:10;
+}
+.gc-conn-label:hover { border-color:var(--yellow); }
 </style>
 </head>
 <body>
@@ -516,6 +561,7 @@ header h1 {
   <button class="btn btn-commit-all" id="btn-commit-all" disabled>↓ Commit All</button>
   <button class="btn" id="btn-export-dex" disabled style="border-color:var(--purple);color:var(--purple);">★ Export TamaDex</button>
   <button class="btn" id="btn-eggs-mode" style="border-color:var(--orange);color:var(--orange);">🥚 Egg Editor</button>
+  <button class="btn" id="btn-growth-mode" style="border-color:var(--yellow);color:var(--yellow);">📈 Growth Chart</button>
   <button class="btn" id="btn-manifest-mode" style="border-color:var(--cyan);color:var(--cyan);">📋 Manifest</button>
   <button class="btn" id="btn-preview-mode" style="border-color:var(--green);color:var(--green);">🔍 JSON Preview</button>
   <div class="header-sep"></div>
@@ -542,6 +588,101 @@ header h1 {
         <span>● unsaved</span>
         <span style="color:var(--muted);">○ saved</span>
       </div>
+    </div>
+  </div>
+
+  <!-- ── Growth Chart Editor ── -->
+  <div id="growth-editor" style="display:none;flex:1;flex-direction:column;overflow:hidden;">
+
+    <!-- Header bar -->
+    <div style="padding:10px 16px;background:var(--surface);border-bottom:1px solid var(--border2);display:flex;align-items:center;gap:12px;flex-shrink:0;">
+      <span style="font-family:'Pixelify Sans',monospace;font-size:1rem;color:var(--yellow);">📈 Growth Chart</span>
+      <div style="display:flex;gap:6px;">
+        <button class="btn" id="gc-btn-new" style="font-size:10px;">+ New Chart</button>
+        <select id="gc-chart-select" style="font-size:10px;background:var(--bg);color:var(--fg);border:1px solid var(--border);border-radius:3px;padding:3px 6px;"></select>
+        <button class="btn" id="gc-btn-rename" style="font-size:10px;">✏</button>
+        <button class="btn" id="gc-btn-delete" style="font-size:10px;color:var(--red);">🗑</button>
+      </div>
+      <div style="flex:1;"></div>
+      <button class="btn" id="gc-btn-export" style="border-color:var(--yellow);color:var(--yellow);font-size:10px;">↓ Export JSON</button>
+      <button class="btn" id="btn-growth-close">✕ Close</button>
+    </div>
+
+    <div style="display:flex;flex:1;overflow:hidden;">
+
+      <!-- Left: roster panel -->
+      <div id="gc-roster" style="width:160px;background:var(--surface);border-right:1px solid var(--border2);display:flex;flex-direction:column;overflow:hidden;flex-shrink:0;">
+        <div style="padding:8px 10px;font-size:9px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;border-bottom:1px solid var(--border2);">Roster</div>
+        <input type="text" id="gc-roster-search" placeholder="Search..." style="margin:6px;padding:4px 6px;font-size:10px;background:var(--bg);color:var(--fg);border:1px solid var(--border);border-radius:3px;">
+        <div style="padding:4px 8px;font-size:9px;color:var(--muted);letter-spacing:1px;">BABY</div>
+        <div id="gc-roster-baby" style="display:flex;flex-wrap:wrap;gap:4px;padding:4px 8px;overflow-y:auto;max-height:160px;"></div>
+        <div style="padding:4px 8px;font-size:9px;color:var(--muted);letter-spacing:1px;border-top:1px solid var(--border2);margin-top:4px;">ADULT</div>
+        <div id="gc-roster-adult" style="display:flex;flex-wrap:wrap;gap:4px;padding:4px 8px;overflow-y:auto;flex:1;"></div>
+      </div>
+
+      <!-- Main chart canvas -->
+      <div id="gc-canvas-wrap" style="flex:1;overflow:auto;padding:24px;position:relative;">
+        <div id="gc-empty-msg" style="color:var(--muted);font-size:11px;padding:40px;text-align:center;">
+          Create a new chart or select one above to begin.<br><br>
+          Drag tamas from the roster onto the chart to build the evolution line.
+        </div>
+        <div id="gc-chart" style="display:none;position:relative;">
+          <!-- SVG for connection lines -->
+          <svg id="gc-svg" style="position:absolute;top:0;left:0;pointer-events:none;overflow:visible;" width="100%" height="100%"></svg>
+
+          <!-- Column layout -->
+          <div style="display:flex;gap:0;align-items:flex-start;min-height:400px;">
+
+            <!-- Egg column -->
+            <div class="gc-col" style="width:130px;flex-shrink:0;">
+              <div class="gc-col-head" style="color:var(--muted);">Egg Stage</div>
+              <div id="gc-egg-zone" class="gc-drop-zone gc-egg-zone" data-stage="egg">
+                <span class="gc-drop-hint">drop egg</span>
+              </div>
+            </div>
+
+            <div class="gc-col-sep"></div>
+
+            <!-- Baby column -->
+            <div class="gc-col" style="width:140px;flex-shrink:0;">
+              <div class="gc-col-head" style="color:var(--pink);">Baby Stage</div>
+              <div id="gc-baby-col" style="display:flex;flex-direction:column;gap:8px;"></div>
+              <button class="gc-add-btn" id="gc-add-baby">+ add baby</button>
+            </div>
+
+            <div class="gc-col-sep" style="width:100px;position:relative;" id="gc-evo-sep">
+              <div style="position:absolute;top:8px;left:50%;transform:translateX(-50%);font-size:9px;color:var(--muted);text-align:center;white-space:nowrap;">
+                click a baby →<br>click an adult<br>to connect
+              </div>
+            </div>
+
+            <!-- Adult column -->
+            <div class="gc-col" style="width:140px;flex-shrink:0;">
+              <div class="gc-col-head" style="color:var(--cyan);">Adult Stage</div>
+              <div id="gc-adult-col" style="display:flex;flex-direction:column;gap:8px;"></div>
+              <button class="gc-add-btn" id="gc-add-adult">+ add adult slot</button>
+            </div>
+
+            <div class="gc-col-sep"></div>
+
+            <!-- Variants column -->
+            <div class="gc-col" style="width:140px;flex-shrink:0;">
+              <div class="gc-col-head" style="color:var(--purple);">Variants</div>
+              <div id="gc-variants-col" style="display:flex;flex-direction:column;gap:8px;"></div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+      <!-- Right: connection/slot editor -->
+      <div id="gc-inspector" style="width:200px;background:var(--surface);border-left:1px solid var(--border2);padding:14px;display:flex;flex-direction:column;gap:10px;flex-shrink:0;overflow-y:auto;">
+        <div class="section-head">Inspector</div>
+        <div id="gc-inspector-content" style="color:var(--muted);font-size:10px;">
+          Select a connection or slot to edit.
+        </div>
+      </div>
+
     </div>
   </div>
 
@@ -3054,6 +3195,551 @@ if (!('showDirectoryPicker' in window)) {
     '⚠ File System Access API not supported — please use Chrome or Edge';
   document.getElementById('btn-open-folder').disabled = true;
 }
+
+// ═══════════════════════════════════════════════════════════════════════════
+// GROWTH CHART EDITOR
+// ═══════════════════════════════════════════════════════════════════════════
+
+// ── State ──────────────────────────────────────────────────────────────────
+let gcCharts    = [];   // array of chart objects
+let gcActiveIdx = -1;  // index into gcCharts
+let gcConnecting = null; // { slotEl, slotId } when user is mid-connection click
+let gcSelectedConn = null; // currently selected connection id
+let gcBitmapCache = {}; // id → offscreen canvas
+
+// Chart shape:
+// { id, name, egg:id|null, babySlots:[{id,tamaId}], adultSlots:[{id,tamaId,variantIds:[]}],
+//   connections:[{id,fromSlot,toSlot,requirements,chance}] }
+
+function gcNewId(prefix) {
+  return prefix + '-' + Math.random().toString(36).slice(2,8);
+}
+
+function gcActiveChart() {
+  return gcCharts[gcActiveIdx] || null;
+}
+
+// ── Open / Close ────────────────────────────────────────────────────────────
+function openGrowthEditor() {
+  document.getElementById('growth-editor').style.display  = 'flex';
+  document.getElementById('editor-area').style.display    = 'none';
+  document.getElementById('char-list').style.display      = 'none';
+  gcBuildRoster();
+  gcRefreshChartSelect();
+  gcRender();
+}
+
+function closeGrowthEditor() {
+  document.getElementById('growth-editor').style.display  = 'none';
+  document.getElementById('editor-area').style.display    = 'flex';
+  document.getElementById('char-list').style.display      = 'flex';
+  gcConnecting = null;
+}
+
+function gcBindColumnDrops() {
+  ['gc-baby-col','gc-adult-col','gc-variants-col','gc-egg-zone'].forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.addEventListener('dragover', e => { e.preventDefault(); el.style.outline='1px dashed var(--cyan)'; });
+    el.addEventListener('dragleave', () => { el.style.outline=''; });
+    el.addEventListener('drop', e => {
+      e.preventDefault(); el.style.outline='';
+      const tamaId = e.dataTransfer.getData('tama-id');
+      const gen    = e.dataTransfer.getData('tama-gen');
+      if (!tamaId) return;
+      const stageMap = {'gc-baby-col':'baby','gc-adult-col':'adult','gc-variants-col':'adult','gc-egg-zone':'egg'};
+      gcDropNew(stageMap[id], tamaId, gen);
+    });
+  });
+}
+
+document.getElementById('btn-growth-mode').addEventListener('click', openGrowthEditor);
+document.getElementById('btn-growth-close').addEventListener('click', closeGrowthEditor);
+
+// ── Roster ──────────────────────────────────────────────────────────────────
+function gcGetEnabledTamas() {
+  // Use collection if loaded, else use tamaDex
+  const all = collection.length ? collection : [];
+  const babies = all.filter(e => e.gen === 'baby' && (e.json.enabled || dexEntry(e.id)?.enabled));
+  const adults = all.filter(e => e.gen === 'adult' && (e.json.enabled || dexEntry(e.id)?.enabled));
+  return { babies, adults };
+}
+
+function dexEntry(id) {
+  return tamaDex?.characters?.find(c => c.id === id) || null;
+}
+
+function gcBitmapForEntry(entry) {
+  if (gcBitmapCache[entry.id]) return gcBitmapCache[entry.id];
+  if (!entry.bitmap || !entry.analysis) return null;
+  // Draw small_anim[0] or body_anim[0]
+  const band = entry.analysis.bands.find(b=>b.role==='small_anim') ||
+               entry.analysis.bands.find(b=>b.role==='body_anim');
+  if (!band || !band.sprites.length) return null;
+  const sp = band.sprites[0];
+  const off = document.createElement('canvas');
+  off.width = sp.w; off.height = sp.h;
+  const ctx = off.getContext('2d'); ctx.imageSmoothingEnabled = false;
+  const src = document.createElement('canvas');
+  src.width = entry.bitmap.width; src.height = entry.bitmap.height;
+  src.getContext('2d').drawImage(entry.bitmap,0,0);
+  ctx.drawImage(src, sp.x,sp.y,sp.w,sp.h, 0,0,sp.w,sp.h);
+  gcBitmapCache[entry.id] = off;
+  return off;
+}
+
+function gcRenderChip(entry, container) {
+  const chip = document.createElement('div');
+  chip.className = 'gc-roster-chip';
+  chip.draggable = true;
+  chip.dataset.tamaId = entry.id;
+  chip.title = entry.name;
+
+  const bmp = gcBitmapForEntry(entry);
+  if (bmp) {
+    const S = Math.min(2, Math.round(40/Math.max(bmp.width,bmp.height)));
+    const c = document.createElement('canvas');
+    c.width=bmp.width*S; c.height=bmp.height*S;
+    c.style.imageRendering='pixelated';
+    const ctx=c.getContext('2d'); ctx.imageSmoothingEnabled=false;
+    ctx.drawImage(bmp,0,0,bmp.width,bmp.height,0,0,c.width,c.height);
+    chip.appendChild(c);
+  } else {
+    const ph = document.createElement('div');
+    ph.style.cssText='width:36px;height:36px;background:var(--border);border-radius:3px;display:flex;align-items:center;justify-content:center;font-size:16px;';
+    ph.textContent = entry.gen==='baby'?'🐣':'🐾';
+    chip.appendChild(ph);
+  }
+
+  const lbl = document.createElement('span');
+  lbl.textContent = entry.name;
+  chip.appendChild(lbl);
+
+  chip.addEventListener('dragstart', e => {
+    e.dataTransfer.setData('tama-id', entry.id);
+    e.dataTransfer.setData('tama-gen', entry.gen);
+  });
+  container.appendChild(chip);
+}
+
+function gcBuildRoster() {
+  const { babies, adults } = gcGetEnabledTamas();
+  const babyEl  = document.getElementById('gc-roster-baby');
+  const adultEl = document.getElementById('gc-roster-adult');
+  babyEl.innerHTML=''; adultEl.innerHTML='';
+  babies.forEach(e => gcRenderChip(e, babyEl));
+  adults.forEach(e => gcRenderChip(e, adultEl));
+
+  document.getElementById('gc-roster-search').addEventListener('input', e => {
+    const q = e.target.value.toLowerCase();
+    [...babyEl.children, ...adultEl.children].forEach(chip => {
+      chip.style.display = chip.dataset.tamaId.toLowerCase().includes(q) ||
+        chip.title.toLowerCase().includes(q) ? '' : 'none';
+    });
+  });
+}
+
+// ── Chart CRUD ───────────────────────────────────────────────────────────────
+function gcRefreshChartSelect() {
+  const sel = document.getElementById('gc-chart-select');
+  sel.innerHTML = gcCharts.map((c,i)=>`<option value="${i}">${c.name}</option>`).join('');
+  if (gcActiveIdx >= 0) sel.value = gcActiveIdx;
+}
+
+document.getElementById('gc-btn-new').addEventListener('click', () => {
+  const name = prompt('Chart name:', `Evolution Line ${gcCharts.length+1}`);
+  if (!name) return;
+  gcCharts.push({ id:gcNewId('gc'), name, egg:null, babySlots:[], adultSlots:[], connections:[] });
+  gcActiveIdx = gcCharts.length-1;
+  gcRefreshChartSelect();
+  gcRender();
+});
+
+document.getElementById('gc-btn-rename').addEventListener('click', () => {
+  const c = gcActiveChart(); if(!c)return;
+  const name = prompt('Rename chart:', c.name);
+  if (name) { c.name = name; gcRefreshChartSelect(); }
+});
+
+document.getElementById('gc-btn-delete').addEventListener('click', () => {
+  if (!gcActiveChart()) return;
+  if (!confirm('Delete this chart?')) return;
+  gcCharts.splice(gcActiveIdx,1);
+  gcActiveIdx = Math.max(0, gcActiveIdx-1);
+  gcRefreshChartSelect();
+  gcRender();
+});
+
+document.getElementById('gc-chart-select').addEventListener('change', e => {
+  gcActiveIdx = parseInt(e.target.value);
+  gcConnecting = null; gcSelectedConn = null;
+  gcRender();
+});
+
+// ── Render ───────────────────────────────────────────────────────────────────
+function gcRender() {
+  const chart = gcActiveChart();
+  const emptyMsg = document.getElementById('gc-empty-msg');
+  const chartEl  = document.getElementById('gc-chart');
+  if (!chart) {
+    emptyMsg.style.display=''; chartEl.style.display='none'; return;
+  }
+  emptyMsg.style.display='none'; chartEl.style.display='';
+
+  gcRenderEgg(chart);
+  gcRenderBabyCol(chart);
+  gcRenderAdultCol(chart);
+  gcRenderVariantsCol(chart);
+  requestAnimationFrame(() => { gcRenderConnections(chart); gcBindColumnDrops(); });
+}
+
+function gcMakeSlotEl(slotId, tamaId, stage, removable=true) {
+  const slot = document.createElement('div');
+  slot.className = 'gc-slot' + (gcConnecting?.slotId===slotId?' connecting-source':'') + (gcSelectedConn&&false?' selected':'');
+  slot.dataset.slotId = slotId;
+  slot.dataset.stage  = stage;
+  slot.id = 'gc-slot-' + slotId;
+
+  if (removable) {
+    const rm = document.createElement('span');
+    rm.className='gc-slot-remove'; rm.textContent='✕';
+    rm.addEventListener('click', e => { e.stopPropagation(); gcRemoveFromSlot(slotId, stage); });
+    slot.appendChild(rm);
+  }
+
+  const entry = tamaId ? collection.find(e=>e.id===tamaId) : null;
+  if (entry) {
+    const bmp = gcBitmapForEntry(entry);
+    if (bmp) {
+      const S = Math.min(2, Math.round(48/Math.max(bmp.width,bmp.height)));
+      const c = document.createElement('canvas');
+      c.width=bmp.width*S; c.height=bmp.height*S;
+      c.style.imageRendering='pixelated';
+      c.getContext('2d').drawImage(bmp,0,0,bmp.width,bmp.height,0,0,c.width,c.height);
+      slot.appendChild(c);
+    }
+    const lbl = document.createElement('div');
+    lbl.className='gc-slot-name'; lbl.textContent=entry.name+(entry.json.variant?` (${entry.json.variant})`:'');
+    slot.appendChild(lbl);
+  } else {
+    const dz = document.createElement('div');
+    dz.className='gc-drop-zone has-drop'; dz.dataset.slotId=slotId; dz.dataset.stage=stage;
+    dz.style.cssText='min-width:90px;min-height:60px;';
+    dz.innerHTML='<span class="gc-drop-hint">drop here</span>';
+    gcBindDropZone(dz);
+    slot.appendChild(dz);
+  }
+
+  // Click to connect
+  if (stage === 'baby' || stage === 'adult') {
+    slot.addEventListener('click', () => gcHandleSlotClick(slotId, stage, slot));
+  }
+
+  // Drop on filled slot to replace
+  if (entry) {
+    slot.addEventListener('dragover', e => { e.preventDefault(); slot.style.outline='2px solid var(--cyan)'; });
+    slot.addEventListener('dragleave', () => { slot.style.outline=''; });
+    slot.addEventListener('drop', e => {
+      e.preventDefault(); slot.style.outline='';
+      const id = e.dataTransfer.getData('tama-id');
+      if (id) gcDropOntoSlot(slotId, stage, id);
+    });
+  }
+
+  return slot;
+}
+
+function gcRenderEgg(chart) {
+  const zone = document.getElementById('gc-egg-zone');
+  zone.innerHTML='';
+  if (chart.egg) {
+    const entry = collection.find(e=>e.id===chart.egg);
+    if (entry && entry.bitmap) {
+      const S=2, bmp=entry.bitmap;
+      const c=document.createElement('canvas');
+      c.width=Math.min(80,bmp.width*S); c.height=Math.min(80,bmp.height*S);
+      c.style.imageRendering='pixelated';
+      c.getContext('2d').drawImage(bmp,0,0,bmp.width,bmp.height,0,0,c.width,c.height);
+      zone.appendChild(c);
+    }
+    const rm=document.createElement('div');
+    rm.style.cssText='font-size:9px;color:var(--muted);cursor:pointer;margin-top:4px;';
+    rm.textContent='✕ remove'; rm.addEventListener('click',()=>{chart.egg=null;gcRender();});
+    zone.appendChild(rm);
+    zone.classList.add('has-tama');
+  } else {
+    zone.innerHTML='<span class="gc-drop-hint">drop egg</span>';
+    zone.classList.remove('has-tama');
+  }
+  gcBindDropZone(zone);
+}
+
+function gcRenderBabyCol(chart) {
+  const col = document.getElementById('gc-baby-col');
+  col.innerHTML='';
+  chart.babySlots.forEach(s => col.appendChild(gcMakeSlotEl(s.id, s.tamaId, 'baby')));
+}
+
+function gcRenderAdultCol(chart) {
+  const col = document.getElementById('gc-adult-col');
+  col.innerHTML='';
+  chart.adultSlots.forEach(s => col.appendChild(gcMakeSlotEl(s.id, s.tamaId, 'adult')));
+}
+
+function gcRenderVariantsCol(chart) {
+  const col = document.getElementById('gc-variants-col');
+  col.innerHTML='';
+  chart.adultSlots.forEach(s => {
+    if (!s.tamaId) return;
+    const group = document.createElement('div');
+    group.style.cssText='display:flex;flex-direction:column;gap:4px;min-height:80px;';
+    s.variantIds.forEach((vid,vi) => {
+      const vslot = gcMakeSlotEl(s.id+'-v'+vi, vid, 'variant');
+      group.appendChild(vslot);
+    });
+    const addV = document.createElement('button');
+    addV.className='gc-add-btn'; addV.textContent='+ variant';
+    addV.addEventListener('click',()=>{
+      s.variantIds.push(null); gcRender();
+    });
+    group.appendChild(addV);
+    col.appendChild(group);
+    // spacer to match adult slot height
+    col.appendChild(document.createElement('div'));
+  });
+}
+
+function gcRenderConnections(chart) {
+  const svg = document.getElementById('gc-svg');
+  const labels = document.querySelectorAll('.gc-conn-label');
+  labels.forEach(l=>l.remove());
+  svg.innerHTML='';
+  if (!chart) return;
+
+  const wrap = document.getElementById('gc-chart');
+  const wRect = wrap.getBoundingClientRect();
+
+  chart.connections.forEach(conn => {
+    const fromEl = document.getElementById('gc-slot-'+conn.fromSlot);
+    const toEl   = document.getElementById('gc-slot-'+conn.toSlot);
+    if (!fromEl || !toEl) return;
+
+    const fR = fromEl.getBoundingClientRect();
+    const tR = toEl.getBoundingClientRect();
+    const x1 = fR.right - wRect.left;
+    const y1 = fR.top + fR.height/2 - wRect.top;
+    const x2 = tR.left - wRect.left;
+    const y2 = tR.top + tR.height/2 - wRect.top;
+    const cx = (x1+x2)/2;
+
+    const isSelected = gcSelectedConn === conn.id;
+    const path = document.createElementNS('http://www.w3.org/2000/svg','path');
+    path.setAttribute('d',`M${x1},${y1} C${cx},${y1} ${cx},${y2} ${x2},${y2}`);
+    path.setAttribute('stroke', isSelected ? 'var(--yellow)' : 'var(--cyan)');
+    path.setAttribute('stroke-width', isSelected ? '2' : '1.5');
+    path.setAttribute('fill','none');
+    path.setAttribute('opacity','0.8');
+    path.style.pointerEvents='stroke';
+    path.style.cursor='pointer';
+    path.setAttribute('stroke-dasharray', conn.chance < 100 ? '4,3' : '');
+
+    path.addEventListener('click', () => {
+      gcSelectedConn = conn.id;
+      gcShowConnInspector(conn, chart);
+      gcRenderConnections(chart);
+    });
+    svg.appendChild(path);
+
+    // Label showing % chance and requirements indicator
+    const label = document.createElement('div');
+    label.className='gc-conn-label';
+    label.style.left = cx + 'px';
+    label.style.top  = ((y1+y2)/2) + 'px';
+    const reqStr = conn.requirements ? '⚑ ' : '';
+    label.textContent = reqStr + conn.chance + '%';
+    label.addEventListener('click',()=>{
+      gcSelectedConn = conn.id;
+      gcShowConnInspector(conn, chart);
+      gcRenderConnections(chart);
+    });
+    wrap.appendChild(label);
+  });
+}
+
+// ── Drop zones ───────────────────────────────────────────────────────────────
+function gcBindDropZone(el) {
+  el.addEventListener('dragover', e => { e.preventDefault(); el.classList.add('over'); });
+  el.addEventListener('dragleave', () => el.classList.remove('over'));
+  el.addEventListener('drop', e => {
+    e.preventDefault(); el.classList.remove('over');
+    const id  = e.dataTransfer.getData('tama-id');
+    const gen = e.dataTransfer.getData('tama-gen');
+    if (!id) return;
+    const stage = el.dataset.stage;
+    const slotId = el.dataset.slotId;
+    if (slotId) { gcDropOntoSlot(slotId, stage, id); }
+    else gcDropNew(stage, id, gen);
+  });
+}
+
+function gcDropNew(stage, tamaId, gen) {
+  const chart = gcActiveChart(); if(!chart)return;
+  if (stage==='egg') { chart.egg=tamaId; gcRender(); return; }
+  if (stage==='baby') {
+    const existing = chart.babySlots.find(s=>s.tamaId===tamaId);
+    if (!existing) chart.babySlots.push({id:gcNewId('bs'), tamaId, variantIds:[]});
+  } else if (stage==='adult') {
+    const existing = chart.adultSlots.find(s=>s.tamaId===tamaId);
+    if (!existing) chart.adultSlots.push({id:gcNewId('as'), tamaId, variantIds:[]});
+  }
+  gcRender();
+}
+
+function gcDropOntoSlot(slotId, stage, tamaId) {
+  const chart = gcActiveChart(); if(!chart)return;
+  if (stage==='baby') {
+    const s=chart.babySlots.find(s=>s.id===slotId);
+    if(s)s.tamaId=tamaId;
+  } else if (stage==='adult') {
+    const s=chart.adultSlots.find(s=>s.id===slotId);
+    if(s)s.tamaId=tamaId;
+  } else if (stage==='variant') {
+    const m = slotId.match(/^(.+)-v(\d+)$/);
+    if (m) {
+      const s = chart.adultSlots.find(s=>s.id===m[1]);
+      if (s && m[2] !== undefined) s.variantIds[parseInt(m[2])] = tamaId;
+    }
+  }
+  gcRender();
+}
+
+function gcRemoveFromSlot(slotId, stage) {
+  const chart = gcActiveChart(); if(!chart)return;
+  if (stage==='baby') {
+    const idx=chart.babySlots.findIndex(s=>s.id===slotId);
+    if(idx>=0){
+      chart.connections=chart.connections.filter(c=>c.fromSlot!==slotId&&c.toSlot!==slotId);
+      chart.babySlots.splice(idx,1);
+    }
+  } else if (stage==='adult') {
+    const idx=chart.adultSlots.findIndex(s=>s.id===slotId);
+    if(idx>=0){
+      chart.connections=chart.connections.filter(c=>c.fromSlot!==slotId&&c.toSlot!==slotId);
+      chart.adultSlots.splice(idx,1);
+    }
+  } else if (stage==='variant') {
+    const m=slotId.match(/^(.+)-v(\d+)$/);
+    if(m){ const s=chart.adultSlots.find(s=>s.id===m[1]); if(s)s.variantIds.splice(parseInt(m[2]),1); }
+  }
+  gcRender();
+}
+
+// ── Add slot buttons ─────────────────────────────────────────────────────────
+document.getElementById('gc-add-baby').addEventListener('click',()=>{
+  const c=gcActiveChart();if(!c)return;
+  c.babySlots.push({id:gcNewId('bs'),tamaId:null,variantIds:[]});
+  gcRender();
+});
+document.getElementById('gc-add-adult').addEventListener('click',()=>{
+  const c=gcActiveChart();if(!c)return;
+  c.adultSlots.push({id:gcNewId('as'),tamaId:null,variantIds:[]});
+  gcRender();
+});
+
+// ── Connection clicks ─────────────────────────────────────────────────────────
+function gcHandleSlotClick(slotId, stage, slotEl) {
+  const chart = gcActiveChart(); if(!chart)return;
+  const slot = [...chart.babySlots,...chart.adultSlots].find(s=>s.id===slotId);
+  if (!slot?.tamaId) return; // can only connect filled slots
+
+  if (!gcConnecting) {
+    // Start connection — must start from baby
+    if (stage !== 'baby') { toast('Click a baby slot first to start a connection'); return; }
+    gcConnecting = { slotId, slotEl };
+    slotEl.classList.add('connecting-source');
+    toast('Now click an adult slot to connect →');
+  } else {
+    // Finish connection — must end at adult
+    if (stage !== 'adult') {
+      gcConnecting.slotEl.classList.remove('connecting-source');
+      gcConnecting = null;
+      return;
+    }
+    const exists = chart.connections.find(c=>c.fromSlot===gcConnecting.slotId&&c.toSlot===slotId);
+    if (!exists) {
+      chart.connections.push({
+        id: gcNewId('cn'),
+        fromSlot: gcConnecting.slotId,
+        toSlot:   slotId,
+        requirements: '',
+        chance: 100,
+      });
+    }
+    gcConnecting.slotEl.classList.remove('connecting-source');
+    gcConnecting = null;
+    gcRender();
+  }
+}
+
+// ── Inspector ────────────────────────────────────────────────────────────────
+function gcShowConnInspector(conn, chart) {
+  const el = document.getElementById('gc-inspector-content');
+  const fromSlot = chart.babySlots.find(s=>s.id===conn.fromSlot);
+  const toSlot   = chart.adultSlots.find(s=>s.id===conn.toSlot);
+  const fromName = fromSlot?.tamaId ? (collection.find(e=>e.id===fromSlot.tamaId)?.name||fromSlot.tamaId) : '?';
+  const toName   = toSlot?.tamaId   ? (collection.find(e=>e.id===toSlot.tamaId)?.name||toSlot.tamaId)   : '?';
+
+  el.innerHTML=`
+    <div style="font-size:9px;color:var(--muted);margin-bottom:8px;">Evolution: ${fromName} → ${toName}</div>
+    <div class="field" style="margin-bottom:6px;">
+      <label style="font-size:9px;">% Chance</label>
+      <input type="number" id="gc-inp-chance" min="1" max="100" value="${conn.chance}"
+        style="width:60px;padding:3px;font-size:10px;">
+    </div>
+    <div class="field" style="margin-bottom:8px;">
+      <label style="font-size:9px;">Requirements</label>
+      <textarea id="gc-inp-req" rows="3" style="width:100%;font-size:9px;resize:vertical;"
+        placeholder="e.g. happiness > 80">${conn.requirements||''}</textarea>
+    </div>
+    <button class="btn" id="gc-inp-save" style="font-size:9px;width:100%;">Apply</button>
+    <button class="btn" id="gc-inp-del" style="font-size:9px;width:100%;color:var(--red);margin-top:4px;">Delete Connection</button>
+  `;
+
+  document.getElementById('gc-inp-save').addEventListener('click',()=>{
+    conn.chance       = parseInt(document.getElementById('gc-inp-chance').value)||100;
+    conn.requirements = document.getElementById('gc-inp-req').value.trim();
+    gcRenderConnections(chart);
+    toast('✓ Connection updated');
+  });
+  document.getElementById('gc-inp-del').addEventListener('click',()=>{
+    chart.connections = chart.connections.filter(c=>c.id!==conn.id);
+    gcSelectedConn = null;
+    el.innerHTML = '<span style="color:var(--muted);font-size:10px;">Select a connection or slot to edit.</span>';
+    gcRenderConnections(chart);
+    toast('Connection removed');
+  });
+}
+
+// ── Export ───────────────────────────────────────────────────────────────────
+document.getElementById('gc-btn-export').addEventListener('click',()=>{
+  const chart = gcActiveChart();
+  if (!chart) { toast('No chart selected'); return; }
+  const out = {
+    id:    chart.id,
+    name:  chart.name,
+    egg:   chart.egg,
+    babySlots:  chart.babySlots.map(s=>({id:s.id,tamaId:s.tamaId})),
+    adultSlots: chart.adultSlots.map(s=>({id:s.id,tamaId:s.tamaId,variantIds:s.variantIds})),
+    connections: chart.connections,
+  };
+  const blob = new Blob([JSON.stringify(out,null,2)],{type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = (chart.name||'growth-chart').replace(/\s+/g,'-').toLowerCase()+'.json';
+  a.click();
+  URL.revokeObjectURL(a.href);
+  toast(`✓ Exported ${a.download}`);
+});
 </script>
 </body>
 </html>
