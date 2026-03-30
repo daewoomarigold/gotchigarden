@@ -391,5 +391,53 @@
     }
   ],
   "animations": [],
-  "variant": "Goro2Awamoko"
+  "variant": "Goro2Awamoko",
+  "bodyAnimAnchors": [
+    {
+      "offsetX": 14,
+      "offsetY": 24,
+      "useFace": true
+    },
+    {
+      "offsetX": 15,
+      "offsetY": 25,
+      "useFace": true
+    },
+    {
+      "offsetX": 15,
+      "offsetY": 28,
+      "useFace": true
+    },
+    {
+      "offsetX": 15,
+      "offsetY": 23,
+      "useFace": true
+    },
+    {
+      "offsetX": 11,
+      "offsetY": 24,
+      "useFace": true
+    },
+    {
+      "offsetX": 11,
+      "offsetY": 23,
+      "useFace": true
+    },
+    {
+      "offsetX": 11,
+      "offsetY": 26,
+      "useFace": true
+    },
+    {
+      "offsetX": 15,
+      "offsetY": 12,
+      "useFace": false
+    },
+    {
+      "offsetX": 15,
+      "offsetY": 11,
+      "useFace": false
+    }
+  ],
+  "enabled": true
 }

@@ -423,5 +423,53 @@
     }
   ],
   "animations": [],
-  "variant": "Transparent Patchi"
+  "variant": "Transparent Patchi",
+  "bodyAnimAnchors": [
+    {
+      "offsetX": 7,
+      "offsetY": 11,
+      "useFace": true
+    },
+    {
+      "offsetX": 9,
+      "offsetY": 11,
+      "useFace": true
+    },
+    {
+      "offsetX": 5,
+      "offsetY": 11,
+      "useFace": true
+    },
+    {
+      "offsetX": 10,
+      "offsetY": 11,
+      "useFace": true
+    },
+    {
+      "offsetX": 5,
+      "offsetY": 12,
+      "useFace": true
+    },
+    {
+      "offsetX": 3,
+      "offsetY": 11,
+      "useFace": true
+    },
+    {
+      "offsetX": 6,
+      "offsetY": 16,
+      "useFace": true
+    },
+    {
+      "offsetX": 7,
+      "offsetY": 9,
+      "useFace": false
+    },
+    {
+      "offsetX": 7,
+      "offsetY": 9,
+      "useFace": false
+    }
+  ],
+  "enabled": true
 }

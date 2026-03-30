@@ -423,5 +423,53 @@
     }
   ],
   "animations": [],
-  "variant": "Chopper Milktchi"
+  "variant": "Chopper Milktchi",
+  "bodyAnimAnchors": [
+    {
+      "offsetX": 19,
+      "offsetY": 27,
+      "useFace": true
+    },
+    {
+      "offsetX": 18,
+      "offsetY": 27,
+      "useFace": true
+    },
+    {
+      "offsetX": 19,
+      "offsetY": 28,
+      "useFace": true
+    },
+    {
+      "offsetX": 18,
+      "offsetY": 25,
+      "useFace": true
+    },
+    {
+      "offsetX": 16,
+      "offsetY": 28,
+      "useFace": true
+    },
+    {
+      "offsetX": 16,
+      "offsetY": 26,
+      "useFace": true
+    },
+    {
+      "offsetX": 16,
+      "offsetY": 30,
+      "useFace": true
+    },
+    {
+      "offsetX": 18,
+      "offsetY": 11,
+      "useFace": false
+    },
+    {
+      "offsetX": 18,
+      "offsetY": 11,
+      "useFace": false
+    }
+  ],
+  "enabled": true
 }

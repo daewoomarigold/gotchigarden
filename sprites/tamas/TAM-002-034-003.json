@@ -383,5 +383,53 @@
     }
   ],
   "animations": [],
-  "variant": "Mame Kitty"
+  "variant": "Mame Kitty",
+  "bodyAnimAnchors": [
+    {
+      "offsetX": 10,
+      "offsetY": 19,
+      "useFace": true
+    },
+    {
+      "offsetX": 10,
+      "offsetY": 19,
+      "useFace": true
+    },
+    {
+      "offsetX": 10,
+      "offsetY": 19,
+      "useFace": true
+    },
+    {
+      "offsetX": 9,
+      "offsetY": 19,
+      "useFace": true
+    },
+    {
+      "offsetX": 6,
+      "offsetY": 20,
+      "useFace": true
+    },
+    {
+      "offsetX": 6,
+      "offsetY": 19,
+      "useFace": true
+    },
+    {
+      "offsetX": 6,
+      "offsetY": 22,
+      "useFace": true
+    },
+    {
+      "offsetX": 10,
+      "offsetY": 10,
+      "useFace": false
+    },
+    {
+      "offsetX": 10,
+      "offsetY": 10,
+      "useFace": false
+    }
+  ],
+  "enabled": true
 }

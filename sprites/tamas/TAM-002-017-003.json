@@ -415,5 +415,53 @@
     }
   ],
   "animations": [],
-  "variant": "Karapa Franken"
+  "variant": "Karapa Franken",
+  "bodyAnimAnchors": [
+    {
+      "offsetX": 8,
+      "offsetY": 23,
+      "useFace": true
+    },
+    {
+      "offsetX": 11,
+      "offsetY": 21,
+      "useFace": true
+    },
+    {
+      "offsetX": 10,
+      "offsetY": 25,
+      "useFace": true
+    },
+    {
+      "offsetX": 10,
+      "offsetY": 19,
+      "useFace": true
+    },
+    {
+      "offsetX": 7,
+      "offsetY": 24,
+      "useFace": true
+    },
+    {
+      "offsetX": 6,
+      "offsetY": 23,
+      "useFace": true
+    },
+    {
+      "offsetX": 7,
+      "offsetY": 29,
+      "useFace": true
+    },
+    {
+      "offsetX": 8,
+      "offsetY": 11,
+      "useFace": false
+    },
+    {
+      "offsetX": 8,
+      "offsetY": 11,
+      "useFace": false
+    }
+  ],
+  "enabled": true
 }

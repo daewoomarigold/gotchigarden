@@ -288,7 +288,7 @@
       "index": 5,
       "role": "face_zoom",
       "rowStart": 347,
-      "rowEnd": 407,
+      "rowEnd": 404,
       "frameCount": 9,
       "sprites": [
         {
@@ -296,7 +296,7 @@
           "x": 23,
           "y": 347,
           "w": 86,
-          "h": 61,
+          "h": 58,
           "label": "normal"
         },
         {
@@ -304,7 +304,7 @@
           "x": 153,
           "y": 347,
           "w": 86,
-          "h": 61,
+          "h": 58,
           "label": "eyes_closed"
         },
         {
@@ -312,7 +312,7 @@
           "x": 283,
           "y": 347,
           "w": 86,
-          "h": 61,
+          "h": 58,
           "label": "happy"
         },
         {
@@ -320,7 +320,7 @@
           "x": 413,
           "y": 347,
           "w": 86,
-          "h": 61,
+          "h": 58,
           "label": "crying"
         },
         {
@@ -328,7 +328,7 @@
           "x": 543,
           "y": 347,
           "w": 86,
-          "h": 61,
+          "h": 58,
           "label": "annoyed"
         },
         {
@@ -336,7 +336,7 @@
           "x": 673,
           "y": 347,
           "w": 86,
-          "h": 61,
+          "h": 58,
           "label": "blush_angry"
         },
         {
@@ -344,7 +344,7 @@
           "x": 803,
           "y": 347,
           "w": 91,
-          "h": 61,
+          "h": 58,
           "label": "worried"
         },
         {
@@ -352,7 +352,7 @@
           "x": 929,
           "y": 347,
           "w": 94,
-          "h": 61,
+          "h": 58,
           "label": "blush_happy"
         },
         {
@@ -360,12 +360,60 @@
           "x": 1063,
           "y": 347,
           "w": 86,
-          "h": 61,
+          "h": 58,
           "label": "somber"
         }
       ]
     }
   ],
   "animations": [],
-  "variant": "Buzz Kuchipatchi"
+  "variant": "Buzz Kuchipatchi",
+  "bodyAnimAnchors": [
+    {
+      "offsetX": 12,
+      "offsetY": 14,
+      "useFace": true
+    },
+    {
+      "offsetX": 12,
+      "offsetY": 14,
+      "useFace": true
+    },
+    {
+      "offsetX": 12,
+      "offsetY": 14,
+      "useFace": true
+    },
+    {
+      "offsetX": 12,
+      "offsetY": 14,
+      "useFace": true
+    },
+    {
+      "offsetX": 10,
+      "offsetY": 14,
+      "useFace": true
+    },
+    {
+      "offsetX": 10,
+      "offsetY": 13,
+      "useFace": true
+    },
+    {
+      "offsetX": 10,
+      "offsetY": 19,
+      "useFace": true
+    },
+    {
+      "offsetX": 12,
+      "offsetY": 10,
+      "useFace": false
+    },
+    {
+      "offsetX": 12,
+      "offsetY": 10,
+      "useFace": false
+    }
+  ],
+  "enabled": true
 }

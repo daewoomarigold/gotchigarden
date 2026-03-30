@@ -415,5 +415,53 @@
     }
   ],
   "animations": [],
-  "variant": "Gudetama Karapa"
+  "variant": "Gudetama Karapa",
+  "bodyAnimAnchors": [
+    {
+      "offsetX": 7,
+      "offsetY": 10,
+      "useFace": true
+    },
+    {
+      "offsetX": 7,
+      "offsetY": 10,
+      "useFace": true
+    },
+    {
+      "offsetX": 7,
+      "offsetY": 10,
+      "useFace": true
+    },
+    {
+      "offsetX": 7,
+      "offsetY": 10,
+      "useFace": true
+    },
+    {
+      "offsetX": 7,
+      "offsetY": 10,
+      "useFace": true
+    },
+    {
+      "offsetX": 7,
+      "offsetY": 10,
+      "useFace": true
+    },
+    {
+      "offsetX": 8,
+      "offsetY": 16,
+      "useFace": true
+    },
+    {
+      "offsetX": 7,
+      "offsetY": 10,
+      "useFace": false
+    },
+    {
+      "offsetX": 7,
+      "offsetY": 10,
+      "useFace": false
+    }
+  ],
+  "enabled": true
 }

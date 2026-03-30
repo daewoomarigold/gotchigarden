@@ -176,7 +176,7 @@
       "role": "face_small",
       "rowStart": 306,
       "rowEnd": 337,
-      "frameCount": 17,
+      "frameCount": 16,
       "sprites": [
         {
           "index": 0,
@@ -230,69 +230,69 @@
           "index": 6,
           "x": 398,
           "y": 306,
-          "w": 42,
+          "w": 59,
           "h": 32,
           "label": "neutral_eyes_closed"
         },
         {
           "index": 7,
-          "x": 453,
+          "x": 466,
           "y": 306,
-          "w": 4,
+          "w": 44,
           "h": 32,
           "label": "smile_eyes_closed"
         },
         {
           "index": 8,
-          "x": 466,
+          "x": 543,
           "y": 306,
-          "w": 44,
+          "w": 34,
           "h": 32,
           "label": "eyes_open_happy"
         },
         {
           "index": 9,
-          "x": 543,
+          "x": 612,
           "y": 306,
-          "w": 34,
+          "w": 28,
           "h": 32,
           "label": "eyes_closed_happy"
         },
         {
           "index": 10,
-          "x": 612,
+          "x": 672,
           "y": 306,
-          "w": 28,
+          "w": 35,
           "h": 32,
           "label": "sad_crying"
         },
         {
           "index": 11,
-          "x": 672,
+          "x": 734,
           "y": 306,
-          "w": 35,
+          "w": 37,
           "h": 32,
           "label": "disappointed"
         },
         {
           "index": 12,
-          "x": 734,
+          "x": 804,
           "y": 306,
-          "w": 37,
+          "w": 32,
           "h": 32,
           "label": "fever"
         },
         {
           "index": 13,
-          "x": 804,
+          "x": 867,
           "y": 306,
-          "w": 32,
+          "w": 33,
           "h": 32,
           "label": "surprised"
         },
         {
           "index": 14,
-          "x": 867,
+          "x": 933,
           "y": 306,
           "w": 33,
           "h": 32,
@@ -300,18 +300,11 @@
         },
         {
           "index": 15,
-          "x": 933,
-          "y": 306,
-          "w": 33,
-          "h": 32,
-          "label": "contemplating"
-        },
-        {
-          "index": 16,
           "x": 1007,
           "y": 306,
           "w": 26,
-          "h": 32
+          "h": 32,
+          "label": "contemplating"
         }
       ]
     },
@@ -319,7 +312,7 @@
       "index": 5,
       "role": "face_zoom",
       "rowStart": 346,
-      "rowEnd": 407,
+      "rowEnd": 405,
       "frameCount": 9,
       "sprites": [
         {
@@ -327,7 +320,7 @@
           "x": 2,
           "y": 346,
           "w": 92,
-          "h": 62,
+          "h": 60,
           "label": "normal"
         },
         {
@@ -335,7 +328,7 @@
           "x": 141,
           "y": 346,
           "w": 85,
-          "h": 62,
+          "h": 60,
           "label": "eyes_closed"
         },
         {
@@ -343,7 +336,7 @@
           "x": 262,
           "y": 346,
           "w": 93,
-          "h": 62,
+          "h": 60,
           "label": "happy"
         },
         {
@@ -351,7 +344,7 @@
           "x": 401,
           "y": 346,
           "w": 86,
-          "h": 62,
+          "h": 60,
           "label": "crying"
         },
         {
@@ -359,7 +352,7 @@
           "x": 531,
           "y": 346,
           "w": 90,
-          "h": 62,
+          "h": 60,
           "label": "annoyed"
         },
         {
@@ -367,7 +360,7 @@
           "x": 652,
           "y": 346,
           "w": 94,
-          "h": 62,
+          "h": 60,
           "label": "blush_angry"
         },
         {
@@ -375,7 +368,7 @@
           "x": 790,
           "y": 346,
           "w": 99,
-          "h": 62,
+          "h": 60,
           "label": "worried"
         },
         {
@@ -383,7 +376,7 @@
           "x": 913,
           "y": 346,
           "w": 97,
-          "h": 62,
+          "h": 60,
           "label": "blush_happy"
         },
         {
@@ -391,12 +384,60 @@
           "x": 1051,
           "y": 346,
           "w": 85,
-          "h": 62,
+          "h": 60,
           "label": "somber"
         }
       ]
     }
   ],
   "animations": [],
-  "variant": "Gao Fire"
+  "variant": "Gao Fire",
+  "bodyAnimAnchors": [
+    {
+      "offsetX": 2,
+      "offsetY": 11,
+      "useFace": true
+    },
+    {
+      "offsetX": 2,
+      "offsetY": 10,
+      "useFace": true
+    },
+    {
+      "offsetX": 1,
+      "offsetY": 12,
+      "useFace": true
+    },
+    {
+      "offsetX": 3,
+      "offsetY": 9,
+      "useFace": true
+    },
+    {
+      "offsetX": -1,
+      "offsetY": 12,
+      "useFace": true
+    },
+    {
+      "offsetX": -1,
+      "offsetY": 11,
+      "useFace": true
+    },
+    {
+      "offsetX": 0,
+      "offsetY": 13,
+      "useFace": true
+    },
+    {
+      "offsetX": 11,
+      "offsetY": 11,
+      "useFace": false
+    },
+    {
+      "offsetX": 11,
+      "offsetY": 10,
+      "useFace": false
+    }
+  ],
+  "enabled": true
 }

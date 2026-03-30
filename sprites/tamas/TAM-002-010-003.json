@@ -192,7 +192,7 @@
       "role": "face_small",
       "rowStart": 306,
       "rowEnd": 337,
-      "frameCount": 17,
+      "frameCount": 16,
       "sprites": [
         {
           "index": 0,
@@ -246,45 +246,45 @@
           "index": 6,
           "x": 398,
           "y": 306,
-          "w": 42,
+          "w": 59,
           "h": 32,
           "label": "neutral_eyes_closed"
         },
         {
           "index": 7,
-          "x": 453,
+          "x": 484,
           "y": 306,
-          "w": 4,
+          "w": 26,
           "h": 32,
           "label": "smile_eyes_closed"
         },
         {
           "index": 8,
-          "x": 484,
+          "x": 552,
           "y": 306,
-          "w": 26,
+          "w": 25,
           "h": 32,
           "label": "eyes_open_happy"
         },
         {
           "index": 9,
-          "x": 552,
+          "x": 616,
           "y": 306,
-          "w": 25,
+          "w": 24,
           "h": 32,
           "label": "eyes_closed_happy"
         },
         {
           "index": 10,
-          "x": 616,
+          "x": 683,
           "y": 306,
-          "w": 24,
+          "w": 22,
           "h": 32,
           "label": "sad_crying"
         },
         {
           "index": 11,
-          "x": 683,
+          "x": 749,
           "y": 306,
           "w": 22,
           "h": 32,
@@ -292,15 +292,15 @@
         },
         {
           "index": 12,
-          "x": 749,
+          "x": 816,
           "y": 306,
-          "w": 22,
+          "w": 20,
           "h": 32,
           "label": "fever"
         },
         {
           "index": 13,
-          "x": 816,
+          "x": 880,
           "y": 306,
           "w": 20,
           "h": 32,
@@ -308,7 +308,7 @@
         },
         {
           "index": 14,
-          "x": 880,
+          "x": 946,
           "y": 306,
           "w": 20,
           "h": 32,
@@ -316,18 +316,11 @@
         },
         {
           "index": 15,
-          "x": 946,
-          "y": 306,
-          "w": 20,
-          "h": 32,
-          "label": "contemplating"
-        },
-        {
-          "index": 16,
           "x": 1011,
           "y": 306,
           "w": 22,
-          "h": 32
+          "h": 32,
+          "label": "contemplating"
         }
       ]
     },
@@ -335,7 +328,7 @@
       "index": 5,
       "role": "face_zoom",
       "rowStart": 342,
-      "rowEnd": 407,
+      "rowEnd": 405,
       "frameCount": 10,
       "sprites": [
         {
@@ -343,7 +336,7 @@
           "x": 29,
           "y": 342,
           "w": 65,
-          "h": 66,
+          "h": 64,
           "label": "normal"
         },
         {
@@ -351,7 +344,7 @@
           "x": 158,
           "y": 342,
           "w": 68,
-          "h": 66,
+          "h": 64,
           "label": "eyes_closed"
         },
         {
@@ -359,7 +352,7 @@
           "x": 290,
           "y": 342,
           "w": 65,
-          "h": 66,
+          "h": 64,
           "label": "happy"
         },
         {
@@ -367,7 +360,7 @@
           "x": 415,
           "y": 342,
           "w": 72,
-          "h": 66,
+          "h": 64,
           "label": "crying"
         },
         {
@@ -375,7 +368,7 @@
           "x": 543,
           "y": 342,
           "w": 78,
-          "h": 66,
+          "h": 64,
           "label": "annoyed"
         },
         {
@@ -383,7 +376,7 @@
           "x": 652,
           "y": 342,
           "w": 94,
-          "h": 66,
+          "h": 64,
           "label": "blush_angry"
         },
         {
@@ -391,7 +384,7 @@
           "x": 770,
           "y": 342,
           "w": 10,
-          "h": 66,
+          "h": 64,
           "label": "worried"
         },
         {
@@ -399,7 +392,7 @@
           "x": 810,
           "y": 342,
           "w": 79,
-          "h": 66,
+          "h": 64,
           "label": "blush_happy"
         },
         {
@@ -407,7 +400,7 @@
           "x": 933,
           "y": 342,
           "w": 77,
-          "h": 66,
+          "h": 64,
           "label": "somber"
         },
         {
@@ -415,11 +408,59 @@
           "x": 1068,
           "y": 342,
           "w": 68,
-          "h": 66
+          "h": 64
         }
       ]
     }
   ],
   "animations": [],
-  "variant": "Gaorukatchi"
+  "variant": "Gaorukatchi",
+  "bodyAnimAnchors": [
+    {
+      "offsetX": 7,
+      "offsetY": 11,
+      "useFace": true
+    },
+    {
+      "offsetX": 18,
+      "offsetY": 10,
+      "useFace": true
+    },
+    {
+      "offsetX": 4,
+      "offsetY": 12,
+      "useFace": true
+    },
+    {
+      "offsetX": 9,
+      "offsetY": 10,
+      "useFace": true
+    },
+    {
+      "offsetX": 6,
+      "offsetY": 10,
+      "useFace": true
+    },
+    {
+      "offsetX": 4,
+      "offsetY": 9,
+      "useFace": true
+    },
+    {
+      "offsetX": 9,
+      "offsetY": 12,
+      "useFace": true
+    },
+    {
+      "offsetX": 9,
+      "offsetY": 11,
+      "useFace": false
+    },
+    {
+      "offsetX": 9,
+      "offsetY": 10,
+      "useFace": false
+    }
+  ],
+  "enabled": true
 }

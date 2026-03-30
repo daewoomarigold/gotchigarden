@@ -407,5 +407,53 @@
     }
   ],
   "animations": [],
-  "variant": "Mei Milktchi"
+  "variant": "Mei Milktchi",
+  "bodyAnimAnchors": [
+    {
+      "offsetX": 13,
+      "offsetY": 18,
+      "useFace": true
+    },
+    {
+      "offsetX": 20,
+      "offsetY": 18,
+      "useFace": true
+    },
+    {
+      "offsetX": 8,
+      "offsetY": 19,
+      "useFace": true
+    },
+    {
+      "offsetX": 17,
+      "offsetY": 17,
+      "useFace": true
+    },
+    {
+      "offsetX": 8,
+      "offsetY": 20,
+      "useFace": true
+    },
+    {
+      "offsetX": 8,
+      "offsetY": 19,
+      "useFace": true
+    },
+    {
+      "offsetX": 8,
+      "offsetY": 22,
+      "useFace": true
+    },
+    {
+      "offsetX": 12,
+      "offsetY": 10,
+      "useFace": false
+    },
+    {
+      "offsetX": 12,
+      "offsetY": 10,
+      "useFace": false
+    }
+  ],
+  "enabled": true
 }

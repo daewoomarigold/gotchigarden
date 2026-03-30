@@ -415,5 +415,53 @@
     }
   ],
   "animations": [],
-  "variant": "Mameculatchi"
+  "variant": "Mameculatchi",
+  "bodyAnimAnchors": [
+    {
+      "offsetX": 9,
+      "offsetY": 16,
+      "useFace": true
+    },
+    {
+      "offsetX": 9,
+      "offsetY": 16,
+      "useFace": true
+    },
+    {
+      "offsetX": 9,
+      "offsetY": 16,
+      "useFace": true
+    },
+    {
+      "offsetX": 9,
+      "offsetY": 16,
+      "useFace": true
+    },
+    {
+      "offsetX": 3,
+      "offsetY": 17,
+      "useFace": true
+    },
+    {
+      "offsetX": 3,
+      "offsetY": 16,
+      "useFace": true
+    },
+    {
+      "offsetX": 5,
+      "offsetY": 19,
+      "useFace": true
+    },
+    {
+      "offsetX": 8,
+      "offsetY": 11,
+      "useFace": false
+    },
+    {
+      "offsetX": 8,
+      "offsetY": 9,
+      "useFace": false
+    }
+  ],
+  "enabled": true
 }

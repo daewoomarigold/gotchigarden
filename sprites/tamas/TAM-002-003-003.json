@@ -423,5 +423,53 @@
     }
   ],
   "animations": [],
-  "variant": "Brook Mokotchi"
+  "variant": "Brook Mokotchi",
+  "bodyAnimAnchors": [
+    {
+      "offsetX": 14,
+      "offsetY": 29,
+      "useFace": true
+    },
+    {
+      "offsetX": 19,
+      "offsetY": 28,
+      "useFace": true
+    },
+    {
+      "offsetX": 13,
+      "offsetY": 31,
+      "useFace": true
+    },
+    {
+      "offsetX": 20,
+      "offsetY": 26,
+      "useFace": true
+    },
+    {
+      "offsetX": 8,
+      "offsetY": 29,
+      "useFace": true
+    },
+    {
+      "offsetX": 7,
+      "offsetY": 28,
+      "useFace": true
+    },
+    {
+      "offsetX": 8,
+      "offsetY": 30,
+      "useFace": true
+    },
+    {
+      "offsetX": 12,
+      "offsetY": 13,
+      "useFace": false
+    },
+    {
+      "offsetX": 12,
+      "offsetY": 12,
+      "useFace": false
+    }
+  ],
+  "enabled": true
 }

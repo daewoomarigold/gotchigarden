@@ -344,7 +344,7 @@
       "index": 5,
       "role": "face_zoom",
       "rowStart": 342,
-      "rowEnd": 407,
+      "rowEnd": 405,
       "frameCount": 9,
       "sprites": [
         {
@@ -352,7 +352,7 @@
           "x": 10,
           "y": 342,
           "w": 112,
-          "h": 66,
+          "h": 64,
           "label": "normal"
         },
         {
@@ -360,7 +360,7 @@
           "x": 140,
           "y": 342,
           "w": 112,
-          "h": 66,
+          "h": 64,
           "label": "eyes_closed"
         },
         {
@@ -368,7 +368,7 @@
           "x": 265,
           "y": 342,
           "w": 123,
-          "h": 66,
+          "h": 64,
           "label": "happy"
         },
         {
@@ -376,7 +376,7 @@
           "x": 396,
           "y": 342,
           "w": 121,
-          "h": 66,
+          "h": 64,
           "label": "crying"
         },
         {
@@ -384,7 +384,7 @@
           "x": 530,
           "y": 342,
           "w": 112,
-          "h": 66,
+          "h": 64,
           "label": "annoyed"
         },
         {
@@ -392,7 +392,7 @@
           "x": 660,
           "y": 342,
           "w": 112,
-          "h": 66,
+          "h": 64,
           "label": "blush_angry"
         },
         {
@@ -400,7 +400,7 @@
           "x": 790,
           "y": 342,
           "w": 112,
-          "h": 66,
+          "h": 64,
           "label": "worried"
         },
         {
@@ -408,19 +408,67 @@
           "x": 920,
           "y": 342,
           "w": 112,
-          "h": 66,
+          "h": 64,
           "label": "blush_happy"
         },
         {
           "index": 8,
           "x": 1046,
           "y": 342,
-          "w": 126,
-          "h": 66,
+          "w": 121,
+          "h": 64,
           "label": "somber"
         }
       ]
     }
   ],
-  "animations": []
+  "animations": [],
+  "bodyAnimAnchors": [
+    {
+      "offsetX": 1,
+      "offsetY": 20,
+      "useFace": true
+    },
+    {
+      "offsetX": 1,
+      "offsetY": 20,
+      "useFace": true
+    },
+    {
+      "offsetX": 1,
+      "offsetY": 21,
+      "useFace": true
+    },
+    {
+      "offsetX": 1,
+      "offsetY": 19,
+      "useFace": true
+    },
+    {
+      "offsetX": 0,
+      "offsetY": 21,
+      "useFace": true
+    },
+    {
+      "offsetX": 0,
+      "offsetY": 20,
+      "useFace": true
+    },
+    {
+      "offsetX": 0,
+      "offsetY": 23,
+      "useFace": true
+    },
+    {
+      "offsetX": 1,
+      "offsetY": 9,
+      "useFace": false
+    },
+    {
+      "offsetX": 1,
+      "offsetY": 9,
+      "useFace": false
+    }
+  ],
+  "enabled": true
 }

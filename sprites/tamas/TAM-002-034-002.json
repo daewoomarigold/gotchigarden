@@ -423,5 +423,53 @@
     }
   ],
   "animations": [],
-  "variant": "Luffy Mametchi"
+  "variant": "Luffy Mametchi",
+  "bodyAnimAnchors": [
+    {
+      "offsetX": 11,
+      "offsetY": 22,
+      "useFace": true
+    },
+    {
+      "offsetX": 11,
+      "offsetY": 22,
+      "useFace": true
+    },
+    {
+      "offsetX": 11,
+      "offsetY": 22,
+      "useFace": true
+    },
+    {
+      "offsetX": 11,
+      "offsetY": 22,
+      "useFace": true
+    },
+    {
+      "offsetX": 9,
+      "offsetY": 24,
+      "useFace": true
+    },
+    {
+      "offsetX": 9,
+      "offsetY": 23,
+      "useFace": true
+    },
+    {
+      "offsetX": 9,
+      "offsetY": 26,
+      "useFace": true
+    },
+    {
+      "offsetX": 10,
+      "offsetY": 10,
+      "useFace": false
+    },
+    {
+      "offsetX": 10,
+      "offsetY": 10,
+      "useFace": false
+    }
+  ],
+  "enabled": true
 }

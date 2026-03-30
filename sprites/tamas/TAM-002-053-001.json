@@ -351,5 +351,52 @@
     }
   ],
   "animations": [],
-  "variant": "DJ Poptchi"
+  "variant": "DJ Poptchi",
+  "bodyAnimAnchors": [
+    {
+      "offsetX": 0,
+      "offsetY": 13,
+      "useFace": true
+    },
+    {
+      "offsetX": 0,
+      "offsetY": 13,
+      "useFace": true
+    },
+    {
+      "offsetX": 0,
+      "offsetY": 13,
+      "useFace": true
+    },
+    {
+      "offsetX": 0,
+      "offsetY": 13,
+      "useFace": true
+    },
+    {
+      "offsetX": 0,
+      "offsetY": 13,
+      "useFace": true
+    },
+    {
+      "offsetX": 0,
+      "offsetY": 13,
+      "useFace": true
+    },
+    {
+      "offsetX": 0,
+      "offsetY": 13,
+      "useFace": true
+    },
+    {
+      "offsetX": 0,
+      "offsetY": 13,
+      "useFace": false
+    },
+    {
+      "offsetX": 0,
+      "offsetY": 13,
+      "useFace": false
+    }
+  ]
 }

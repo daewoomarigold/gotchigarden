@@ -208,27 +208,27 @@
       "role": "face_small",
       "rowStart": 324,
       "rowEnd": 355,
-      "frameCount": 18,
+      "frameCount": 16,
       "sprites": [
         {
           "index": 0,
           "x": 15,
           "y": 324,
-          "w": 18,
+          "w": 30,
           "h": 32,
           "label": "normal"
         },
         {
           "index": 1,
-          "x": 42,
+          "x": 83,
           "y": 324,
-          "w": 3,
+          "w": 30,
           "h": 32,
           "label": "blush"
         },
         {
           "index": 2,
-          "x": 83,
+          "x": 151,
           "y": 324,
           "w": 30,
           "h": 32,
@@ -236,23 +236,23 @@
         },
         {
           "index": 3,
-          "x": 151,
+          "x": 219,
           "y": 324,
-          "w": 18,
+          "w": 30,
           "h": 32,
           "label": "annoyed"
         },
         {
           "index": 4,
-          "x": 178,
+          "x": 287,
           "y": 324,
-          "w": 3,
+          "w": 33,
           "h": 32,
           "label": "normal_2"
         },
         {
           "index": 5,
-          "x": 219,
+          "x": 355,
           "y": 324,
           "w": 30,
           "h": 32,
@@ -260,31 +260,31 @@
         },
         {
           "index": 6,
-          "x": 287,
+          "x": 423,
           "y": 324,
-          "w": 33,
+          "w": 30,
           "h": 32,
           "label": "neutral_eyes_closed"
         },
         {
           "index": 7,
-          "x": 355,
+          "x": 491,
           "y": 324,
-          "w": 30,
+          "w": 33,
           "h": 32,
           "label": "smile_eyes_closed"
         },
         {
           "index": 8,
-          "x": 423,
+          "x": 559,
           "y": 324,
-          "w": 30,
+          "w": 42,
           "h": 32,
           "label": "eyes_open_happy"
         },
         {
           "index": 9,
-          "x": 491,
+          "x": 627,
           "y": 324,
           "w": 33,
           "h": 32,
@@ -292,23 +292,23 @@
         },
         {
           "index": 10,
-          "x": 559,
+          "x": 695,
           "y": 324,
-          "w": 42,
+          "w": 30,
           "h": 32,
           "label": "sad_crying"
         },
         {
           "index": 11,
-          "x": 627,
+          "x": 763,
           "y": 324,
-          "w": 33,
+          "w": 30,
           "h": 32,
           "label": "disappointed"
         },
         {
           "index": 12,
-          "x": 695,
+          "x": 831,
           "y": 324,
           "w": 30,
           "h": 32,
@@ -316,41 +316,27 @@
         },
         {
           "index": 13,
-          "x": 763,
+          "x": 899,
           "y": 324,
-          "w": 30,
+          "w": 27,
           "h": 32,
           "label": "surprised"
         },
         {
           "index": 14,
-          "x": 831,
+          "x": 967,
           "y": 324,
-          "w": 30,
+          "w": 27,
           "h": 32,
           "label": "worried"
         },
         {
           "index": 15,
-          "x": 899,
-          "y": 324,
-          "w": 27,
-          "h": 32,
-          "label": "contemplating"
-        },
-        {
-          "index": 16,
-          "x": 967,
-          "y": 324,
-          "w": 27,
-          "h": 32
-        },
-        {
-          "index": 17,
           "x": 1035,
           "y": 324,
           "w": 30,
-          "h": 32
+          "h": 32,
+          "label": "contemplating"
         }
       ]
     },
@@ -534,5 +520,53 @@
       ]
     }
   ],
-  "animations": []
+  "animations": [],
+  "bodyAnimAnchors": [
+    {
+      "offsetX": -9,
+      "offsetY": 2,
+      "useFace": true
+    },
+    {
+      "offsetX": -9,
+      "offsetY": 2,
+      "useFace": true
+    },
+    {
+      "offsetX": -9,
+      "offsetY": 5,
+      "useFace": true
+    },
+    {
+      "offsetX": -9,
+      "offsetY": 3,
+      "useFace": true
+    },
+    {
+      "offsetX": -9,
+      "offsetY": 5,
+      "useFace": true
+    },
+    {
+      "offsetX": -9,
+      "offsetY": 2,
+      "useFace": true
+    },
+    {
+      "offsetX": -9,
+      "offsetY": 2,
+      "useFace": true
+    },
+    {
+      "offsetX": 5,
+      "offsetY": 9,
+      "useFace": false
+    },
+    {
+      "offsetX": 5,
+      "offsetY": 9,
+      "useFace": false
+    }
+  ],
+  "enabled": true
 }

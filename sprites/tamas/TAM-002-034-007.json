@@ -367,5 +367,53 @@
     }
   ],
   "animations": [],
-  "variant": "Woody Mametchi"
+  "variant": "Woody Mametchi",
+  "bodyAnimAnchors": [
+    {
+      "offsetX": 10,
+      "offsetY": 18,
+      "useFace": true
+    },
+    {
+      "offsetX": 10,
+      "offsetY": 18,
+      "useFace": true
+    },
+    {
+      "offsetX": 10,
+      "offsetY": 19,
+      "useFace": true
+    },
+    {
+      "offsetX": 10,
+      "offsetY": 19,
+      "useFace": true
+    },
+    {
+      "offsetX": 10,
+      "offsetY": 19,
+      "useFace": true
+    },
+    {
+      "offsetX": 10,
+      "offsetY": 18,
+      "useFace": true
+    },
+    {
+      "offsetX": 9,
+      "offsetY": 21,
+      "useFace": true
+    },
+    {
+      "offsetX": 9,
+      "offsetY": 9,
+      "useFace": false
+    },
+    {
+      "offsetX": 9,
+      "offsetY": 9,
+      "useFace": false
+    }
+  ],
+  "enabled": true
 }

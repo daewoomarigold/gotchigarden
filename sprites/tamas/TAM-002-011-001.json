@@ -444,5 +444,53 @@
     }
   ],
   "animations": [],
-  "variant": "1996 Ginjirotchi"
+  "variant": "1996 Ginjirotchi",
+  "bodyAnimAnchors": [
+    {
+      "offsetX": -6,
+      "offsetY": 4,
+      "useFace": true
+    },
+    {
+      "offsetX": 0,
+      "offsetY": 3,
+      "useFace": true
+    },
+    {
+      "offsetX": -6,
+      "offsetY": 6,
+      "useFace": true
+    },
+    {
+      "offsetX": -6,
+      "offsetY": 4,
+      "useFace": true
+    },
+    {
+      "offsetX": -6,
+      "offsetY": 7,
+      "useFace": true
+    },
+    {
+      "offsetX": -3,
+      "offsetY": 4,
+      "useFace": true
+    },
+    {
+      "offsetX": -6,
+      "offsetY": 9,
+      "useFace": true
+    },
+    {
+      "offsetX": 2,
+      "offsetY": 9,
+      "useFace": false
+    },
+    {
+      "offsetX": 2,
+      "offsetY": 9,
+      "useFace": false
+    }
+  ],
+  "enabled": true
 }

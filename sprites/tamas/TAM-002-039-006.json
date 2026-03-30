@@ -407,5 +407,53 @@
     }
   ],
   "animations": [],
-  "variant": "Milk Witchi"
+  "variant": "Milk Witchi",
+  "bodyAnimAnchors": [
+    {
+      "offsetX": 12,
+      "offsetY": 21,
+      "useFace": true
+    },
+    {
+      "offsetX": 18,
+      "offsetY": 22,
+      "useFace": true
+    },
+    {
+      "offsetX": 5,
+      "offsetY": 24,
+      "useFace": true
+    },
+    {
+      "offsetX": 16,
+      "offsetY": 20,
+      "useFace": true
+    },
+    {
+      "offsetX": 9,
+      "offsetY": 21,
+      "useFace": true
+    },
+    {
+      "offsetX": 8,
+      "offsetY": 20,
+      "useFace": true
+    },
+    {
+      "offsetX": 8,
+      "offsetY": 33,
+      "useFace": true
+    },
+    {
+      "offsetX": 11,
+      "offsetY": 12,
+      "useFace": false
+    },
+    {
+      "offsetX": 11,
+      "offsetY": 12,
+      "useFace": false
+    }
+  ],
+  "enabled": true
 }

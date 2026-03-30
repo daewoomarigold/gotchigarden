@@ -367,5 +367,53 @@
     }
   ],
   "animations": [],
-  "variant": "Awamoko Ghost"
+  "variant": "Awamoko Ghost",
+  "bodyAnimAnchors": [
+    {
+      "offsetX": 15,
+      "offsetY": 26,
+      "useFace": true
+    },
+    {
+      "offsetX": 15,
+      "offsetY": 25,
+      "useFace": true
+    },
+    {
+      "offsetX": 15,
+      "offsetY": 29,
+      "useFace": true
+    },
+    {
+      "offsetX": 15,
+      "offsetY": 23,
+      "useFace": true
+    },
+    {
+      "offsetX": 14,
+      "offsetY": 26,
+      "useFace": true
+    },
+    {
+      "offsetX": 14,
+      "offsetY": 25,
+      "useFace": true
+    },
+    {
+      "offsetX": 14,
+      "offsetY": 27,
+      "useFace": true
+    },
+    {
+      "offsetX": 15,
+      "offsetY": 13,
+      "useFace": false
+    },
+    {
+      "offsetX": 15,
+      "offsetY": 12,
+      "useFace": false
+    }
+  ],
+  "enabled": true
 }

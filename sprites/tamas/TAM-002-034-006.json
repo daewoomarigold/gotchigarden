@@ -485,5 +485,57 @@
     }
   ],
   "animations": [],
-  "variant": "Potato Mametchi"
+  "variant": "Potato Mametchi",
+  "bodyAnimAnchors": [
+    {
+      "offsetX": 23,
+      "offsetY": 11,
+      "useFace": true
+    },
+    {
+      "offsetX": 23,
+      "offsetY": 11,
+      "useFace": true
+    },
+    {
+      "offsetX": 23,
+      "offsetY": 11,
+      "useFace": true
+    },
+    {
+      "offsetX": 23,
+      "offsetY": 11,
+      "useFace": true
+    },
+    {
+      "offsetX": 23,
+      "offsetY": 11,
+      "useFace": true
+    },
+    {
+      "offsetX": 23,
+      "offsetY": 11,
+      "useFace": true
+    },
+    {
+      "offsetX": 23,
+      "offsetY": 11,
+      "useFace": true
+    },
+    {
+      "offsetX": 23,
+      "offsetY": 11,
+      "useFace": false
+    },
+    {
+      "offsetX": 23,
+      "offsetY": 11,
+      "useFace": false
+    },
+    {
+      "offsetX": 23,
+      "offsetY": 11,
+      "useFace": true
+    }
+  ]
 }

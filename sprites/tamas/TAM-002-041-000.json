@@ -419,7 +419,7 @@
   "bodyAnimAnchors": [
     {
       "offsetX": 7,
-      "offsetY": 26,
+      "offsetY": 25,
       "useFace": true
     },
     {
@@ -428,8 +428,8 @@
       "useFace": true
     },
     {
-      "offsetX": 6,
-      "offsetY": 26,
+      "offsetX": 5,
+      "offsetY": 25,
       "useFace": true
     },
     {
@@ -449,17 +449,17 @@
     },
     {
       "offsetX": 2,
-      "offsetY": 30,
+      "offsetY": 28,
       "useFace": true
     },
     {
-      "offsetX": 0,
-      "offsetY": 0,
+      "offsetX": 6,
+      "offsetY": 10,
       "useFace": false
     },
     {
-      "offsetX": 0,
-      "offsetY": 0,
+      "offsetX": 6,
+      "offsetY": 10,
       "useFace": false
     }
   ]

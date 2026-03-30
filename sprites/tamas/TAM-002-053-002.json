@@ -288,7 +288,7 @@
       "index": 5,
       "role": "face_zoom",
       "rowStart": 357,
-      "rowEnd": 407,
+      "rowEnd": 405,
       "frameCount": 9,
       "sprites": [
         {
@@ -296,7 +296,7 @@
           "x": 10,
           "y": 357,
           "w": 112,
-          "h": 51,
+          "h": 49,
           "label": "normal"
         },
         {
@@ -304,7 +304,7 @@
           "x": 140,
           "y": 357,
           "w": 112,
-          "h": 51,
+          "h": 49,
           "label": "eyes_closed"
         },
         {
@@ -312,7 +312,7 @@
           "x": 265,
           "y": 357,
           "w": 117,
-          "h": 51,
+          "h": 49,
           "label": "happy"
         },
         {
@@ -320,7 +320,7 @@
           "x": 396,
           "y": 357,
           "w": 116,
-          "h": 51,
+          "h": 49,
           "label": "crying"
         },
         {
@@ -328,7 +328,7 @@
           "x": 530,
           "y": 357,
           "w": 112,
-          "h": 51,
+          "h": 49,
           "label": "annoyed"
         },
         {
@@ -336,7 +336,7 @@
           "x": 660,
           "y": 357,
           "w": 112,
-          "h": 51,
+          "h": 49,
           "label": "blush_angry"
         },
         {
@@ -344,7 +344,7 @@
           "x": 790,
           "y": 357,
           "w": 112,
-          "h": 51,
+          "h": 49,
           "label": "worried"
         },
         {
@@ -352,7 +352,7 @@
           "x": 920,
           "y": 357,
           "w": 112,
-          "h": 51,
+          "h": 49,
           "label": "blush_happy"
         },
         {
@@ -360,12 +360,60 @@
           "x": 1050,
           "y": 357,
           "w": 112,
-          "h": 51,
+          "h": 49,
           "label": "somber"
         }
       ]
     }
   ],
   "animations": [],
-  "variant": "Jessie Poptchi"
+  "variant": "Jessie Poptchi",
+  "bodyAnimAnchors": [
+    {
+      "offsetX": 8,
+      "offsetY": 20,
+      "useFace": true
+    },
+    {
+      "offsetX": 8,
+      "offsetY": 20,
+      "useFace": true
+    },
+    {
+      "offsetX": 8,
+      "offsetY": 21,
+      "useFace": true
+    },
+    {
+      "offsetX": 8,
+      "offsetY": 19,
+      "useFace": true
+    },
+    {
+      "offsetX": 7,
+      "offsetY": 21,
+      "useFace": true
+    },
+    {
+      "offsetX": 8,
+      "offsetY": 20,
+      "useFace": true
+    },
+    {
+      "offsetX": 8,
+      "offsetY": 23,
+      "useFace": true
+    },
+    {
+      "offsetX": 8,
+      "offsetY": 9,
+      "useFace": false
+    },
+    {
+      "offsetX": 8,
+      "offsetY": 9,
+      "useFace": false
+    }
+  ],
+  "enabled": true
 }

@@ -423,5 +423,53 @@
     }
   ],
   "animations": [],
-  "variant": "Uso Karapatchi"
+  "variant": "Uso Karapatchi",
+  "bodyAnimAnchors": [
+    {
+      "offsetX": 8,
+      "offsetY": 19,
+      "useFace": true
+    },
+    {
+      "offsetX": 9,
+      "offsetY": 17,
+      "useFace": true
+    },
+    {
+      "offsetX": 7,
+      "offsetY": 20,
+      "useFace": true
+    },
+    {
+      "offsetX": 9,
+      "offsetY": 15,
+      "useFace": true
+    },
+    {
+      "offsetX": 7,
+      "offsetY": 20,
+      "useFace": true
+    },
+    {
+      "offsetX": 7,
+      "offsetY": 17,
+      "useFace": true
+    },
+    {
+      "offsetX": 7,
+      "offsetY": 22,
+      "useFace": true
+    },
+    {
+      "offsetX": 9,
+      "offsetY": 12,
+      "useFace": false
+    },
+    {
+      "offsetX": 9,
+      "offsetY": 11,
+      "useFace": false
+    }
+  ],
+  "enabled": true
 }

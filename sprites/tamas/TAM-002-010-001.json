@@ -208,7 +208,7 @@
       "role": "face_small",
       "rowStart": 324,
       "rowEnd": 355,
-      "frameCount": 17,
+      "frameCount": 16,
       "sprites": [
         {
           "index": 0,
@@ -262,45 +262,45 @@
           "index": 6,
           "x": 412,
           "y": 324,
-          "w": 42,
+          "w": 62,
           "h": 32,
           "label": "neutral_eyes_closed"
         },
         {
           "index": 7,
-          "x": 470,
+          "x": 500,
           "y": 324,
-          "w": 4,
+          "w": 22,
           "h": 32,
           "label": "smile_eyes_closed"
         },
         {
           "index": 8,
-          "x": 500,
+          "x": 570,
           "y": 324,
-          "w": 22,
+          "w": 25,
           "h": 32,
           "label": "eyes_open_happy"
         },
         {
           "index": 9,
-          "x": 570,
+          "x": 636,
           "y": 324,
-          "w": 25,
+          "w": 24,
           "h": 32,
           "label": "eyes_closed_happy"
         },
         {
           "index": 10,
-          "x": 636,
+          "x": 705,
           "y": 324,
-          "w": 24,
+          "w": 21,
           "h": 32,
           "label": "sad_crying"
         },
         {
           "index": 11,
-          "x": 705,
+          "x": 773,
           "y": 324,
           "w": 21,
           "h": 32,
@@ -308,15 +308,15 @@
         },
         {
           "index": 12,
-          "x": 773,
+          "x": 842,
           "y": 324,
-          "w": 21,
+          "w": 20,
           "h": 32,
           "label": "fever"
         },
         {
           "index": 13,
-          "x": 842,
+          "x": 908,
           "y": 324,
           "w": 20,
           "h": 32,
@@ -324,7 +324,7 @@
         },
         {
           "index": 14,
-          "x": 908,
+          "x": 976,
           "y": 324,
           "w": 20,
           "h": 32,
@@ -332,18 +332,11 @@
         },
         {
           "index": 15,
-          "x": 976,
-          "y": 324,
-          "w": 20,
-          "h": 32,
-          "label": "contemplating"
-        },
-        {
-          "index": 16,
           "x": 1043,
           "y": 324,
           "w": 22,
-          "h": 32
+          "h": 32,
+          "label": "contemplating"
         }
       ]
     },
@@ -437,5 +430,53 @@
     }
   ],
   "animations": [],
-  "variant": "Fran Galtchi"
+  "variant": "Fran Galtchi",
+  "bodyAnimAnchors": [
+    {
+      "offsetX": 13,
+      "offsetY": 15,
+      "useFace": true
+    },
+    {
+      "offsetX": 15,
+      "offsetY": 14,
+      "useFace": true
+    },
+    {
+      "offsetX": 13,
+      "offsetY": 15,
+      "useFace": true
+    },
+    {
+      "offsetX": 15,
+      "offsetY": 14,
+      "useFace": true
+    },
+    {
+      "offsetX": 10,
+      "offsetY": 17,
+      "useFace": true
+    },
+    {
+      "offsetX": 9,
+      "offsetY": 16,
+      "useFace": true
+    },
+    {
+      "offsetX": 9,
+      "offsetY": 19,
+      "useFace": true
+    },
+    {
+      "offsetX": 14,
+      "offsetY": 13,
+      "useFace": false
+    },
+    {
+      "offsetX": 14,
+      "offsetY": 12,
+      "useFace": false
+    }
+  ],
+  "enabled": true
 }

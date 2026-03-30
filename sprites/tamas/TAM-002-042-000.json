@@ -192,7 +192,7 @@
       "role": "face_small",
       "rowStart": 306,
       "rowEnd": 330,
-      "frameCount": 15,
+      "frameCount": 16,
       "sprites": [
         {
           "index": 0,
@@ -294,25 +294,33 @@
           "index": 12,
           "x": 815,
           "y": 306,
-          "w": 87,
+          "w": 23,
           "h": 25,
           "label": "fever"
         },
         {
           "index": 13,
-          "x": 949,
+          "x": 842,
           "y": 306,
-          "w": 24,
+          "w": 60,
           "h": 25,
           "label": "surprised"
         },
         {
           "index": 14,
-          "x": 1013,
+          "x": 949,
           "y": 306,
           "w": 24,
           "h": 25,
           "label": "worried"
+        },
+        {
+          "index": 15,
+          "x": 1013,
+          "y": 306,
+          "w": 24,
+          "h": 25,
+          "label": "contemplating"
         }
       ]
     },
@@ -398,5 +406,53 @@
       ]
     }
   ],
-  "animations": []
+  "animations": [],
+  "bodyAnimAnchors": [
+    {
+      "offsetX": 10,
+      "offsetY": 7,
+      "useFace": true
+    },
+    {
+      "offsetX": 10,
+      "offsetY": 6,
+      "useFace": true
+    },
+    {
+      "offsetX": 10,
+      "offsetY": 17,
+      "useFace": true
+    },
+    {
+      "offsetX": 11,
+      "offsetY": 6,
+      "useFace": true
+    },
+    {
+      "offsetX": 8,
+      "offsetY": 10,
+      "useFace": true
+    },
+    {
+      "offsetX": 8,
+      "offsetY": 8,
+      "useFace": true
+    },
+    {
+      "offsetX": 7,
+      "offsetY": 15,
+      "useFace": true
+    },
+    {
+      "offsetX": 10,
+      "offsetY": 9,
+      "useFace": false
+    },
+    {
+      "offsetX": 10,
+      "offsetY": 9,
+      "useFace": false
+    }
+  ],
+  "enabled": true
 }

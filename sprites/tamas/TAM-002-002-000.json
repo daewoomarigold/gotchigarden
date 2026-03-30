@@ -422,5 +422,53 @@
       ]
     }
   ],
-  "animations": []
+  "animations": [],
+  "bodyAnimAnchors": [
+    {
+      "offsetX": 6,
+      "offsetY": 16,
+      "useFace": true
+    },
+    {
+      "offsetX": 6,
+      "offsetY": 14,
+      "useFace": true
+    },
+    {
+      "offsetX": 6,
+      "offsetY": 19,
+      "useFace": true
+    },
+    {
+      "offsetX": 6,
+      "offsetY": 15,
+      "useFace": true
+    },
+    {
+      "offsetX": 3,
+      "offsetY": 17,
+      "useFace": true
+    },
+    {
+      "offsetX": 3,
+      "offsetY": 16,
+      "useFace": true
+    },
+    {
+      "offsetX": 3,
+      "offsetY": 19,
+      "useFace": true
+    },
+    {
+      "offsetX": 6,
+      "offsetY": 9,
+      "useFace": false
+    },
+    {
+      "offsetX": 6,
+      "offsetY": 9,
+      "useFace": false
+    }
+  ],
+  "enabled": true
 }

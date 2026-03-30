@@ -390,5 +390,53 @@
       ]
     }
   ],
-  "animations": []
+  "animations": [],
+  "bodyAnimAnchors": [
+    {
+      "offsetX": 12,
+      "offsetY": 14,
+      "useFace": true
+    },
+    {
+      "offsetX": 12,
+      "offsetY": 14,
+      "useFace": true
+    },
+    {
+      "offsetX": 10,
+      "offsetY": 15,
+      "useFace": true
+    },
+    {
+      "offsetX": 13,
+      "offsetY": 14,
+      "useFace": true
+    },
+    {
+      "offsetX": 5,
+      "offsetY": 17,
+      "useFace": true
+    },
+    {
+      "offsetX": 4,
+      "offsetY": 16,
+      "useFace": true
+    },
+    {
+      "offsetX": 4,
+      "offsetY": 19,
+      "useFace": true
+    },
+    {
+      "offsetX": 12,
+      "offsetY": 9,
+      "useFace": false
+    },
+    {
+      "offsetX": 12,
+      "offsetY": 8,
+      "useFace": false
+    }
+  ],
+  "enabled": true
 }

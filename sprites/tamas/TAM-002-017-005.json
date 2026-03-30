@@ -625,5 +625,62 @@
     }
   ],
   "animations": [],
-  "variant": "Sushi Karapatchi"
+  "variant": "Sushi Karapatchi",
+  "bodyAnimAnchors": [
+    {
+      "offsetX": 24,
+      "offsetY": 12,
+      "useFace": true
+    },
+    {
+      "offsetX": 24,
+      "offsetY": 12,
+      "useFace": true
+    },
+    {
+      "offsetX": 24,
+      "offsetY": 12,
+      "useFace": true
+    },
+    {
+      "offsetX": 24,
+      "offsetY": 12,
+      "useFace": true
+    },
+    {
+      "offsetX": 24,
+      "offsetY": 12,
+      "useFace": true
+    },
+    {
+      "offsetX": 24,
+      "offsetY": 12,
+      "useFace": true
+    },
+    {
+      "offsetX": 24,
+      "offsetY": 12,
+      "useFace": true
+    },
+    {
+      "offsetX": 24,
+      "offsetY": 12,
+      "useFace": false
+    },
+    {
+      "offsetX": 24,
+      "offsetY": 12,
+      "useFace": false
+    },
+    {
+      "offsetX": 24,
+      "offsetY": 12,
+      "useFace": true
+    },
+    {
+      "offsetX": 24,
+      "offsetY": 12,
+      "useFace": true
+    }
+  ]
 }

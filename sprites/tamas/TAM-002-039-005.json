@@ -407,5 +407,53 @@
     }
   ],
   "animations": [],
-  "variant": "Mermaid Milk"
+  "variant": "Mermaid Milk",
+  "bodyAnimAnchors": [
+    {
+      "offsetX": 12,
+      "offsetY": 18,
+      "useFace": true
+    },
+    {
+      "offsetX": 18,
+      "offsetY": 19,
+      "useFace": true
+    },
+    {
+      "offsetX": 7,
+      "offsetY": 19,
+      "useFace": true
+    },
+    {
+      "offsetX": 17,
+      "offsetY": 17,
+      "useFace": true
+    },
+    {
+      "offsetX": 8,
+      "offsetY": 19,
+      "useFace": true
+    },
+    {
+      "offsetX": 9,
+      "offsetY": 19,
+      "useFace": true
+    },
+    {
+      "offsetX": 9,
+      "offsetY": 26,
+      "useFace": true
+    },
+    {
+      "offsetX": 12,
+      "offsetY": 10,
+      "useFace": false
+    },
+    {
+      "offsetX": 12,
+      "offsetY": 10,
+      "useFace": false
+    }
+  ],
+  "enabled": true
 }

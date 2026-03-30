@@ -455,18 +455,18 @@
       "useFace": true
     },
     {
-      "offsetX": 2,
-      "offsetY": 20,
+      "offsetX": 3,
+      "offsetY": 21,
       "useFace": true
     },
     {
-      "offsetX": 0,
-      "offsetY": 0,
+      "offsetX": 3,
+      "offsetY": 9,
       "useFace": false
     },
     {
-      "offsetX": 0,
-      "offsetY": 0,
+      "offsetX": 3,
+      "offsetY": 9,
       "useFace": false
     }
   ],

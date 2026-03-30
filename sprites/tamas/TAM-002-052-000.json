@@ -426,48 +426,48 @@
   "enabled": true,
   "bodyAnimAnchors": [
     {
-      "offsetX": 8,
+      "offsetX": 9,
       "offsetY": 6,
       "useFace": true
     },
     {
-      "offsetX": 10,
-      "offsetY": 6,
+      "offsetX": 11,
+      "offsetY": 7,
       "useFace": true
     },
     {
-      "offsetX": 8,
+      "offsetX": 9,
       "offsetY": 7,
       "useFace": true
     },
     {
       "offsetX": 11,
-      "offsetY": 4,
+      "offsetY": 5,
       "useFace": true
     },
     {
       "offsetX": 3,
-      "offsetY": 8,
-      "useFace": true
-    },
-    {
-      "offsetX": 2,
       "offsetY": 7,
       "useFace": true
     },
     {
-      "offsetX": 3,
-      "offsetY": 10,
+      "offsetX": 2,
+      "offsetY": 6,
       "useFace": true
     },
     {
-      "offsetX": 0,
-      "offsetY": 0,
+      "offsetX": 3,
+      "offsetY": 9,
+      "useFace": true
+    },
+    {
+      "offsetX": 8,
+      "offsetY": 8,
       "useFace": false
     },
     {
-      "offsetX": 0,
-      "offsetY": 0,
+      "offsetX": 8,
+      "offsetY": 8,
       "useFace": false
     }
   ]

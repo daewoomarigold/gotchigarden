@@ -415,5 +415,53 @@
     }
   ],
   "animations": [],
-  "variant": "Sulley Mokotchi"
+  "variant": "Sulley Mokotchi",
+  "bodyAnimAnchors": [
+    {
+      "offsetX": 9,
+      "offsetY": 23,
+      "useFace": true
+    },
+    {
+      "offsetX": 16,
+      "offsetY": 23,
+      "useFace": true
+    },
+    {
+      "offsetX": 8,
+      "offsetY": 27,
+      "useFace": true
+    },
+    {
+      "offsetX": 16,
+      "offsetY": 22,
+      "useFace": true
+    },
+    {
+      "offsetX": 4,
+      "offsetY": 24,
+      "useFace": true
+    },
+    {
+      "offsetX": 5,
+      "offsetY": 23,
+      "useFace": true
+    },
+    {
+      "offsetX": 6,
+      "offsetY": 26,
+      "useFace": true
+    },
+    {
+      "offsetX": 8,
+      "offsetY": 12,
+      "useFace": false
+    },
+    {
+      "offsetX": 8,
+      "offsetY": 11,
+      "useFace": false
+    }
+  ],
+  "enabled": true
 }

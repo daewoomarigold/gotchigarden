@@ -576,5 +576,57 @@
     }
   ],
   "animations": [],
-  "variant": "Rose Gyao"
+  "variant": "Rose Gyao",
+  "bodyAnimAnchors": [
+    {
+      "offsetX": 25,
+      "offsetY": 11,
+      "useFace": true
+    },
+    {
+      "offsetX": 25,
+      "offsetY": 11,
+      "useFace": true
+    },
+    {
+      "offsetX": 25,
+      "offsetY": 11,
+      "useFace": true
+    },
+    {
+      "offsetX": 25,
+      "offsetY": 11,
+      "useFace": true
+    },
+    {
+      "offsetX": 25,
+      "offsetY": 11,
+      "useFace": true
+    },
+    {
+      "offsetX": 25,
+      "offsetY": 11,
+      "useFace": true
+    },
+    {
+      "offsetX": 25,
+      "offsetY": 11,
+      "useFace": true
+    },
+    {
+      "offsetX": 25,
+      "offsetY": 11,
+      "useFace": false
+    },
+    {
+      "offsetX": 25,
+      "offsetY": 11,
+      "useFace": false
+    },
+    {
+      "offsetX": 25,
+      "offsetY": 11,
+      "useFace": true
+    }
+  ]
 }

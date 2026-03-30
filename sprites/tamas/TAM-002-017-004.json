@@ -383,5 +383,53 @@
     }
   ],
   "animations": [],
-  "variant": "Miguel Karapatchi"
+  "variant": "Miguel Karapatchi",
+  "bodyAnimAnchors": [
+    {
+      "offsetX": 14,
+      "offsetY": 18,
+      "useFace": true
+    },
+    {
+      "offsetX": 19,
+      "offsetY": 17,
+      "useFace": true
+    },
+    {
+      "offsetX": 14,
+      "offsetY": 19,
+      "useFace": true
+    },
+    {
+      "offsetX": 14,
+      "offsetY": 16,
+      "useFace": true
+    },
+    {
+      "offsetX": 10,
+      "offsetY": 21,
+      "useFace": true
+    },
+    {
+      "offsetX": 11,
+      "offsetY": 18,
+      "useFace": true
+    },
+    {
+      "offsetX": 10,
+      "offsetY": 23,
+      "useFace": true
+    },
+    {
+      "offsetX": 19,
+      "offsetY": 12,
+      "useFace": false
+    },
+    {
+      "offsetX": 19,
+      "offsetY": 11,
+      "useFace": false
+    }
+  ],
+  "enabled": true
 }

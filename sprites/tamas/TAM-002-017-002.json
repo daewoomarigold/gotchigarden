@@ -391,5 +391,53 @@
     }
   ],
   "animations": [],
-  "variant": "Hermit Crab Karapatchi"
+  "variant": "Hermit Crab Karapatchi",
+  "bodyAnimAnchors": [
+    {
+      "offsetX": 18,
+      "offsetY": 30,
+      "useFace": true
+    },
+    {
+      "offsetX": 15,
+      "offsetY": 28,
+      "useFace": true
+    },
+    {
+      "offsetX": 13,
+      "offsetY": 30,
+      "useFace": true
+    },
+    {
+      "offsetX": 19,
+      "offsetY": 27,
+      "useFace": true
+    },
+    {
+      "offsetX": 18,
+      "offsetY": 29,
+      "useFace": true
+    },
+    {
+      "offsetX": 19,
+      "offsetY": 29,
+      "useFace": true
+    },
+    {
+      "offsetX": 18,
+      "offsetY": 30,
+      "useFace": true
+    },
+    {
+      "offsetX": 21,
+      "offsetY": 13,
+      "useFace": false
+    },
+    {
+      "offsetX": 21,
+      "offsetY": 12,
+      "useFace": false
+    }
+  ],
+  "enabled": true
 }
