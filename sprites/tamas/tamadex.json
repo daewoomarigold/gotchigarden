@@ -1,7 +1,7 @@
 {
   "generated": "2026-03-30",
   "total": 133,
-  "enabledCount": 0,
+  "enabledCount": 124,
   "characters": [
     {
       "id": "TAM-002-001-000",
@@ -10,7 +10,7 @@
       "generation": "adult",
       "sheet": "LCD Handhelds - Tamagotchi Smart - Characters - Achiatchi.png",
       "hasAnchors": true,
-      "enabled": false
+      "enabled": true
     },
     {
       "id": "TAM-002-002-000",
@@ -19,7 +19,7 @@
       "generation": "adult",
       "sheet": "LCD Handhelds - Tamagotchi Smart - Characters - Anotchi.png",
       "hasAnchors": true,
-      "enabled": false
+      "enabled": true
     },
     {
       "id": "TAM-002-003-000",
@@ -28,7 +28,7 @@
       "generation": "adult",
       "sheet": "LCD Handhelds - Tamagotchi Smart - Characters - Awamokotchi.png",
       "hasAnchors": true,
-      "enabled": false
+      "enabled": true
     },
     {
       "id": "TAM-002-003-001",
@@ -37,7 +37,7 @@
       "generation": "adult",
       "sheet": "LCD Handhelds - Tamagotchi Smart - Characters - Awamokotchi (Amemokofurashi).png",
       "hasAnchors": true,
-      "enabled": false
+      "enabled": true
     },
     {
       "id": "TAM-002-003-002",
@@ -46,7 +46,7 @@
       "generation": "adult",
       "sheet": "LCD Handhelds - Tamagotchi Smart - Characters - Awamokotchi (Awamoko Ghost).png",
       "hasAnchors": true,
-      "enabled": false
+      "enabled": true
     },
     {
       "id": "TAM-002-003-003",
@@ -55,7 +55,7 @@
       "generation": "adult",
       "sheet": "LCD Handhelds - Tamagotchi Smart - Characters - Awamokotchi (Brook Mokotchi).png",
       "hasAnchors": true,
-      "enabled": false
+      "enabled": true
     },
     {
       "id": "TAM-002-003-004",
@@ -64,7 +64,7 @@
       "generation": "adult",
       "sheet": "LCD Handhelds - Tamagotchi Smart - Characters - Awamokotchi (Goro2Awamoko).png",
       "hasAnchors": true,
-      "enabled": false
+      "enabled": true
     },
     {
       "id": "TAM-002-003-005",
@@ -82,7 +82,7 @@
       "generation": "adult",
       "sheet": "LCD Handhelds - Tamagotchi Smart - Characters - Awamokotchi (Sulley Mokotchi).png",
       "hasAnchors": true,
-      "enabled": false
+      "enabled": true
     },
     {
       "id": "TAM-002-004-000",
@@ -91,7 +91,7 @@
       "generation": "adult",
       "sheet": "LCD Handhelds - Tamagotchi Smart - Characters - Chamametchi.png",
       "hasAnchors": true,
-      "enabled": false
+      "enabled": true
     },
     {
       "id": "TAM-002-005-000",
@@ -100,7 +100,7 @@
       "generation": "adult",
       "sheet": "LCD Handhelds - Tamagotchi Smart - Characters - Chamekotchi.png",
       "hasAnchors": true,
-      "enabled": false
+      "enabled": true
     },
     {
       "id": "TAM-002-006-000",
@@ -109,7 +109,7 @@
       "generation": "adult",
       "sheet": "LCD Handhelds - Tamagotchi Smart - Characters - Chekeratchi.png",
       "hasAnchors": true,
-      "enabled": false
+      "enabled": true
     },
     {
       "id": "TAM-002-007-000",
@@ -118,7 +118,7 @@
       "generation": "adult",
       "sheet": "LCD Handhelds - Tamagotchi Smart - Characters - Coffretchi.png",
       "hasAnchors": true,
-      "enabled": false
+      "enabled": true
     },
     {
       "id": "TAM-002-008-000",
@@ -127,7 +127,7 @@
       "generation": "adult",
       "sheet": "LCD Handhelds - Tamagotchi Smart - Characters - Debatchi.png",
       "hasAnchors": true,
-      "enabled": false
+      "enabled": true
     },
     {
       "id": "TAM-002-009-000",
@@ -136,7 +136,7 @@
       "generation": "adult",
       "sheet": "LCD Handhelds - Tamagotchi Smart - Characters - Dorotchi.png",
       "hasAnchors": true,
-      "enabled": false
+      "enabled": true
     },
     {
       "id": "TAM-002-010-000",
@@ -145,7 +145,7 @@
       "generation": "adult",
       "sheet": "LCD Handhelds - Tamagotchi Smart - Characters - Gaogaltchi.png",
       "hasAnchors": true,
-      "enabled": false
+      "enabled": true
     },
     {
       "id": "TAM-002-010-001",
@@ -154,7 +154,7 @@
       "generation": "adult",
       "sheet": "LCD Handhelds - Tamagotchi Smart - Characters - Gaogaltchi (Fran Galtchi).png",
       "hasAnchors": true,
-      "enabled": false
+      "enabled": true
     },
     {
       "id": "TAM-002-010-002",
@@ -163,7 +163,7 @@
       "generation": "adult",
       "sheet": "LCD Handhelds - Tamagotchi Smart - Characters - Gaogaltchi (Gao Fire).png",
       "hasAnchors": true,
-      "enabled": false
+      "enabled": true
     },
     {
       "id": "TAM-002-010-003",
@@ -172,7 +172,7 @@
       "generation": "adult",
       "sheet": "LCD Handhelds - Tamagotchi Smart - Characters - Gaogaltchi (Gaorukatchi).png",
       "hasAnchors": true,
-      "enabled": false
+      "enabled": true
     },
     {
       "id": "TAM-002-010-004",
@@ -181,7 +181,7 @@
       "generation": "adult",
       "sheet": "LCD Handhelds - Tamagotchi Smart - Characters - Gaogaltchi (Kuromi Gao).png",
       "hasAnchors": true,
-      "enabled": false
+      "enabled": true
     },
     {
       "id": "TAM-002-010-005",
@@ -190,7 +190,7 @@
       "generation": "adult",
       "sheet": "LCD Handhelds - Tamagotchi Smart - Characters - Gaogaltchi (Merida Galtchi).png",
       "hasAnchors": true,
-      "enabled": false
+      "enabled": true
     },
     {
       "id": "TAM-002-010-006",
@@ -217,7 +217,7 @@
       "generation": "adult",
       "sheet": "LCD Handhelds - Tamagotchi Smart - Characters - Ginjirotchi (1996 Ginjirotchi).png",
       "hasAnchors": true,
-      "enabled": false
+      "enabled": true
     },
     {
       "id": "TAM-002-012-000",
@@ -226,7 +226,7 @@
       "generation": "adult",
       "sheet": "LCD Handhelds - Tamagotchi Smart - Characters - Gozarutchi.png",
       "hasAnchors": true,
-      "enabled": false
+      "enabled": true
     },
     {
       "id": "TAM-002-013-000",
@@ -235,7 +235,7 @@
       "generation": "adult",
       "sheet": "LCD Handhelds - Tamagotchi Smart - Characters - Gunchitchi.png",
       "hasAnchors": true,
-      "enabled": false
+      "enabled": true
     },
     {
       "id": "TAM-002-014-000",
@@ -244,7 +244,7 @@
       "generation": "adult",
       "sheet": "LCD Handhelds - Tamagotchi Smart - Characters - Hotcaketchi.png",
       "hasAnchors": true,
-      "enabled": false
+      "enabled": true
     },
     {
       "id": "TAM-002-015-000",
@@ -253,7 +253,7 @@
       "generation": "adult",
       "sheet": "LCD Handhelds - Tamagotchi Smart - Characters - Ichigotchi.png",
       "hasAnchors": true,
-      "enabled": false
+      "enabled": true
     },
     {
       "id": "TAM-002-016-000",
@@ -262,7 +262,7 @@
       "generation": "adult",
       "sheet": "LCD Handhelds - Tamagotchi Smart - Characters - Kappappatchi.png",
       "hasAnchors": true,
-      "enabled": false
+      "enabled": true
     },
     {
       "id": "TAM-002-017-000",
@@ -271,7 +271,7 @@
       "generation": "adult",
       "sheet": "LCD Handhelds - Tamagotchi Smart - Characters - Karapatchi.png",
       "hasAnchors": true,
-      "enabled": false
+      "enabled": true
     },
     {
       "id": "TAM-002-017-001",
@@ -280,7 +280,7 @@
       "generation": "adult",
       "sheet": "LCD Handhelds - Tamagotchi Smart - Characters - Karapatchi (Gudetama Karapa).png",
       "hasAnchors": true,
-      "enabled": false
+      "enabled": true
     },
     {
       "id": "TAM-002-017-002",
@@ -289,7 +289,7 @@
       "generation": "adult",
       "sheet": "LCD Handhelds - Tamagotchi Smart - Characters - Karapatchi (Hermit Crab Karapatchi).png",
       "hasAnchors": true,
-      "enabled": false
+      "enabled": true
     },
     {
       "id": "TAM-002-017-003",
@@ -298,7 +298,7 @@
       "generation": "adult",
       "sheet": "LCD Handhelds - Tamagotchi Smart - Characters - Karapatchi (Karapa Franken).png",
       "hasAnchors": true,
-      "enabled": false
+      "enabled": true
     },
     {
       "id": "TAM-002-017-004",
@@ -307,7 +307,7 @@
       "generation": "adult",
       "sheet": "LCD Handhelds - Tamagotchi Smart - Characters - Karapatchi (Miguel Karapatchi).png",
       "hasAnchors": true,
-      "enabled": false
+      "enabled": true
     },
     {
       "id": "TAM-002-017-005",
@@ -325,7 +325,7 @@
       "generation": "adult",
       "sheet": "LCD Handhelds - Tamagotchi Smart - Characters - Karapatchi (Uso Karapatchi).png",
       "hasAnchors": true,
-      "enabled": false
+      "enabled": true
     },
     {
       "id": "TAM-002-018-000",
@@ -334,7 +334,7 @@
       "generation": "adult",
       "sheet": "LCD Handhelds - Tamagotchi Smart - Characters - Kikitchi.png",
       "hasAnchors": true,
-      "enabled": false
+      "enabled": true
     },
     {
       "id": "TAM-002-019-000",
@@ -343,7 +343,7 @@
       "generation": "adult",
       "sheet": "LCD Handhelds - Tamagotchi Smart - Characters - Kinatchi.png",
       "hasAnchors": true,
-      "enabled": false
+      "enabled": true
     },
     {
       "id": "TAM-002-020-000",
@@ -352,7 +352,7 @@
       "generation": "adult",
       "sheet": "LCD Handhelds - Tamagotchi Smart - Characters - Kiraritchi.png",
       "hasAnchors": true,
-      "enabled": false
+      "enabled": true
     },
     {
       "id": "TAM-002-021-000",
@@ -361,7 +361,7 @@
       "generation": "adult",
       "sheet": "LCD Handhelds - Tamagotchi Smart - Characters - Koronetchi.png",
       "hasAnchors": true,
-      "enabled": false
+      "enabled": true
     },
     {
       "id": "TAM-002-022-000",
@@ -370,7 +370,7 @@
       "generation": "adult",
       "sheet": "LCD Handhelds - Tamagotchi Smart - Characters - Kuchipatchi.png",
       "hasAnchors": true,
-      "enabled": false
+      "enabled": true
     },
     {
       "id": "TAM-002-022-001",
@@ -379,7 +379,7 @@
       "generation": "adult",
       "sheet": "LCD Handhelds - Tamagotchi Smart - Characters - Kuchipatchi (Buzz Kuchipatchi).png",
       "hasAnchors": true,
-      "enabled": false
+      "enabled": true
     },
     {
       "id": "TAM-002-022-002",
@@ -388,7 +388,7 @@
       "generation": "adult",
       "sheet": "LCD Handhelds - Tamagotchi Smart - Characters - Kuchipatchi (Clionepatchi).png",
       "hasAnchors": true,
-      "enabled": false
+      "enabled": true
     },
     {
       "id": "TAM-002-022-003",
@@ -397,7 +397,7 @@
       "generation": "adult",
       "sheet": "LCD Handhelds - Tamagotchi Smart - Characters - Kuchipatchi (Patchipurin).png",
       "hasAnchors": true,
-      "enabled": false
+      "enabled": true
     },
     {
       "id": "TAM-002-022-004",
@@ -406,7 +406,7 @@
       "generation": "adult",
       "sheet": "LCD Handhelds - Tamagotchi Smart - Characters - Kuchipatchi (Shiromo Kuchipatchi).png",
       "hasAnchors": true,
-      "enabled": false
+      "enabled": true
     },
     {
       "id": "TAM-002-022-005",
@@ -415,7 +415,7 @@
       "generation": "adult",
       "sheet": "LCD Handhelds - Tamagotchi Smart - Characters - Kuchipatchi (Transparent Patchi).png",
       "hasAnchors": true,
-      "enabled": false
+      "enabled": true
     },
     {
       "id": "TAM-002-022-006",
@@ -433,7 +433,7 @@
       "generation": "adult",
       "sheet": "LCD Handhelds - Tamagotchi Smart - Characters - Kuromametchi.png",
       "hasAnchors": true,
-      "enabled": false
+      "enabled": true
     },
     {
       "id": "TAM-002-024-000",
@@ -442,7 +442,7 @@
       "generation": "adult",
       "sheet": "LCD Handhelds - Tamagotchi Smart - Characters - Kurumaritchi.png",
       "hasAnchors": true,
-      "enabled": false
+      "enabled": true
     },
     {
       "id": "TAM-002-025-000",
@@ -451,7 +451,7 @@
       "generation": "adult",
       "sheet": "LCD Handhelds - Tamagotchi Smart - Characters - Kyupitchi.png",
       "hasAnchors": true,
-      "enabled": false
+      "enabled": true
     },
     {
       "id": "TAM-002-026-000",
@@ -460,7 +460,7 @@
       "generation": "adult",
       "sheet": "LCD Handhelds - Tamagotchi Smart - Characters - Labilatchi.png",
       "hasAnchors": true,
-      "enabled": false
+      "enabled": true
     },
     {
       "id": "TAM-002-027-000",
@@ -469,7 +469,7 @@
       "generation": "adult",
       "sheet": "LCD Handhelds - Tamagotchi Smart - Characters - Lakotchi.png",
       "hasAnchors": true,
-      "enabled": false
+      "enabled": true
     },
     {
       "id": "TAM-002-028-000",
@@ -478,7 +478,7 @@
       "generation": "adult",
       "sheet": "LCD Handhelds - Tamagotchi Smart - Characters - Llanutchi.png",
       "hasAnchors": true,
-      "enabled": false
+      "enabled": true
     },
     {
       "id": "TAM-002-029-000",
@@ -487,7 +487,7 @@
       "generation": "adult",
       "sheet": "LCD Handhelds - Tamagotchi Smart - Characters - Lovelitchi.png",
       "hasAnchors": true,
-      "enabled": false
+      "enabled": true
     },
     {
       "id": "TAM-002-030-000",
@@ -496,7 +496,7 @@
       "generation": "adult",
       "sheet": "LCD Handhelds - Tamagotchi Smart - Characters - Lucatchi.png",
       "hasAnchors": true,
-      "enabled": false
+      "enabled": true
     },
     {
       "id": "TAM-002-031-000",
@@ -505,7 +505,7 @@
       "generation": "adult",
       "sheet": "LCD Handhelds - Tamagotchi Smart - Characters - Maidtchi.png",
       "hasAnchors": true,
-      "enabled": false
+      "enabled": true
     },
     {
       "id": "TAM-002-032-000",
@@ -514,7 +514,7 @@
       "generation": "adult",
       "sheet": "LCD Handhelds - Tamagotchi Smart - Characters - Makamokotchi.png",
       "hasAnchors": true,
-      "enabled": false
+      "enabled": true
     },
     {
       "id": "TAM-002-033-000",
@@ -523,7 +523,7 @@
       "generation": "adult",
       "sheet": "LCD Handhelds - Tamagotchi Smart - Characters - Makiko.png",
       "hasAnchors": true,
-      "enabled": false
+      "enabled": true
     },
     {
       "id": "TAM-002-034-000",
@@ -532,7 +532,7 @@
       "generation": "adult",
       "sheet": "LCD Handhelds - Tamagotchi Smart - Characters - Mametchi.png",
       "hasAnchors": true,
-      "enabled": false
+      "enabled": true
     },
     {
       "id": "TAM-002-034-001",
@@ -541,7 +541,7 @@
       "generation": "adult",
       "sheet": "LCD Handhelds - Tamagotchi Smart - Characters - Mametchi (1996 Mametchi).png",
       "hasAnchors": true,
-      "enabled": false
+      "enabled": true
     },
     {
       "id": "TAM-002-034-002",
@@ -550,7 +550,7 @@
       "generation": "adult",
       "sheet": "LCD Handhelds - Tamagotchi Smart - Characters - Mametchi (Luffy Mametchi).png",
       "hasAnchors": true,
-      "enabled": false
+      "enabled": true
     },
     {
       "id": "TAM-002-034-003",
@@ -559,7 +559,7 @@
       "generation": "adult",
       "sheet": "LCD Handhelds - Tamagotchi Smart - Characters - Mametchi (Mame Kitty).png",
       "hasAnchors": true,
-      "enabled": false
+      "enabled": true
     },
     {
       "id": "TAM-002-034-004",
@@ -568,7 +568,7 @@
       "generation": "adult",
       "sheet": "LCD Handhelds - Tamagotchi Smart - Characters - Mametchi (Mame Seahorse).png",
       "hasAnchors": true,
-      "enabled": false
+      "enabled": true
     },
     {
       "id": "TAM-002-034-005",
@@ -577,7 +577,7 @@
       "generation": "adult",
       "sheet": "LCD Handhelds - Tamagotchi Smart - Characters - Mametchi (Mameculatchi).png",
       "hasAnchors": true,
-      "enabled": false
+      "enabled": true
     },
     {
       "id": "TAM-002-034-006",
@@ -595,7 +595,7 @@
       "generation": "adult",
       "sheet": "LCD Handhelds - Tamagotchi Smart - Characters - Mametchi (Woody Mametchi).png",
       "hasAnchors": true,
-      "enabled": false
+      "enabled": true
     },
     {
       "id": "TAM-002-035-000",
@@ -604,7 +604,7 @@
       "generation": "adult",
       "sheet": "LCD Handhelds - Tamagotchi Smart - Characters - Maskutchi.png",
       "hasAnchors": true,
-      "enabled": false
+      "enabled": true
     },
     {
       "id": "TAM-002-036-000",
@@ -613,7 +613,7 @@
       "generation": "adult",
       "sheet": "LCD Handhelds - Tamagotchi Smart - Characters - Mayantchi.png",
       "hasAnchors": true,
-      "enabled": false
+      "enabled": true
     },
     {
       "id": "TAM-002-037-000",
@@ -622,7 +622,7 @@
       "generation": "adult",
       "sheet": "LCD Handhelds - Tamagotchi Smart - Characters - Melodytchi.png",
       "hasAnchors": true,
-      "enabled": false
+      "enabled": true
     },
     {
       "id": "TAM-002-038-000",
@@ -631,7 +631,7 @@
       "generation": "adult",
       "sheet": "LCD Handhelds - Tamagotchi Smart - Characters - Memetchi.png",
       "hasAnchors": true,
-      "enabled": false
+      "enabled": true
     },
     {
       "id": "TAM-002-039-000",
@@ -640,7 +640,7 @@
       "generation": "adult",
       "sheet": "LCD Handhelds - Tamagotchi Smart - Characters - Milktchi.png",
       "hasAnchors": true,
-      "enabled": false
+      "enabled": true
     },
     {
       "id": "TAM-002-039-001",
@@ -658,7 +658,7 @@
       "generation": "adult",
       "sheet": "LCD Handhelds - Tamagotchi Smart - Characters - Milktchi (Chopper Milktchi).png",
       "hasAnchors": true,
-      "enabled": false
+      "enabled": true
     },
     {
       "id": "TAM-002-039-003",
@@ -667,7 +667,7 @@
       "generation": "adult",
       "sheet": "LCD Handhelds - Tamagotchi Smart - Characters - Milktchi (Cinnamon Milk).png",
       "hasAnchors": true,
-      "enabled": false
+      "enabled": true
     },
     {
       "id": "TAM-002-039-004",
@@ -676,7 +676,7 @@
       "generation": "adult",
       "sheet": "LCD Handhelds - Tamagotchi Smart - Characters - Milktchi (Mei Milktchi).png",
       "hasAnchors": true,
-      "enabled": false
+      "enabled": true
     },
     {
       "id": "TAM-002-039-005",
@@ -685,7 +685,7 @@
       "generation": "adult",
       "sheet": "LCD Handhelds - Tamagotchi Smart - Characters - Milktchi (Mermaid Milk).png",
       "hasAnchors": true,
-      "enabled": false
+      "enabled": true
     },
     {
       "id": "TAM-002-039-006",
@@ -694,7 +694,7 @@
       "generation": "adult",
       "sheet": "LCD Handhelds - Tamagotchi Smart - Characters - Milktchi (Milk Witchi).png",
       "hasAnchors": true,
-      "enabled": false
+      "enabled": true
     },
     {
       "id": "TAM-002-040-000",
@@ -703,7 +703,7 @@
       "generation": "adult",
       "sheet": "LCD Handhelds - Tamagotchi Smart - Characters - Mimipurutchi.png",
       "hasAnchors": true,
-      "enabled": false
+      "enabled": true
     },
     {
       "id": "TAM-002-041-000",
@@ -712,7 +712,7 @@
       "generation": "adult",
       "sheet": "LCD Handhelds - Tamagotchi Smart - Characters - Mimitchi.png",
       "hasAnchors": true,
-      "enabled": false
+      "enabled": true
     },
     {
       "id": "TAM-002-042-000",
@@ -721,7 +721,7 @@
       "generation": "adult",
       "sheet": "LCD Handhelds - Tamagotchi Smart - Characters - Mokotsunotchi.png",
       "hasAnchors": true,
-      "enabled": false
+      "enabled": true
     },
     {
       "id": "TAM-002-043-000",
@@ -730,7 +730,7 @@
       "generation": "adult",
       "sheet": "LCD Handhelds - Tamagotchi Smart - Characters - Nijifuwatchi.png",
       "hasAnchors": true,
-      "enabled": false
+      "enabled": true
     },
     {
       "id": "TAM-002-044-000",
@@ -739,7 +739,7 @@
       "generation": "adult",
       "sheet": "LCD Handhelds - Tamagotchi Smart - Characters - Nyorotchi.png",
       "hasAnchors": true,
-      "enabled": false
+      "enabled": true
     },
     {
       "id": "TAM-002-045-000",
@@ -748,7 +748,7 @@
       "generation": "adult",
       "sheet": "LCD Handhelds - Tamagotchi Smart - Characters - Omechuptchi.png",
       "hasAnchors": true,
-      "enabled": false
+      "enabled": true
     },
     {
       "id": "TAM-002-046-000",
@@ -757,7 +757,7 @@
       "generation": "adult",
       "sheet": "LCD Handhelds - Tamagotchi Smart - Characters - Omuchutchi.png",
       "hasAnchors": true,
-      "enabled": false
+      "enabled": true
     },
     {
       "id": "TAM-002-047-000",
@@ -766,7 +766,7 @@
       "generation": "adult",
       "sheet": "LCD Handhelds - Tamagotchi Smart - Characters - Orchestrotchi.png",
       "hasAnchors": true,
-      "enabled": false
+      "enabled": true
     },
     {
       "id": "TAM-002-048-000",
@@ -775,7 +775,7 @@
       "generation": "adult",
       "sheet": "LCD Handhelds - Tamagotchi Smart - Characters - Oyajitchi.png",
       "hasAnchors": true,
-      "enabled": false
+      "enabled": true
     },
     {
       "id": "TAM-002-049-000",
@@ -784,7 +784,7 @@
       "generation": "adult",
       "sheet": "LCD Handhelds - Tamagotchi Smart - Characters - Pafuwatchi.png",
       "hasAnchors": true,
-      "enabled": false
+      "enabled": true
     },
     {
       "id": "TAM-002-050-000",
@@ -793,7 +793,7 @@
       "generation": "adult",
       "sheet": "LCD Handhelds - Tamagotchi Smart - Characters - Pikagorotchi.png",
       "hasAnchors": true,
-      "enabled": false
+      "enabled": true
     },
     {
       "id": "TAM-002-051-000",
@@ -802,7 +802,7 @@
       "generation": "adult",
       "sheet": "LCD Handhelds - Tamagotchi Smart - Characters - Piyotamausatchi.png",
       "hasAnchors": true,
-      "enabled": false
+      "enabled": true
     },
     {
       "id": "TAM-002-052-000",
@@ -811,7 +811,7 @@
       "generation": "adult",
       "sheet": "LCD Handhelds - Tamagotchi Smart - Characters - Pochitchi.png",
       "hasAnchors": true,
-      "enabled": false
+      "enabled": true
     },
     {
       "id": "TAM-002-053-000",
@@ -820,7 +820,7 @@
       "generation": "adult",
       "sheet": "LCD Handhelds - Tamagotchi Smart - Characters - Poptchi.png",
       "hasAnchors": true,
-      "enabled": false
+      "enabled": true
     },
     {
       "id": "TAM-002-053-001",
@@ -838,7 +838,7 @@
       "generation": "adult",
       "sheet": "LCD Handhelds - Tamagotchi Smart - Characters - Poptchi (Jessie Poptchi).png",
       "hasAnchors": true,
-      "enabled": false
+      "enabled": true
     },
     {
       "id": "TAM-002-053-003",
@@ -847,7 +847,7 @@
       "generation": "adult",
       "sheet": "LCD Handhelds - Tamagotchi Smart - Characters - Poptchi (Melody Pop).png",
       "hasAnchors": true,
-      "enabled": false
+      "enabled": true
     },
     {
       "id": "TAM-002-053-004",
@@ -856,7 +856,7 @@
       "generation": "adult",
       "sheet": "LCD Handhelds - Tamagotchi Smart - Characters - Poptchi (Nami Poptchi).png",
       "hasAnchors": true,
-      "enabled": false
+      "enabled": true
     },
     {
       "id": "TAM-002-053-005",
@@ -865,7 +865,7 @@
       "generation": "adult",
       "sheet": "LCD Handhelds - Tamagotchi Smart - Characters - Poptchi (Pop Otohimetchi).png",
       "hasAnchors": true,
-      "enabled": false
+      "enabled": true
     },
     {
       "id": "TAM-002-053-006",
@@ -874,7 +874,7 @@
       "generation": "adult",
       "sheet": "LCD Handhelds - Tamagotchi Smart - Characters - Poptchi (Pop Pierrotchi).png",
       "hasAnchors": true,
-      "enabled": false
+      "enabled": true
     },
     {
       "id": "TAM-002-054-000",
@@ -883,7 +883,7 @@
       "generation": "adult",
       "sheet": "LCD Handhelds - Tamagotchi Smart - Characters - Purantatchi.png",
       "hasAnchors": true,
-      "enabled": false
+      "enabled": true
     },
     {
       "id": "TAM-002-055-000",
@@ -892,7 +892,7 @@
       "generation": "adult",
       "sheet": "LCD Handhelds - Tamagotchi Smart - Characters - Pyonpyontchi.png",
       "hasAnchors": true,
-      "enabled": false
+      "enabled": true
     },
     {
       "id": "TAM-002-056-000",
@@ -901,7 +901,7 @@
       "generation": "adult",
       "sheet": "LCD Handhelds - Tamagotchi Smart - Characters - Ribotchi.png",
       "hasAnchors": true,
-      "enabled": false
+      "enabled": true
     },
     {
       "id": "TAM-002-057-000",
@@ -910,7 +910,7 @@
       "generation": "adult",
       "sheet": "LCD Handhelds - Tamagotchi Smart - Characters - Richutchi.png",
       "hasAnchors": true,
-      "enabled": false
+      "enabled": true
     },
     {
       "id": "TAM-002-058-000",
@@ -919,7 +919,7 @@
       "generation": "adult",
       "sheet": "LCD Handhelds - Tamagotchi Smart - Characters - Ringotchi.png",
       "hasAnchors": true,
-      "enabled": false
+      "enabled": true
     },
     {
       "id": "TAM-002-059-000",
@@ -928,7 +928,7 @@
       "generation": "adult",
       "sheet": "LCD Handhelds - Tamagotchi Smart - Characters - Riyotchi.png",
       "hasAnchors": true,
-      "enabled": false
+      "enabled": true
     },
     {
       "id": "TAM-002-060-000",
@@ -937,7 +937,7 @@
       "generation": "adult",
       "sheet": "LCD Handhelds - Tamagotchi Smart - Characters - Sacktchi.png",
       "hasAnchors": true,
-      "enabled": false
+      "enabled": true
     },
     {
       "id": "TAM-002-061-000",
@@ -946,7 +946,7 @@
       "generation": "adult",
       "sheet": "LCD Handhelds - Tamagotchi Smart - Characters - Shimashimatchi.png",
       "hasAnchors": true,
-      "enabled": false
+      "enabled": true
     },
     {
       "id": "TAM-002-062-000",
@@ -955,7 +955,7 @@
       "generation": "adult",
       "sheet": "LCD Handhelds - Tamagotchi Smart - Characters - Spacytchi.png",
       "hasAnchors": true,
-      "enabled": false
+      "enabled": true
     },
     {
       "id": "TAM-002-063-000",
@@ -964,7 +964,7 @@
       "generation": "adult",
       "sheet": "LCD Handhelds - Tamagotchi Smart - Characters - Togetchi.png",
       "hasAnchors": true,
-      "enabled": false
+      "enabled": true
     },
     {
       "id": "TAM-002-064-000",
@@ -973,7 +973,7 @@
       "generation": "adult",
       "sheet": "LCD Handhelds - Tamagotchi Smart - Characters - Tsuyopitchi.png",
       "hasAnchors": true,
-      "enabled": false
+      "enabled": true
     },
     {
       "id": "TAM-002-064-001",
@@ -982,7 +982,7 @@
       "generation": "adult",
       "sheet": "LCD Handhelds - Tamagotchi Smart - Characters - Tsuyopitchi (Badtz Maru Tsuyomi).png",
       "hasAnchors": true,
-      "enabled": false
+      "enabled": true
     },
     {
       "id": "TAM-002-064-002",
@@ -991,7 +991,7 @@
       "generation": "adult",
       "sheet": "LCD Handhelds - Tamagotchi Smart - Characters - Tsuyopitchi (Gomami-san).png",
       "hasAnchors": true,
-      "enabled": false
+      "enabled": true
     },
     {
       "id": "TAM-002-064-003",
@@ -1000,7 +1000,7 @@
       "generation": "adult",
       "sheet": "LCD Handhelds - Tamagotchi Smart - Characters - Tsuyopitchi (Miss Tsuyomi).png",
       "hasAnchors": true,
-      "enabled": false
+      "enabled": true
     },
     {
       "id": "TAM-002-064-004",
@@ -1009,7 +1009,7 @@
       "generation": "adult",
       "sheet": "LCD Handhelds - Tamagotchi Smart - Characters - Tsuyopitchi (Ms Tsuyomummy).png",
       "hasAnchors": true,
-      "enabled": false
+      "enabled": true
     },
     {
       "id": "TAM-002-064-005",
@@ -1018,7 +1018,7 @@
       "generation": "adult",
       "sheet": "LCD Handhelds - Tamagotchi Smart - Characters - Tsuyopitchi (Sanji Tsuyomi).png",
       "hasAnchors": true,
-      "enabled": false
+      "enabled": true
     },
     {
       "id": "TAM-002-064-006",
@@ -1027,7 +1027,7 @@
       "generation": "adult",
       "sheet": "LCD Handhelds - Tamagotchi Smart - Characters - Tsuyopitchi (Teddy Tsuyomi).png",
       "hasAnchors": true,
-      "enabled": false
+      "enabled": true
     },
     {
       "id": "TAM-002-065-000",
@@ -1036,7 +1036,7 @@
       "generation": "adult",
       "sheet": "LCD Handhelds - Tamagotchi Smart - Characters - Unipegatchi.png",
       "hasAnchors": true,
-      "enabled": false
+      "enabled": true
     },
     {
       "id": "TAM-002-066-000",
@@ -1045,7 +1045,7 @@
       "generation": "adult",
       "sheet": "LCD Handhelds - Tamagotchi Smart - Characters - Ura Mametchi.png",
       "hasAnchors": true,
-      "enabled": false
+      "enabled": true
     },
     {
       "id": "TAM-002-067-000",
@@ -1054,7 +1054,7 @@
       "generation": "adult",
       "sheet": "LCD Handhelds - Tamagotchi Smart - Characters - Violetchi.png",
       "hasAnchors": true,
-      "enabled": false
+      "enabled": true
     },
     {
       "id": "TAM-002-068-000",
@@ -1063,7 +1063,7 @@
       "generation": "adult",
       "sheet": "LCD Handhelds - Tamagotchi Smart - Characters - Watawatatchi.png",
       "hasAnchors": true,
-      "enabled": false
+      "enabled": true
     },
     {
       "id": "TAM-002-069-000",
@@ -1072,7 +1072,7 @@
       "generation": "adult",
       "sheet": "LCD Handhelds - Tamagotchi Smart - Characters - Wawatchi.png",
       "hasAnchors": true,
-      "enabled": false
+      "enabled": true
     },
     {
       "id": "TAM-002-069-001",
@@ -1081,7 +1081,7 @@
       "generation": "adult",
       "sheet": "LCD Handhelds - Tamagotchi Smart - Characters - Wawatchi (Jinbei Wawatchi).png",
       "hasAnchors": true,
-      "enabled": false
+      "enabled": true
     },
     {
       "id": "TAM-002-069-002",
@@ -1090,7 +1090,7 @@
       "generation": "adult",
       "sheet": "LCD Handhelds - Tamagotchi Smart - Characters - Wawatchi (Joy Wawatchi).png",
       "hasAnchors": true,
-      "enabled": false
+      "enabled": true
     },
     {
       "id": "TAM-002-069-003",
@@ -1099,7 +1099,7 @@
       "generation": "adult",
       "sheet": "LCD Handhelds - Tamagotchi Smart - Characters - Wawatchi (Octopus Wawatchi).png",
       "hasAnchors": true,
-      "enabled": false
+      "enabled": true
     },
     {
       "id": "TAM-002-069-004",
@@ -1117,7 +1117,7 @@
       "generation": "adult",
       "sheet": "LCD Handhelds - Tamagotchi Smart - Characters - Wawatchi (Wawa Fortune).png",
       "hasAnchors": true,
-      "enabled": false
+      "enabled": true
     },
     {
       "id": "TAM-002-070-000",
@@ -1126,7 +1126,7 @@
       "generation": "adult",
       "sheet": "LCD Handhelds - Tamagotchi Smart - Characters - Weeptchi.png",
       "hasAnchors": true,
-      "enabled": false
+      "enabled": true
     },
     {
       "id": "TAM-002-070-001",
@@ -1135,7 +1135,7 @@
       "generation": "adult",
       "sheet": "LCD Handhelds - Tamagotchi Smart - Characters - Weeptchi (Jelly Weeptchi).png",
       "hasAnchors": true,
-      "enabled": false
+      "enabled": true
     },
     {
       "id": "TAM-002-070-002",
@@ -1144,7 +1144,7 @@
       "generation": "adult",
       "sheet": "LCD Handhelds - Tamagotchi Smart - Characters - Weeptchi (Little Weep).png",
       "hasAnchors": true,
-      "enabled": false
+      "enabled": true
     },
     {
       "id": "TAM-002-070-003",
@@ -1153,7 +1153,7 @@
       "generation": "adult",
       "sheet": "LCD Handhelds - Tamagotchi Smart - Characters - Weeptchi (Nemo Weeptchi).png",
       "hasAnchors": true,
-      "enabled": false
+      "enabled": true
     },
     {
       "id": "TAM-002-070-004",
@@ -1162,7 +1162,7 @@
       "generation": "adult",
       "sheet": "LCD Handhelds - Tamagotchi Smart - Characters - Weeptchi (Weepdevitchi).png",
       "hasAnchors": true,
-      "enabled": false
+      "enabled": true
     },
     {
       "id": "TAM-002-071-000",
@@ -1171,7 +1171,7 @@
       "generation": "adult",
       "sheet": "LCD Handhelds - Tamagotchi Smart - Characters - Wooltchi.png",
       "hasAnchors": true,
-      "enabled": false
+      "enabled": true
     },
     {
       "id": "TAM-002-072-000",
@@ -1180,7 +1180,7 @@
       "generation": "adult",
       "sheet": "LCD Handhelds - Tamagotchi Smart - Characters - Yumemitchi.png",
       "hasAnchors": true,
-      "enabled": false
+      "enabled": true
     },
     {
       "id": "TAM-001-001-000",
@@ -1189,7 +1189,7 @@
       "generation": "baby",
       "sheet": "LCD Handhelds - Tamagotchi Smart - Characters - Puchikotchi.png",
       "hasAnchors": false,
-      "enabled": false
+      "enabled": true
     },
     {
       "id": "TAM-001-002-000",
@@ -1198,7 +1198,7 @@
       "generation": "baby",
       "sheet": "LCD Handhelds - Tamagotchi Smart - Characters - Puchiotchi.png",
       "hasAnchors": false,
-      "enabled": false
+      "enabled": true
     }
   ]
 }
