@@ -17,7 +17,7 @@
   --yellow:  #ffe066;
   --green:   #6bffb8;
   --red:     #ff6b6b;
-  --np: 28px; --gap: 8px;
+  --np: 0px; --gap: 8px;
   /* --cw and --ch are set dynamically by JS based on viewport */
   --cw: 200px; --ch: 200px;
 }
@@ -86,17 +86,28 @@ header {
 .cell-empty-icon { font-size:1.4rem; opacity:0.18; }
 .cell-canvas { width:100%; height:100%; image-rendering:pixelated; image-rendering:crisp-edges; display:block; }
 
-.cell-plate {
-  width:var(--cw); height:var(--np);
-  background:var(--surface); border:1px solid var(--border);
-  border-top:none; border-radius:0 0 3px 3px;
-  display:flex; align-items:center; padding:0 6px; gap:4px; overflow:hidden;
+.cell-plate { display:none; } /* replaced by in-cell overlay */
+.cell-overlay {
+  position:absolute; top:0; left:0; right:0;
+  display:flex; align-items:center; justify-content:space-between;
+  padding:5px 8px; gap:6px;
+  pointer-events:none;
 }
-.cell-name { font-family:'Pixelify Sans',monospace; font-size:0.85rem; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; flex:1; }
-.cell-pts  { font-size:0.75rem; color:var(--yellow); white-space:nowrap; flex-shrink:0; }
-.cell-dot  { width:5px; height:5px; border-radius:50%; background:var(--green); box-shadow:0 0 3px var(--green); flex-shrink:0; transition:all 0.3s; }
-.cell-dot.flash    { background:var(--cyan); box-shadow:0 0 6px var(--cyan); }
-.cell-dot.inactive { background:var(--muted); box-shadow:none; }
+.cell-name {
+  font-family:'Pixelify Sans',monospace; font-size:1.1rem;
+  color:#fff; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+  text-shadow: 0 1px 0 rgba(0,0,0,0.9), 1px 0 0 rgba(0,0,0,0.9),
+               -1px 0 0 rgba(0,0,0,0.9), 0 -1px 0 rgba(0,0,0,0.9),
+               2px 2px 4px rgba(0,0,0,0.7);
+}
+.cell-pts {
+  font-family:'Pixelify Sans',monospace; font-size:1rem;
+  color:var(--yellow); white-space:nowrap; flex-shrink:0;
+  text-shadow: 0 1px 0 rgba(0,0,0,0.9), 1px 0 0 rgba(0,0,0,0.9),
+               -1px 0 0 rgba(0,0,0,0.9), 0 -1px 0 rgba(0,0,0,0.9),
+               2px 2px 4px rgba(0,0,0,0.7);
+}
+.cell-dot  { display:none; } /* dot removed from overlay, not needed visually */
 
 /* ── Pet roster ── */
 .pet-card {
@@ -1807,12 +1818,18 @@ class GotchiCell {
     this.ctx.imageSmoothingEnabled = false;
     vp.appendChild(this.canvas);
 
+    // Overlay label — sits inside the cell at the top
+    const overlay = document.createElement('div');
+    overlay.className = 'cell-overlay';
+    overlay.innerHTML = `
+      <div class="cell-name">${this.student.name}</div>
+      <div class="cell-pts" id="pts-${this.student.id}">${this.student.gotchiPoints} pts</div>`;
+    vp.appendChild(overlay);
+
+    // Keep an invisible plate for any code that still queries cell-dot
     const plate = document.createElement('div');
     plate.className = 'cell-plate';
-    plate.innerHTML = `
-      <div class="cell-name">${this.student.name}</div>
-      <div class="cell-pts" id="pts-${this.student.id}">${this.student.gotchiPoints} pts</div>
-      <div class="cell-dot" id="dot-${this.student.id}"></div>`;
+    plate.innerHTML = `<div class="cell-dot" id="dot-${this.student.id}"></div>`;
 
     this.vp = vp;
 
