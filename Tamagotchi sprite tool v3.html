@@ -1,0 +1,2812 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TAM SPRITE TOOL v3</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@400;700&family=DM+Mono:wght@400;500&display=swap');
+
+:root {
+  --bg:      #0e0e1a;
+  --surface: #1a1a2e;
+  --raised:  #22223a;
+  --border:  #2e2e4e;
+  --border2: #4a4a7a;
+  --text:    #e0e0f0;
+  --muted:   #7070a0;
+  --pink:    #ff6eb4;
+  --cyan:    #4ef0d8;
+  --yellow:  #ffe066;
+  --green:   #6bffb8;
+  --red:     #ff6b6b;
+  --purple:  #a78bfa;
+  --orange:  #ff9f6b;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; overflow: hidden; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'DM Mono', monospace;
+  font-size: 12px;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── Header ── */
+header {
+  height: 46px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border2);
+  display: flex;
+  align-items: center;
+  padding: 0 16px;
+  gap: 16px;
+  flex-shrink: 0;
+  z-index: 50;
+}
+
+header h1 {
+  font-family: 'Pixelify Sans', monospace;
+  font-size: 1rem;
+  color: var(--pink);
+  letter-spacing: 2px;
+  white-space: nowrap;
+  margin-right: 4px;
+}
+
+.version-badge {
+  font-size: 9px;
+  color: var(--muted);
+  border: 1px solid var(--border2);
+  border-radius: 3px;
+  padding: 1px 5px;
+  letter-spacing: 1px;
+}
+
+.header-sep { flex: 1; }
+
+.header-status {
+  font-size: 10px;
+  color: var(--muted);
+  letter-spacing: 1px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 400px;
+}
+
+/* ── Layout ── */
+.workspace {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+/* ── Character list sidebar ── */
+.char-list {
+  width: 240px;
+  background: var(--surface);
+  border-right: 1px solid var(--border2);
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+.char-list-head {
+  padding: 10px 12px 6px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.char-list-title {
+  font-size: 9px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--muted);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.char-count { color: var(--cyan); }
+
+.char-search {
+  background: var(--raised);
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  padding: 4px 8px;
+  border-radius: 3px;
+  outline: none;
+  width: 100%;
+}
+.char-search:focus { border-color: var(--cyan); }
+.char-search::placeholder { color: var(--muted); }
+
+.char-list-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 4px 0;
+}
+
+.char-list-body::-webkit-scrollbar { width: 4px; }
+.char-list-body::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+
+.char-item {
+  display: flex;
+  align-items: center;
+  padding: 7px 12px;
+  cursor: pointer;
+  gap: 8px;
+  transition: background 0.1s;
+  border-left: 2px solid transparent;
+}
+.char-item:hover { background: var(--raised); }
+.char-item.active {
+  background: var(--raised);
+  border-left-color: var(--cyan);
+}
+
+.char-item-info { flex: 1; min-width: 0; }
+
+.char-item-name {
+  font-family: 'Pixelify Sans', monospace;
+  font-size: 0.75rem;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.char-item-id {
+  font-size: 9px;
+  color: var(--muted);
+  letter-spacing: 0.5px;
+  margin-top: 1px;
+}
+
+.char-item-id .gen-baby  { color: var(--pink); }
+.char-item-id .gen-adult { color: var(--cyan); }
+
+.dirty-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--yellow);
+  box-shadow: 0 0 5px var(--yellow);
+  flex-shrink: 0;
+  display: none;
+}
+.char-item.dirty .dirty-dot { display: block; }
+
+.char-list-footer {
+  padding: 8px 10px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+/* ── Main editor area ── */
+.editor-area {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* Empty state */
+.editor-empty {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  color: var(--muted);
+}
+.editor-empty .ei { font-size: 3rem; opacity: 0.15; }
+.editor-empty p { font-size: 11px; letter-spacing: 1px; }
+
+/* Editor tabs */
+.editor-tabs {
+  display: flex;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border2);
+  padding: 0 12px;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+.etab {
+  padding: 9px 14px;
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  cursor: pointer;
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  border-bottom: 2px solid transparent;
+  transition: all 0.15s;
+  margin-bottom: -1px;
+}
+.etab:hover  { color: var(--text); }
+.etab.active { color: var(--cyan); border-bottom-color: var(--cyan); }
+
+.editor-content {
+  flex: 1;
+  overflow: auto;
+  padding: 16px;
+}
+
+/* ── Character header bar ── */
+.char-header {
+  display: flex;
+  align-items: center;
+  padding: 8px 16px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+.char-header-name {
+  font-family: 'Pixelify Sans', monospace;
+  font-size: 1rem;
+  color: var(--text);
+}
+
+.char-header-id {
+  font-size: 10px;
+  color: var(--muted);
+  letter-spacing: 1px;
+}
+
+.char-header-variant {
+  font-size: 10px;
+  color: var(--purple);
+  letter-spacing: 1px;
+}
+
+.char-header-sep { flex: 1; }
+
+/* ── Sheet view ── */
+.sheet-wrap {
+  position: relative;
+  display: inline-block;
+  cursor: crosshair;
+}
+
+.sheet-wrap canvas { display: block; image-rendering: pixelated; }
+
+/* ── Sprites grid ── */
+.sprites-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.band-section { display: flex; flex-direction: column; gap: 8px; }
+
+.band-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 10px;
+  background: var(--raised);
+  border-radius: 4px;
+  border-left: 3px solid var(--border2);
+}
+
+.band-role-label {
+  font-size: 10px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  font-weight: 500;
+}
+
+.band-count {
+  font-size: 10px;
+  color: var(--muted);
+}
+
+.band-count.ok    { color: var(--green); }
+.band-count.warn  { color: var(--yellow); }
+
+.band-role-select {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  padding: 3px 6px;
+  border-radius: 3px;
+  outline: none;
+  margin-left: auto;
+}
+
+.sprites-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding-left: 12px;
+}
+
+.sprite-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+}
+
+.sprite-canvas {
+  image-rendering: pixelated;
+  border: 1px solid var(--border);
+  border-radius: 2px;
+  background: #1a1a2e;
+}
+
+.sprite-label {
+  font-size: 9px;
+  color: var(--muted);
+  text-align: center;
+  max-width: 80px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ── Anchor editor ── */
+.anc-layout {
+  display: flex;
+  gap: 20px;
+  align-items: flex-start;
+  flex-wrap: wrap;
+}
+
+.anc-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 200px;
+}
+
+.anc-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+
+.anc-strip-item {
+  cursor: pointer;
+  border: 2px solid var(--border);
+  border-radius: 3px;
+  padding: 2px;
+  transition: border-color 0.1s;
+}
+.anc-strip-item.active { border-color: var(--cyan); }
+.anc-strip-item canvas { display: block; image-rendering: pixelated; }
+
+.anc-preview-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.anc-canvas-wrap {
+  background: var(--raised);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 12px;
+  display: inline-block;
+}
+
+/* ── Commit button states ── */
+.btn-commit { border-color: var(--yellow) !important; color: var(--yellow) !important; }
+.btn-commit:hover { background: rgba(255,224,102,.08) !important; }
+.btn-commit-all { border-color: var(--green) !important; color: var(--green) !important; }
+.btn-commit-all:hover { background: rgba(107,255,184,.08) !important; }
+
+/* ── Shared components ── */
+.section-head {
+  font-size: 9px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--muted);
+  padding-bottom: 4px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 8px;
+}
+
+.param { display: flex; flex-direction: column; gap: 3px; }
+.param label { font-size: 10px; color: var(--muted); }
+.param input[type=range] { width: 100%; accent-color: var(--cyan); }
+
+.field { display: flex; flex-direction: column; gap: 3px; }
+.field label { font-size: 10px; color: var(--muted); }
+.field input, .field select {
+  background: var(--raised);
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  padding: 5px 8px;
+  border-radius: 3px;
+  outline: none;
+}
+.field input:focus, .field select:focus { border-color: var(--cyan); }
+
+.id-preview {
+  font-size: 10px;
+  color: var(--pink);
+  margin-top: 2px;
+  letter-spacing: 1px;
+}
+
+.btn {
+  padding: 5px 12px;
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  cursor: pointer;
+  border-radius: 3px;
+  border: 1px solid var(--border2);
+  background: transparent;
+  color: var(--muted);
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+.btn:hover   { border-color: var(--cyan); color: var(--cyan); background: rgba(78,240,216,.06); }
+.btn:disabled { opacity: 0.35; cursor: not-allowed; }
+.btn-primary { border-color: var(--cyan);   color: var(--cyan); }
+.btn-pink    { border-color: var(--pink);   color: var(--pink); }
+.btn-pink:hover { background: rgba(255,110,180,.06); }
+.btn-full    { width: 100%; }
+
+/* ── Toast ── */
+#toast {
+  position: fixed; bottom: 16px; right: 16px; z-index: 999;
+  background: var(--cyan); color: var(--bg);
+  padding: 8px 16px; border-radius: 4px;
+  font-size: 11px; letter-spacing: 1px;
+  transform: translateY(50px); opacity: 0;
+  transition: all 0.22s; pointer-events: none;
+}
+
+/* ── Loading overlay ── */
+#loading {
+  display: none;
+  position: fixed; inset: 0; z-index: 900;
+  background: rgba(10,10,26,0.85);
+  backdrop-filter: blur(4px);
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 12px;
+  font-size: 11px;
+  color: var(--muted);
+  letter-spacing: 1px;
+}
+#loading.show { display: flex; }
+#loading-msg { color: var(--cyan); }
+</style>
+</head>
+<body>
+
+<!-- ── Header ── -->
+<header>
+  <h1>★ TAM SPRITE TOOL</h1>
+  <span class="version-badge">v3</span>
+  <button class="btn btn-primary" id="btn-open-folder">↑ Open Folder</button>
+  <button class="btn btn-commit-all" id="btn-commit-all" disabled>↓ Commit All</button>
+  <button class="btn" id="btn-export-dex" disabled style="border-color:var(--purple);color:var(--purple);">★ Export TamaDex</button>
+  <button class="btn" id="btn-eggs-mode" style="border-color:var(--orange);color:var(--orange);">🥚 Egg Editor</button>
+  <button class="btn" id="btn-manifest-mode" style="border-color:var(--cyan);color:var(--cyan);">📋 Manifest</button>
+  <button class="btn" id="btn-preview-mode" style="border-color:var(--green);color:var(--green);">🔍 JSON Preview</button>
+  <div class="header-sep"></div>
+  <div class="header-status" id="header-status">Open a folder containing sprite sheet PNGs and character JSONs</div>
+</header>
+
+<!-- ── Workspace ── -->
+<div class="workspace">
+
+  <!-- ── Character list ── -->
+  <div class="char-list">
+    <div class="char-list-head">
+      <div class="char-list-title">
+        <span>Characters</span>
+        <span class="char-count" id="char-count">0</span>
+      </div>
+      <input type="text" class="char-search" id="char-search" placeholder="Search...">
+    </div>
+    <div class="char-list-body" id="char-list-body">
+      <!-- populated by JS -->
+    </div>
+    <div class="char-list-footer">
+      <div style="font-size:9px;color:var(--muted);display:flex;gap:10px;align-items:center;">
+        <span>● unsaved</span>
+        <span style="color:var(--muted);">○ saved</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Manifest Generator ── -->
+  <div id="manifest-editor" style="display:none;flex:1;flex-direction:column;overflow:hidden;">
+
+    <div style="padding:12px 16px;background:var(--surface);border-bottom:1px solid var(--border2);display:flex;align-items:center;gap:12px;flex-shrink:0;">
+      <span style="font-family:'Pixelify Sans',monospace;font-size:1rem;color:var(--cyan);">📋 Manifest Generator</span>
+      <span style="font-size:9px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;">sprites/background/manifest.json</span>
+      <div style="flex:1;"></div>
+      <button class="btn" id="btn-manifest-load">↑ Open Background Folder</button>
+      <input type="file" id="manifest-folder-input" webkitdirectory multiple accept="image/png" style="display:none;">
+      <button class="btn" id="btn-manifest-export" disabled style="border-color:var(--cyan);color:var(--cyan);">↓ Export manifest.json</button>
+      <button class="btn" id="btn-manifest-close">✕ Close</button>
+    </div>
+
+    <div style="display:flex;flex:1;overflow:hidden;">
+
+      <!-- Main: grid of background previews -->
+      <div style="flex:1;overflow-y:auto;padding:16px;">
+        <div id="manifest-empty" style="color:var(--muted);font-size:11px;padding:20px;">
+          Open a folder containing background PNG files. Each PNG will become one entry in the manifest.
+        </div>
+        <div id="manifest-grid" style="display:none;display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;"></div>
+      </div>
+
+      <!-- Right: settings -->
+      <div style="width:220px;background:var(--surface);border-left:1px solid var(--border2);padding:16px;display:flex;flex-direction:column;gap:12px;flex-shrink:0;">
+        <div class="section-head">Manifest Settings</div>
+        <div class="field">
+          <label>Manifest type</label>
+          <select id="manifest-type" style="background:var(--raised);border:1px solid var(--border);color:var(--text);font-family:'DM Mono',monospace;font-size:11px;padding:4px 6px;border-radius:3px;width:100%;outline:none;">
+            <option value="backgrounds">backgrounds</option>
+            <option value="eggs">eggs</option>
+            <option value="items">items</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>ID prefix</label>
+          <input type="text" id="manifest-id-prefix" value="bg" placeholder="e.g. bg, egg, item">
+          <div style="font-size:9px;color:var(--muted);margin-top:2px;">IDs will be: bg_001, bg_002…</div>
+        </div>
+        <div style="font-size:9px;color:var(--muted);line-height:1.8;border-top:1px solid var(--border);padding-top:10px;">
+          <div id="manifest-stats">No files loaded</div>
+        </div>
+        <button class="btn btn-primary btn-full" id="btn-manifest-autoname">✦ Auto-name All</button>
+        <div style="font-size:9px;color:var(--muted);">
+          Auto-name cleans up filenames into readable display names.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── JSON Preview Mode ── -->
+  <div id="json-preview-editor" style="display:none;flex:1;flex-direction:column;overflow:hidden;">
+
+    <div style="padding:10px 16px;background:var(--surface);border-bottom:1px solid var(--border2);display:flex;align-items:center;gap:10px;flex-shrink:0;">
+      <span style="font-family:'Pixelify Sans',monospace;font-size:1rem;color:var(--green);">🔍 JSON Preview</span>
+      <span style="font-size:9px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;">Verify corrected JSONs against sprite sheets</span>
+      <div style="flex:1;"></div>
+      <button class="btn" id="btn-preview-load-json">↑ Load JSON</button>
+      <input type="file" id="preview-json-input" accept=".json" style="display:none;">
+      <button class="btn" id="btn-preview-load-sheet">↑ Load Sheet PNG</button>
+      <input type="file" id="preview-sheet-input" accept=".png,.jpg" style="display:none;">
+      <button class="btn" id="btn-preview-close">✕ Close</button>
+    </div>
+
+    <div style="display:flex;flex:1;overflow:hidden;">
+
+      <!-- Canvas area -->
+      <div style="flex:1;overflow:auto;padding:16px;background:var(--bg);position:relative;" id="preview-canvas-wrap">
+        <div id="preview-empty" style="color:var(--muted);font-size:11px;padding:32px;text-align:center;line-height:2;">
+          Load a <strong style="color:var(--text);">JSON file</strong> and its matching <strong style="color:var(--text);">sprite sheet PNG</strong> to preview bounding boxes and face anchors.<br>
+          Problem sprites will be highlighted automatically.
+        </div>
+        <canvas id="preview-canvas" style="display:none;image-rendering:pixelated;image-rendering:crisp-edges;cursor:crosshair;"></canvas>
+      </div>
+
+      <!-- Right panel: info + legend -->
+      <div style="width:260px;background:var(--surface);border-left:1px solid var(--border2);padding:14px;display:flex;flex-direction:column;gap:12px;flex-shrink:0;overflow-y:auto;">
+
+        <div class="section-head">File Info</div>
+        <div id="preview-file-info" style="font-size:10px;color:var(--muted);line-height:1.8;">No files loaded</div>
+
+        <div class="section-head">Legend</div>
+        <div style="display:flex;flex-direction:column;gap:5px;font-size:10px;">
+          <div style="display:flex;align-items:center;gap:8px;"><div style="width:14px;height:14px;border:2px solid #4ef0d8;flex-shrink:0;"></div> body_anim</div>
+          <div style="display:flex;align-items:center;gap:8px;"><div style="width:14px;height:14px;border:2px solid #ffe066;flex-shrink:0;"></div> face_small</div>
+          <div style="display:flex;align-items:center;gap:8px;"><div style="width:14px;height:14px;border:2px solid #ff6eb4;flex-shrink:0;"></div> base</div>
+          <div style="display:flex;align-items:center;gap:8px;"><div style="width:14px;height:14px;border:2px solid #a78bfa;flex-shrink:0;"></div> small_anim</div>
+          <div style="display:flex;align-items:center;gap:8px;"><div style="width:14px;height:14px;border:2px solid #6bffb8;flex-shrink:0;"></div> body_zoom / face_zoom</div>
+          <div style="display:flex;align-items:center;gap:8px;"><div style="width:14px;height:14px;border:2px solid #ff6b6b;background:rgba(255,107,107,0.2);flex-shrink:0;"></div> ⚠ Problem sprite</div>
+          <div style="display:flex;align-items:center;gap:8px;"><div style="width:14px;height:3px;background:#ff9f6b;flex-shrink:0;"></div> Face anchor</div>
+        </div>
+
+        <div class="section-head">Band Toggle</div>
+        <div id="preview-band-toggles" style="display:flex;flex-direction:column;gap:5px;font-size:10px;"></div>
+
+        <div class="section-head">Selected Sprite</div>
+        <div id="preview-selected-info" style="font-size:10px;color:var(--muted);line-height:1.8;font-family:'DM Mono',monospace;">Click a sprite to inspect</div>
+
+        <div class="section-head">Validation</div>
+        <div id="preview-validation" style="font-size:10px;line-height:1.8;"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Egg Editor ── -->
+  <div id="egg-editor" style="display:none;flex:1;flex-direction:column;overflow:hidden;">
+    <div style="padding:12px 16px;background:var(--surface);border-bottom:1px solid var(--border2);display:flex;align-items:center;gap:12px;flex-shrink:0;">
+      <span style="font-family:'Pixelify Sans',monospace;font-size:1rem;color:var(--orange);">🥚 Egg Editor</span>
+      <span style="font-size:9px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;">TAM-000 series</span>
+      <div style="flex:1;"></div>
+      <button class="btn" id="btn-egg-load">↑ Load Egg Sheet PNG</button>
+      <input type="file" id="egg-sheet-input" accept="image/*" style="display:none;">
+      <button class="btn" id="btn-egg-export" disabled style="border-color:var(--orange);color:var(--orange);">↓ Export eggs.json</button>
+      <button class="btn" id="btn-eggs-close">✕ Close</button>
+    </div>
+
+    <div style="display:flex;flex:1;overflow:hidden;">
+
+      <!-- Left: sheet preview + grid -->
+      <div style="flex:1;overflow:auto;padding:16px;display:flex;flex-direction:column;gap:16px;">
+
+        <div id="egg-empty" style="color:var(--muted);font-size:11px;padding:20px;">
+          Load an egg sprite sheet PNG to begin. Expected format: black background, 3 rows × 6 idle frames + 2 hatch frames per row.
+        </div>
+
+        <!-- Sheet canvas -->
+        <div id="egg-sheet-wrap" style="display:none;">
+          <div class="section-head">Sheet Preview</div>
+          <div style="margin-top:8px;display:inline-block;border:1px solid var(--border);border-radius:3px;background:#000;padding:4px;">
+            <canvas id="egg-sheet-canvas" style="display:block;image-rendering:pixelated;"></canvas>
+          </div>
+        </div>
+
+        <!-- Variant strips -->
+        <div id="egg-variants-wrap" style="display:none;">
+          <div class="section-head" style="margin-bottom:12px;">Variants</div>
+          <div id="egg-variants-grid" style="display:flex;flex-direction:column;gap:20px;"></div>
+        </div>
+
+      </div>
+
+      <!-- Right: settings -->
+      <div style="width:220px;background:var(--surface);border-left:1px solid var(--border2);padding:16px;display:flex;flex-direction:column;gap:12px;overflow-y:auto;flex-shrink:0;">
+
+        <div class="section-head">Egg Set Info</div>
+
+        <div class="field">
+          <label>Set Name</label>
+          <input type="text" id="egg-set-name" placeholder="e.g. Rainbow Eggs" value="Rainbow Eggs">
+        </div>
+        <div class="field">
+          <label>Set Number</label>
+          <input type="number" id="egg-set-num" value="1" min="1" max="999">
+          <div class="id-preview" id="egg-id-preview">TAM-000-001-000 … 002</div>
+        </div>
+
+        <div class="section-head" style="margin-top:8px;">Grid Settings</div>
+        <div class="field">
+          <label>Cell width (px)</label>
+          <input type="number" id="egg-cell-w" value="34" min="8" max="128">
+        </div>
+        <div class="field">
+          <label>Cell height (px)</label>
+          <input type="number" id="egg-cell-h" value="36" min="8" max="128">
+        </div>
+        <div class="field">
+          <label>Idle frames per variant</label>
+          <input type="number" id="egg-idle-count" value="5" min="1" max="16">
+        </div>
+        <div style="font-size:9px;color:var(--muted);line-height:1.6;">
+          Hatch frames (fixed):<br>
+          crack: cracked egg (x=170, 18px)<br>
+          burst: explosion (x=207, 30px)
+        </div>
+        <button class="btn btn-primary btn-full" id="btn-egg-analyze">▶ Analyze Grid</button>
+
+        <div class="section-head" style="margin-top:8px;">Preview</div>
+        <div style="display:flex;flex-direction:column;align-items:center;gap:8px;">
+          <div style="background:#000;border:1px solid var(--border);border-radius:3px;padding:8px;display:inline-block;">
+            <canvas id="egg-preview-canvas" width="68" height="72"
+              style="image-rendering:pixelated;display:block;"></canvas>
+          </div>
+          <div style="display:flex;gap:6px;">
+            <button class="btn" id="egg-prev-var">◀</button>
+            <span id="egg-preview-label" style="font-size:10px;color:var(--muted);align-self:center;">Variant 1</span>
+            <button class="btn" id="egg-next-var">▶</button>
+          </div>
+          <div style="display:flex;gap:6px;">
+            <button class="btn btn-primary" id="egg-preview-play">▶ Play</button>
+            <button class="btn" id="egg-preview-stop">■ Stop</button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Editor ── -->
+  <div class="editor-area" id="editor-area">
+    <div class="editor-empty" id="editor-empty">
+      <span class="ei">🥚</span>
+      <p>Open a folder to begin</p>
+    </div>
+
+    <div id="editor-main" style="display:none;flex:1;flex-direction:column;overflow:hidden;">
+      <!-- Character header -->
+      <div class="char-header" id="char-header">
+        <div class="char-header-name" id="ch-name">—</div>
+        <div class="char-header-variant" id="ch-variant" style="display:none;"></div>
+        <div class="char-header-id" id="ch-id">—</div>
+        <div class="char-header-sep"></div>
+        <button class="btn" id="btn-reanalyze">↺ Re-analyze</button>
+        <button class="btn btn-commit" id="btn-commit" disabled>↓ Commit Changes</button>
+      </div>
+
+      <!-- Tabs -->
+      <div class="editor-tabs">
+        <button class="etab active" data-tab="sheet">Sheet View</button>
+        <button class="etab" data-tab="sprites">Extracted Sprites</button>
+        <button class="etab" data-tab="anchor">Anchor Editor</button>
+        <button class="etab" data-tab="info">Character Info</button>
+      </div>
+
+      <!-- Tab panels -->
+      <div class="editor-content" id="editor-content">
+
+        <!-- Sheet view -->
+        <div id="tab-sheet">
+          <div style="display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap;">
+            <div>
+              <div class="section-head" style="margin-bottom:10px;">Detection Settings</div>
+              <div style="display:flex;flex-direction:column;gap:8px;width:200px;">
+                <div class="param">
+                  <label>Row gap min <span id="v-rowgap">4</span>px</label>
+                  <input type="range" id="p-rowgap" min="1" max="20" value="4">
+                </div>
+                <div class="param">
+                  <label>Face gap <span id="v-facegap">8</span>px</label>
+                  <input type="range" id="p-facegap" min="3" max="20" value="8">
+                </div>
+                <div class="param">
+                  <label>Display scale <span id="v-scale">2</span>×</label>
+                  <input type="range" id="p-scale" min="1" max="8" value="2">
+                </div>
+                <div id="sheet-stats" style="margin-top:8px;font-size:10px;color:var(--muted);line-height:1.8;"></div>
+              </div>
+            </div>
+            <div id="sheet-canvas-wrap">
+              <div class="sheet-wrap" id="sheet-wrap">
+                <canvas id="sheet-canvas"></canvas>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Sprites -->
+        <div id="tab-sprites" style="display:none;">
+          <div class="sprites-grid" id="sprites-grid"></div>
+        </div>
+
+        <!-- Anchor editor -->
+        <div id="tab-anchor" style="display:none;">
+          <div class="anc-layout">
+            <div class="anc-controls">
+              <div class="section-head">Body Sprite</div>
+              <div class="anc-strip" id="anc-strip"></div>
+
+              <div class="section-head" style="margin-top:8px;">Offset</div>
+              <div style="display:flex;gap:8px;align-items:center;">
+                <span style="font-size:10px;color:var(--muted);">X</span>
+                <input type="number" id="anc-ox" value="0" style="width:60px;background:var(--raised);border:1px solid var(--border);color:var(--text);font-family:'DM Mono',monospace;font-size:11px;padding:4px 6px;border-radius:3px;outline:none;">
+                <span style="font-size:10px;color:var(--muted);">Y</span>
+                <input type="number" id="anc-oy" value="0" style="width:60px;background:var(--raised);border:1px solid var(--border);color:var(--text);font-family:'DM Mono',monospace;font-size:11px;padding:4px 6px;border-radius:3px;outline:none;">
+              </div>
+              <label style="font-size:10px;color:var(--muted);display:flex;gap:6px;align-items:center;cursor:pointer;margin-top:4px;">
+                <input type="checkbox" id="anc-use-face" checked style="accent-color:var(--cyan);">
+                Use face overlay
+              </label>
+
+              <div style="font-size:10px;color:var(--muted);margin-top:8px;">
+                Arrow keys nudge · Click strip to select
+              </div>
+
+              <button class="btn btn-full btn-primary" id="btn-lock-anchors" style="margin-top:8px;">⚓ Lock Anchors</button>
+              <div id="anc-locked-badge" style="display:none;font-size:9px;color:var(--green);letter-spacing:1px;text-align:center;">✓ ANCHORS LOCKED</div>
+            </div>
+
+            <div class="anc-preview-wrap">
+              <div class="section-head">Preview</div>
+              <div class="anc-canvas-wrap">
+                <canvas id="anc-canvas" style="image-rendering:pixelated;display:block;"></canvas>
+              </div>
+              <div style="font-size:9px;color:var(--muted);text-align:center;line-height:1.7;">
+                Drag to move · Arrow keys nudge · Enter = next sprite
+              </div>
+              <div id="anc-label" style="font-size:10px;color:var(--muted);text-align:center;"></div>
+            </div>
+
+            <div>
+              <div class="section-head">All Sprites</div>
+              <div id="anc-preview-grid" style="display:flex;flex-wrap:wrap;gap:6px;max-width:500px;"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Character info -->
+        <div id="tab-info" style="display:none;">
+          <div style="display:flex;flex-direction:column;gap:12px;max-width:320px;">
+            <div class="section-head">Identity</div>
+            <div class="field">
+              <label>Display Name</label>
+              <input type="text" id="l-name" placeholder="e.g. Mametchi">
+            </div>
+            <div class="field">
+              <label>Variant Name</label>
+              <input type="text" id="l-variant" placeholder="e.g. Chopper Milktchi (optional)">
+            </div>
+            <div class="field">
+              <label>Generation</label>
+              <select id="l-gen">
+                <option value="baby">Baby (TAM-001)</option>
+                <option value="adult" selected>Adult (TAM-002)</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Character #</label>
+              <input type="number" id="l-num" min="1" max="999" value="1">
+            </div>
+            <div class="field">
+              <label>Variant #</label>
+              <input type="number" id="l-var-num" min="0" max="999" value="0">
+              <div class="id-preview" id="id-preview">ID: TAM-002-001-000</div>
+            </div>
+            <button class="btn btn-primary btn-full" id="btn-apply-info">Apply Info Changes</button>
+            <div style="margin-top:8px;padding:10px;background:var(--raised);border-radius:4px;border:1px solid var(--border);">
+              <label style="font-size:10px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;display:flex;align-items:center;gap:8px;cursor:pointer;">
+                <input type="checkbox" id="l-enabled" style="accent-color:var(--purple);width:14px;height:14px;">
+                <span>Enabled — available for student selection</span>
+              </label>
+              <div style="font-size:9px;color:var(--muted);margin-top:4px;padding-left:22px;">Flagged in tamadex.json export</div>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /editor-content -->
+    </div><!-- /editor-main -->
+  </div><!-- /editor-area -->
+
+</div><!-- /workspace -->
+
+<div id="toast"></div>
+<div id="loading"><div id="loading-msg">Loading...</div><div id="loading-sub"></div></div>
+
+<script>
+'use strict';
+
+// ═══════════════════════════════════════════════════════════════════════════
+// CORE CONSTANTS (ported from v1)
+// ═══════════════════════════════════════════════════════════════════════════
+
+const ROLE_META = {
+  base:       { label:'Base (assembled)', color:'#ff6eb4', expected:{adult:2,  baby:null} },
+  body_anim:  { label:'Body Animation',   color:'#4ef0d8', expected:{adult:9,  baby:9   } },
+  small_anim: { label:'Small Animation',  color:'#ffe066', expected:{adult:7,  baby:7   } },
+  body_zoom:  { label:'Body Zoomed',      color:'#a78bfa', expected:{adult:2,  baby:3   } },
+  face_small: { label:'Face Small',       color:'#ff9f6b', expected:{adult:16, baby:null} },
+  face_zoom:  { label:'Face Zoomed',      color:'#6bffb8', expected:{adult:9,  baby:null} },
+  unknown:    { label:'Unknown',          color:'#606082', expected:{adult:null,baby:null} },
+};
+
+const ADULT_ROLES = ['base','body_anim','small_anim','body_zoom','face_small','face_zoom'];
+const BABY_ROLES  = ['body_anim','small_anim','body_zoom'];
+const GEN_PREFIX  = { baby:'001', adult:'002' };
+
+const FRAME_LABELS = {
+  adult: {
+    base:       ['neutral','sad'],
+    body_anim:  ['stand','hand_up','annoyed','jump','walk_1','walk_2','sit','kiss','march'],
+    small_anim: ['stand','happy','sad','angry','walk','sit','march'],
+    body_zoom:  ['neutral','arms_raised'],
+    face_small: ['normal','blush','happy','annoyed','normal_2','wowed','neutral_eyes_closed',
+                 'smile_eyes_closed','eyes_open_happy','eyes_closed_happy','sad_crying',
+                 'disappointed','fever','surprised','worried','contemplating'],
+    face_zoom:  ['normal','eyes_closed','happy','crying','annoyed','blush_angry','worried','blush_happy','somber'],
+  },
+  baby: {
+    body_anim:  ['normal','happy','sad','confused','walk_1','walk_2','smile','eyes_closed','jump'],
+    small_anim: ['normal','happy','sad','angry','walk_1','walk_2','jump'],
+    body_zoom:  ['normal','happy','sleep'],
+  },
+};
+
+const COMPOSITE = { body_anim:'face_small', body_zoom:'face_zoom' };
+const BG_THRESH = 3.0;
+const NO_FACE   = new Set(['kiss', 'march']); // pre-assembled frames — no face overlay
+
+// ═══════════════════════════════════════════════════════════════════════════
+// DETECTION ENGINE (ported from v1)
+// ═══════════════════════════════════════════════════════════════════════════
+
+function lum(pixels, i) {
+  return (pixels[i]*0.299 + pixels[i+1]*0.587 + pixels[i+2]*0.114) * (pixels[i+3]/255);
+}
+
+function detectBands(pixels, w, h, rowGapMin) {
+  const rowMax = new Float32Array(h);
+  for (let y=0;y<h;y++) {
+    let mx=0;
+    for (let x=0;x<w;x++) { const v=lum(pixels,(y*w+x)*4); if(v>mx)mx=v; }
+    rowMax[y]=mx;
+  }
+  const active=[];
+  for (let y=0;y<h;y++) if(rowMax[y]>BG_THRESH) active.push(y);
+  if (!active.length) return [];
+  const bands=[]; let bs=active[0];
+  for (let i=1;i<active.length;i++) {
+    if (active[i]-active[i-1]>rowGapMin) { bands.push([bs,active[i-1]]); bs=active[i]; }
+  }
+  bands.push([bs,active[active.length-1]]);
+
+  // Pass 2: re-split tall bands using threshold=8.0
+  // Higher threshold cuts through JPEG noise that prevents clean splits
+  const SPLIT_THRESH = 8.0;
+  const refined = [];
+  for (const [r1,r2] of bands) {
+    if (r2-r1+1 <= 80) { refined.push([r1,r2]); continue; }
+    const sub=[]; let sbs=-1;
+    for (let y=r1;y<=r2;y++) {
+      if (rowMax[y]>SPLIT_THRESH) { if(sbs===-1) sbs=y; }
+      else { if(sbs!==-1){sub.push([sbs,y-1]);sbs=-1;} }
+    }
+    if (sbs!==-1) sub.push([sbs,r2]);
+    const valid=sub.filter(([a,b])=>b-a+1>=5);
+    if (valid.length>1) refined.push(...valid);
+    else refined.push([r1,r2]);
+  }
+
+  return refined.filter(([r1,r2])=>r2-r1+1>=5);
+}
+
+function detectSprites(pixels, w, bandRow1, bandRow2, colGapMin, prevBandEnd=0) {
+  const colMax=new Float32Array(w);
+  for (let x=0;x<w;x++) {
+    let mx=0;
+    for (let y=bandRow1;y<=bandRow2;y++) { const v=lum(pixels,(y*w+x)*4); if(v>mx)mx=v; }
+    colMax[x]=mx;
+  }
+  const active=[];
+  for (let x=0;x<w;x++) if(colMax[x]>BG_THRESH) active.push(x);
+  if (!active.length) return [];
+  const segs=[]; let cs=active[0];
+  for (let i=1;i<active.length;i++) {
+    if (active[i]-active[i-1]>colGapMin) { segs.push([cs,active[i-1]]); cs=active[i]; }
+  }
+  segs.push([cs,active[active.length-1]]);
+  const lookUp=prevBandEnd+1;
+  return segs.map(([x1,x2])=>{
+    let top=bandRow1;
+    for (let y=lookUp;y<bandRow1;y++) {
+      let found=false;
+      for (let x=x1;x<=x2;x++) { if(lum(pixels,(y*w+x)*4)>BG_THRESH){found=true;break;} }
+      if (found){top=y;break;}
+    }
+    return {x:x1,y:top,w:x2-x1+1,h:bandRow2-top+1};
+  });
+}
+
+function detectGeneration(bands, width, height) {
+  const votes=[
+    bands.length<=3?'baby':'adult',
+    width <800?'baby':'adult',
+    height<300?'baby':'adult',
+  ];
+  return votes.filter(v=>v==='adult').length>=2?'adult':'baby';
+}
+
+function guessRoles(bands, gen) {
+  const list=gen==='baby'?BABY_ROLES:ADULT_ROLES;
+  return bands.map((_,i)=>list[i]||'unknown');
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// FACE_SMALL POST-PROCESSING  (refineFaceSmall)
+// ═══════════════════════════════════════════════════════════════════════════
+// Problems this fixes:
+//  1. OVER-SPLIT: accent/stray pixels after a wide sprite get their own
+//     detection group, shifting all labels right and creating a phantom 17th.
+//     Fix: tiny groups (w < STRAY_W) that immediately follow a wider sprite
+//     with gap <= ACCENT_GAP are merged into that preceding sprite.
+//  2. UNDER-SPLIT: sprites that share a column or are very close horizontally
+//     are detected as one huge group.
+//     Fix: after accent merging, any remaining group wider than WIDE_SPLIT_W
+//     is re-examined at a tighter gap (TIGHT_GAP) to see if it should split.
+//  3. PHANTOM TRIM: if we still have > 16 sprites after merging, trim from
+//     the end as long as the last sprite is a plausible stray (w < STRAY_W
+//     OR it starts past x=1010 on a standard 1080-wide sheet).
+
+function refineFaceSmall(sprites, pixels, w, bandRow1, bandRow2) {
+  if (!sprites.length) return sprites;
+
+  const STRAY_W     = 7;   // width below which a group is a candidate accent/stray
+  const ACCENT_GAP  = 10;  // max horizontal gap to merge a stray into predecessor
+  const WIDE_SPLIT_W = 55; // groups wider than this get re-split attempt
+  const TIGHT_GAP   = 2;   // gap used when re-splitting a wide group
+  const TARGET      = 16;
+
+  // ── Step 1: merge tiny accent groups into the preceding sprite ────────────
+  let merged = [sprites[0]];
+  for (let i = 1; i < sprites.length; i++) {
+    const prev = merged[merged.length - 1];
+    const cur  = sprites[i];
+    const gap  = cur.x - (prev.x + prev.w);
+    // A tiny group right after any sprite with small gap = accent
+    if (cur.w <= STRAY_W && gap <= ACCENT_GAP && gap >= 0) {
+      // Extend prev bounding box to include cur
+      const newRight = cur.x + cur.w;
+      prev.w = newRight - prev.x;
+    } else {
+      merged.push(cur);
+    }
+  }
+
+  // ── Step 2: re-split wide groups using a tight gap ───────────────────────
+  // Only do this when we still have too few sprites (under-split scenario)
+  if (merged.length < TARGET) {
+    const resplit = [];
+    for (const sp of merged) {
+      if (sp.w > WIDE_SPLIT_W) {
+        // Re-run column scan within this sprite's x range using tight gap
+        const colMax = new Float32Array(sp.w);
+        for (let x = 0; x < sp.w; x++) {
+          let mx = 0;
+          for (let y = bandRow1; y <= bandRow2; y++) {
+            const v = lum(pixels, (y * w + sp.x + x) * 4);
+            if (v > mx) mx = v;
+          }
+          colMax[x] = mx;
+        }
+        const active = [];
+        for (let x = 0; x < sp.w; x++) if (colMax[x] > BG_THRESH) active.push(x);
+        if (!active.length) { resplit.push(sp); continue; }
+        const segs = []; let cs = active[0];
+        for (let i = 1; i < active.length; i++) {
+          if (active[i] - active[i-1] > TIGHT_GAP) { segs.push([cs, active[i-1]]); cs = active[i]; }
+        }
+        segs.push([cs, active[active.length-1]]);
+        if (segs.length <= 1) {
+          // Didn't split — keep as-is (legitimately wide sprite like fever or neutral_eyes_closed)
+          resplit.push(sp);
+        } else {
+          for (const [lx, rx] of segs) {
+            resplit.push({ x: sp.x + lx, y: sp.y, w: rx - lx + 1, h: sp.h });
+          }
+        }
+      } else {
+        resplit.push(sp);
+      }
+    }
+    merged = resplit;
+  }
+
+  // ── Step 3: trim phantoms from the end if over TARGET ────────────────────
+  // A phantom is either tiny OR starts in the rightmost ~70px of the sheet
+  const sheetRight = w;
+  while (merged.length > TARGET) {
+    const last = merged[merged.length - 1];
+    const isPhantom = last.w <= STRAY_W || last.x > sheetRight - 80;
+    if (isPhantom) {
+      merged.pop();
+    } else {
+      // Not obviously a phantom — stop trimming to avoid eating real sprites
+      break;
+    }
+  }
+
+  // ── Step 4: if still over 16, just trim the last one ─────────────────────
+  // (handles the very common "true phantom 17th" case that always appears at end)
+  if (merged.length === TARGET + 1) {
+    merged.pop();
+  }
+
+  return merged;
+}
+
+function analyzeSheet(bitmap, rowGap=4, faceGap=8) {
+  const off=document.createElement('canvas');
+  off.width=bitmap.width; off.height=bitmap.height;
+  off.getContext('2d').drawImage(bitmap,0,0);
+  const pixels=off.getContext('2d').getImageData(0,0,off.width,off.height).data;
+
+  const rawBands=detectBands(pixels,bitmap.width,bitmap.height,rowGap);
+  if (!rawBands.length) return null;
+
+  const gen=detectGeneration(rawBands,bitmap.width,bitmap.height);
+  const roles=guessRoles(rawBands,gen);
+
+  const bands=rawBands.map(([r1,r2],i)=>{
+    const role=roles[i];
+    const isFace=role==='face_small'||role==='face_zoom';
+    const colGap=isFace?faceGap:3;
+    const prev=i>0?rawBands[i-1][1]:0;
+    let sprites=detectSprites(pixels,bitmap.width,r1,r2,colGap,prev);
+    // Post-process face_small to fix over/under-splitting
+    if (role==='face_small') {
+      sprites = refineFaceSmall(sprites, pixels, bitmap.width, r1, r2);
+    }
+    // Apply frame labels
+    const labels=FRAME_LABELS[gen]?.[role]||[];
+    sprites.forEach((sp,si)=>{ if(labels[si]) sp.label=labels[si]; });
+    return {rowStart:r1,rowEnd:r2,role,sprites};
+  });
+
+  return {gen, bands, pixels, w:bitmap.width, h:bitmap.height};
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// TRANSPARENT PNG GENERATOR (ported from v1)
+// ═══════════════════════════════════════════════════════════════════════════
+
+function makeTransparentBlob(bitmap, bands) {
+  return new Promise(resolve => {
+    const off=document.createElement('canvas');
+    off.width=bitmap.width; off.height=bitmap.height;
+    const ctx=off.getContext('2d');
+    ctx.drawImage(bitmap,0,0);
+    const imgData=ctx.getImageData(0,0,off.width,off.height);
+    const d=imgData.data; const w=off.width,h=off.height;
+
+    // Protected zones from bbox
+    const prot=new Uint8Array(w*h);
+    bands.forEach(band=>{
+      band.sprites.forEach(sp=>{
+        const x1=Math.max(0,sp.x),y1=Math.max(0,sp.y);
+        const x2=Math.min(w,sp.x+sp.w),y2=Math.min(h,sp.y+sp.h);
+        for(let py=y1;py<y2;py++) for(let px=x1;px<x2;px++) prot[py*w+px]=1;
+      });
+    });
+
+    // Brightness mask
+    const bright=new Float32Array(w*h);
+    const isFg=new Uint8Array(w*h);
+    for(let i=0;i<w*h;i++){
+      bright[i]=d[i*4]*0.299+d[i*4+1]*0.587+d[i*4+2]*0.114;
+      isFg[i]=bright[i]>=3.0?1:0;
+    }
+
+    // Blob labeling
+    const labels=new Int32Array(w*h).fill(-1);
+    const sizes=[]; let next=0;
+    const q=[];
+    for(let y=0;y<h;y++) for(let x=0;x<w;x++){
+      const idx=y*w+x;
+      if(isFg[idx]&&labels[idx]===-1){
+        const lbl=next++; sizes.push(0); q.push(idx); labels[idx]=lbl;
+        while(q.length){
+          const cur=q.pop(); sizes[lbl]++;
+          const cy=Math.floor(cur/w),cx=cur%w;
+          for(const[nx,ny]of[[cx-1,cy],[cx+1,cy],[cx,cy-1],[cx,cy+1]]){
+            if(nx>=0&&nx<w&&ny>=0&&ny<h){const ni=ny*w+nx;if(isFg[ni]&&labels[ni]===-1){labels[ni]=lbl;q.push(ni);}}
+          }
+        }
+      }
+    }
+
+    for(let i=0;i<w*h;i++){
+      if(!isFg[i]) d[i*4+3]=0;
+      else if(prot[i]) d[i*4+3]=255;
+      else { const lbl=labels[i]; d[i*4+3]=(lbl!==-1&&sizes[lbl]>=10)?255:0; }
+    }
+    ctx.putImageData(imgData,0,0);
+    off.toBlob(resolve,'image/png');
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// COLLECTION STATE
+// ═══════════════════════════════════════════════════════════════════════════
+
+let dirHandle    = null;   // FileSystemDirectoryHandle
+let collection   = [];     // array of CharEntry
+let activeId     = null;   // currently selected char id
+
+class CharEntry {
+  constructor(jsonHandle, json, pngHandle, bitmap) {
+    this.jsonHandle = jsonHandle;  // FileSystemFileHandle
+    this.pngHandle  = pngHandle;   // FileSystemFileHandle (may be null if not found)
+    this.json       = json;        // current in-memory JSON
+    this.bitmap     = bitmap;      // ImageBitmap (may be null)
+    this.dirty      = false;
+
+    // Analysis results (computed on first view)
+    this.analysis   = null;        // {gen, bands, pixels, w, h}
+    this.userRoles  = [];          // user-overridden band roles
+
+    // Anchor state
+    this.anchors    = json.bodyAnimAnchors
+      ? JSON.parse(JSON.stringify(json.bodyAnimAnchors))
+      : null;
+    this.anchorsLocked = !!json.bodyAnimAnchors;
+
+    // Settings
+    this.rowGap   = 4;
+    this.faceGap  = 8;
+    this.dispScale = 2;
+  }
+
+  get id()   { return this.json.id;          }
+  get name() { return this.json.displayName; }
+  get gen()  { return this.json.generation || 'adult'; }
+
+  markDirty() {
+    this.dirty = true;
+    refreshListItem(this.id);
+    document.getElementById('btn-commit').disabled    = false;
+    document.getElementById('btn-commit-all').disabled = false;
+  }
+
+  buildJSON() {
+    // Rebuild JSON from current analysis + anchors + info fields
+    const analysis = this.analysis;
+    if (!analysis) return this.json;
+
+    const labelTable = FRAME_LABELS[analysis.gen] || FRAME_LABELS.adult;
+    const bands = analysis.bands.map((band, i) => {
+      const role   = this.userRoles[i] || band.role;
+      const labels = labelTable[role] || [];
+      const entry  = {
+        index:      i,
+        role,
+        rowStart:   band.rowStart,
+        rowEnd:     band.rowEnd,
+        frameCount: band.sprites.length,
+        sprites:    band.sprites.map((sp, si) => ({
+          index: si, x:sp.x, y:sp.y, w:sp.w, h:sp.h,
+          ...(sp.label ? {label:sp.label} : labels[si] ? {label:labels[si]} : {}),
+        })),
+      };
+      if (COMPOSITE[role]) entry.compositesWith = COMPOSITE[role];
+      return entry;
+    });
+
+    return {
+      ...this.json,
+      bands,
+      ...(this.anchorsLocked && this.anchors ? {bodyAnimAnchors: this.anchors} : {}),
+    };
+  }
+
+  async ensureAnalysis() {
+    if (this.analysis) return;
+    if (!this.bitmap)  return;
+    this.analysis = analyzeSheet(this.bitmap, this.rowGap, this.faceGap);
+    if (this.analysis && !this.userRoles.length) {
+      this.userRoles = this.analysis.bands.map(b=>b.role);
+    }
+    // Initialize anchors from JSON if available, else blank
+    // kiss and march are pre-assembled — always useFace:false
+    if (!this.anchors) {
+      const bb = this.analysis.bands.find(b=>b.role==='body_anim');
+      if (bb) {
+        this.anchors = bb.sprites.map((sp,i) => ({
+          offsetX: 0, offsetY: 0,
+          useFace: !NO_FACE.has(sp.label || FRAME_LABELS[this.analysis.gen]?.body_anim?.[i] || ''),
+        }));
+      }
+    }
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// FOLDER LOADING
+// ═══════════════════════════════════════════════════════════════════════════
+
+async function openFolder() {
+  try {
+    dirHandle = await window.showDirectoryPicker({ mode:'readwrite' });
+  } catch(e) {
+    if (e.name!=='AbortError') toast('❌ Could not open folder');
+    return;
+  }
+
+  showLoading('Scanning folder...');
+
+  // Collect all files
+  const jsonHandles = [];
+  const pngHandles  = {};   // key: lowercase filename → handle
+
+  for await (const [name, handle] of dirHandle.entries()) {
+    if (handle.kind !== 'file') continue;
+    const lo = name.toLowerCase();
+    if (lo.endsWith('.json'))     jsonHandles.push(handle);
+    else if (lo.endsWith('.png')) pngHandles[lo] = handle;
+  }
+
+  console.log('JSONs found:', jsonHandles.map(h=>h.name));
+  console.log('PNGs found:', Object.keys(pngHandles));
+
+  if (!jsonHandles.length) {
+    hideLoading();
+    toast('No JSON files found in folder');
+    return;
+  }
+
+  jsonHandles.sort((a,b)=>a.name.localeCompare(b.name));
+
+  collection = [];
+  let loaded = 0;
+
+  for (const jh of jsonHandles) {
+    setLoadingMsg(`Loading ${jh.name}...`, `${loaded}/${jsonHandles.length}`);
+    try {
+      const text = await (await jh.getFile()).text();
+      const json = JSON.parse(text);
+
+      // Fuzzy PNG match — try several normalizations against lowercase keys
+      const sheetName = (json.sheet || '').toLowerCase();
+      const candidates = [
+        sheetName,
+        sheetName.replace(/ /g, '_'),
+        sheetName.replace(/_/g, ' '),
+        // also try stripping path separators if any
+        sheetName.split(/[\\/]/).pop(),
+      ];
+
+      let ph = null;
+      for (const c of candidates) {
+        if (pngHandles[c]) { ph = pngHandles[c]; break; }
+      }
+
+      // Last resort: if sheet name ends with character name, try partial match
+      if (!ph && sheetName) {
+        const sheetBase = sheetName.replace(/\.png$/,'');
+        for (const [key, handle] of Object.entries(pngHandles)) {
+          if (key.replace(/\.png$/,'') === sheetBase) { ph = handle; break; }
+        }
+      }
+
+      console.log(`${jh.name}: sheet="${json.sheet}" → PNG ${ph ? ph.name : 'NOT FOUND'}`);
+
+      let bitmap = null;
+      if (ph) {
+        try {
+          bitmap = await loadBitmapFromHandle(ph);
+        } catch(e) {
+          console.warn(`Failed to load bitmap for ${jh.name}:`, e);
+        }
+      }
+
+      collection.push(new CharEntry(jh, json, ph, bitmap));
+      loaded++;
+    } catch(e) {
+      console.warn('Failed to load', jh.name, e);
+    }
+  }
+
+  hideLoading();
+  buildCharList();
+  updateHeaderStatus();
+  document.getElementById('btn-export-dex').disabled = false;
+  await tryLoadExistingDex();
+
+  if (collection.length) {
+    selectChar(collection[0].id);
+    const missing = collection.filter(c=>!c.bitmap).length;
+    toast(`Loaded ${collection.length} characters${missing ? ` · ${missing} missing PNGs` : ''}`);
+  }
+}
+
+async function loadBitmapFromHandle(handle) {
+  const file = await handle.getFile();
+  const url  = URL.createObjectURL(file);
+  try {
+    const img = await new Promise((resolve, reject) => {
+      const i  = new Image();
+      i.onload  = () => resolve(i);
+      i.onerror = reject;
+      i.src = url;
+    });
+    return await createImageBitmap(img);
+  } finally {
+    URL.revokeObjectURL(url);
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// CHARACTER LIST UI
+// ═══════════════════════════════════════════════════════════════════════════
+
+function buildCharList(filter='') {
+  const body    = document.getElementById('char-list-body');
+  const lo      = filter.toLowerCase();
+  const visible = filter
+    ? collection.filter(c=>c.name.toLowerCase().includes(lo)||c.id.toLowerCase().includes(lo))
+    : collection;
+
+  document.getElementById('char-count').textContent = `${visible.length}/${collection.length}`;
+  body.innerHTML = '';
+
+  visible.forEach(entry => {
+    const item = document.createElement('div');
+    item.className = 'char-item' + (entry.id===activeId?' active':'') + (entry.dirty?' dirty':'');
+    item.dataset.id = entry.id;
+
+    const genColor = entry.gen==='baby' ? 'gen-baby' : 'gen-adult';
+    const dexEntry = (window._loadedDex?.characters||[]).find(c=>c.id===entry.id);
+    const isEnabled   = dexEntry?.enabled || entry.json.enabled || false;
+    item.innerHTML = `
+      <div class="char-item-info">
+        <div class="char-item-name">${entry.name}${entry.json.variant ? ` <span style="color:var(--purple);font-size:0.65rem;">(${entry.json.variant})</span>` : ''}${isEnabled ? ` <span style="color:var(--purple);font-size:0.6rem;">★</span>` : ''}</div>
+        <div class="char-item-id"><span class="${genColor}">${entry.id}</span></div>
+      </div>
+      <div class="dirty-dot" title="Unsaved changes"></div>`;
+
+    item.addEventListener('click', ()=>selectChar(entry.id));
+    body.appendChild(item);
+  });
+}
+
+function refreshListItem(id) {
+  const entry = collection.find(c=>c.id===id);
+  if (!entry) return;
+  const item = document.querySelector(`.char-item[data-id="${id}"]`);
+  if (!item)  return;
+  item.classList.toggle('dirty', entry.dirty);
+  item.classList.toggle('active', id===activeId);
+}
+
+document.getElementById('char-search').addEventListener('input', e => {
+  buildCharList(e.target.value);
+});
+
+// ═══════════════════════════════════════════════════════════════════════════
+// CHARACTER SELECTION & RENDERING
+// ═══════════════════════════════════════════════════════════════════════════
+
+async function selectChar(id) {
+  const entry = collection.find(c=>c.id===id);
+  if (!entry) return;
+  activeId = id;
+
+  // Update list highlight
+  document.querySelectorAll('.char-item').forEach(el=>{
+    el.classList.toggle('active', el.dataset.id===id);
+  });
+
+  // Show editor
+  document.getElementById('editor-empty').style.display = 'none';
+  const main = document.getElementById('editor-main');
+  main.style.display = 'flex';
+
+  // Update header
+  document.getElementById('ch-name').textContent = entry.name;
+  document.getElementById('ch-id').textContent   = entry.id;
+  const vEl = document.getElementById('ch-variant');
+  if (entry.json.variant) {
+    vEl.textContent = `(${entry.json.variant})`;
+    vEl.style.display = '';
+  } else {
+    vEl.style.display = 'none';
+  }
+
+  document.getElementById('btn-commit').disabled = !entry.dirty;
+
+  // Ensure analysis
+  if (!entry.analysis && entry.bitmap) {
+    showLoading(`Analyzing ${entry.name}...`);
+    await entry.ensureAnalysis();
+    hideLoading();
+  }
+
+  // Populate info tab
+  populateInfoTab(entry);
+
+  // Render active tab
+  renderActiveTab(entry);
+}
+
+function renderActiveTab(entry) {
+  const active = document.querySelector('.etab.active')?.dataset.tab || 'sheet';
+  if      (active==='sheet')   renderSheetTab(entry);
+  else if (active==='sprites') renderSpritesTab(entry);
+  else if (active==='anchor')  renderAnchorTab(entry);
+  else if (active==='info')    populateInfoTab(entry);
+}
+
+// ── Tab switching ──────────────────────────────────────────────────────────
+document.querySelectorAll('.etab').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    document.querySelectorAll('.etab').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    ['sheet','sprites','anchor','info'].forEach(t=>{
+      document.getElementById('tab-'+t).style.display = t===btn.dataset.tab?'block':'none';
+    });
+    const entry=collection.find(c=>c.id===activeId);
+    if (entry) renderActiveTab(entry);
+  });
+});
+
+// ═══════════════════════════════════════════════════════════════════════════
+// SHEET VIEW TAB
+// ═══════════════════════════════════════════════════════════════════════════
+
+function renderSheetTab(entry) {
+  if (!entry.bitmap || !entry.analysis) {
+    document.getElementById('sheet-canvas-wrap').innerHTML =
+      `<div style="color:var(--muted);font-size:11px;padding:20px;line-height:2;">
+        ${!entry.bitmap
+          ? `⚠ Sprite sheet PNG not found in folder<br>
+             <span style="color:var(--border2)">Expected filename:</span><br>
+             <span style="color:var(--yellow);font-size:10px;">${entry.json.sheet || '(no sheet field in JSON)'}</span>`
+          : 'Run analysis to view sheet'}
+      </div>`;
+    return;
+  }
+
+  const s      = entry.dispScale;
+  const bmp    = entry.bitmap;
+  const canvas = document.getElementById('sheet-canvas');
+  canvas.width  = bmp.width  * s;
+  canvas.height = bmp.height * s;
+  const ctx = canvas.getContext('2d');
+  ctx.imageSmoothingEnabled = false;
+  ctx.drawImage(bmp, 0,0, bmp.width*s, bmp.height*s);
+
+  // Draw band overlays
+  entry.analysis.bands.forEach((band, i) => {
+    const role = entry.userRoles[i] || band.role;
+    const meta = ROLE_META[role] || ROLE_META.unknown;
+    ctx.strokeStyle = meta.color;
+    ctx.lineWidth   = 1;
+    ctx.globalAlpha = 0.6;
+    band.sprites.forEach(sp => {
+      ctx.strokeRect(sp.x*s, sp.y*s, sp.w*s, sp.h*s);
+    });
+  });
+  ctx.globalAlpha = 1;
+
+  // Stats
+  const total = entry.analysis.bands.reduce((n,b)=>n+b.sprites.length,0);
+  document.getElementById('sheet-stats').innerHTML =
+    `<div>${bmp.width}×${bmp.height}px</div>
+     <div>Bands: <span style="color:var(--cyan)">${entry.analysis.bands.length}</span></div>
+     <div>Sprites: <span style="color:var(--cyan)">${total}</span></div>
+     <div>Generation: <span style="color:var(--${entry.gen==='baby'?'pink':'cyan'}">${entry.gen}</span></div>`;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// SPRITES TAB
+// ═══════════════════════════════════════════════════════════════════════════
+
+function renderSpritesTab(entry) {
+  const grid = document.getElementById('sprites-grid');
+  grid.innerHTML = '';
+  if (!entry.bitmap || !entry.analysis) {
+    grid.innerHTML = `<div style="color:var(--muted);font-size:11px;">No analysis available</div>`;
+    return;
+  }
+
+  const S = 3; // display scale for sprite cards
+
+  // Build offscreen
+  const off = document.createElement('canvas');
+  off.width=entry.bitmap.width; off.height=entry.bitmap.height;
+  const oc=off.getContext('2d'); oc.imageSmoothingEnabled=false;
+  oc.drawImage(entry.bitmap,0,0);
+
+  entry.analysis.bands.forEach((band, bi) => {
+    const role = entry.userRoles[bi] || band.role;
+    const meta = ROLE_META[role] || ROLE_META.unknown;
+    const labels = FRAME_LABELS[entry.analysis.gen]?.[role] || [];
+    const expected = meta.expected[entry.analysis.gen];
+
+    const section = document.createElement('div');
+    section.className = 'band-section';
+
+    // Band header
+    const head = document.createElement('div');
+    head.className = 'band-head';
+    head.style.borderLeftColor = meta.color;
+
+    const countClass = expected===null ? '' : band.sprites.length===expected ? 'ok' : 'warn';
+    head.innerHTML = `
+      <span class="band-role-label" style="color:${meta.color}">${meta.label}</span>
+      <span class="band-count ${countClass}">${band.sprites.length}${expected!==null?' / '+expected:''} sprites</span>
+      <select class="band-role-select" data-band="${bi}">
+        ${Object.entries(ROLE_META).map(([k,v])=>`<option value="${k}" ${k===role?'selected':''}>${v.label}</option>`).join('')}
+      </select>`;
+
+    head.querySelector('select').addEventListener('change', e => {
+      entry.userRoles[bi] = e.target.value;
+      entry.markDirty();
+      renderSpritesTab(entry);
+    });
+
+    section.appendChild(head);
+
+    // Sprites row
+    const row = document.createElement('div');
+    row.className = 'sprites-row';
+
+    band.sprites.forEach((sp, si) => {
+      const label = sp.label || labels[si] || `#${si}`;
+      const card  = document.createElement('div');
+      card.className = 'sprite-card';
+
+      const c = document.createElement('canvas');
+      c.className = 'sprite-canvas';
+      c.width  = sp.w * S; c.height = sp.h * S;
+      const ctx2 = c.getContext('2d');
+      ctx2.imageSmoothingEnabled = false;
+      ctx2.drawImage(off, sp.x,sp.y,sp.w,sp.h, 0,0,sp.w*S,sp.h*S);
+
+      const lbl = document.createElement('div');
+      lbl.className = 'sprite-label';
+      lbl.textContent = label;
+
+      card.appendChild(c); card.appendChild(lbl);
+      row.appendChild(card);
+    });
+
+    section.appendChild(row);
+    grid.appendChild(section);
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// ANCHOR EDITOR TAB
+// ═══════════════════════════════════════════════════════════════════════════
+
+let ancBodyIdx = 0;
+
+function renderAnchorTab(entry) {
+  if (!entry.bitmap || !entry.analysis) {
+    document.getElementById('anc-strip').innerHTML =
+      `<div style="color:var(--muted);font-size:11px;">No analysis available</div>`;
+    return;
+  }
+
+  const bodyBand = entry.analysis.bands.find(b=>b.role==='body_anim');
+  const faceBand = entry.analysis.bands.find(b=>b.role==='face_small');
+  if (!bodyBand) {
+    document.getElementById('anc-strip').innerHTML =
+      `<div style="color:var(--muted);font-size:11px;">No body_anim band found</div>`;
+    return;
+  }
+
+  // Build offscreen
+  const off=document.createElement('canvas');
+  off.width=entry.bitmap.width; off.height=entry.bitmap.height;
+  const oc=off.getContext('2d'); oc.imageSmoothingEnabled=false;
+  oc.drawImage(entry.bitmap,0,0);
+
+  // Ensure anchors array — rebuild if missing or wrong length
+  if (!entry.anchors || entry.anchors.length !== bodyBand.sprites.length) {
+    const labels = FRAME_LABELS[entry.analysis.gen]?.body_anim || [];
+    entry.anchors = bodyBand.sprites.map((sp, i) => ({
+      offsetX: 0, offsetY: 0,
+      useFace: !NO_FACE.has(sp.label || labels[i] || ''),
+    }));
+  } else {
+    // Enforce useFace=false on kiss/march even if loaded from JSON
+    const labels = FRAME_LABELS[entry.analysis.gen]?.body_anim || [];
+    bodyBand.sprites.forEach((sp, i) => {
+      const label = sp.label || labels[i] || '';
+      if (NO_FACE.has(label)) entry.anchors[i].useFace = false;
+    });
+  }
+
+  // Clamp bodyIdx
+  if (ancBodyIdx>=bodyBand.sprites.length) ancBodyIdx=0;
+
+  // Build strip
+  const strip=document.getElementById('anc-strip');
+  strip.innerHTML='';
+  bodyBand.sprites.forEach((sp,i)=>{
+    const item=document.createElement('div');
+    item.className='anc-strip-item'+(i===ancBodyIdx?' active':'');
+    const c=document.createElement('canvas');
+    const S=2; c.width=sp.w*S; c.height=sp.h*S;
+    const ctx=c.getContext('2d'); ctx.imageSmoothingEnabled=false;
+    ctx.drawImage(off,sp.x,sp.y,sp.w,sp.h,0,0,sp.w*S,sp.h*S);
+    item.appendChild(c);
+    item.addEventListener('click',()=>{ ancBodyIdx=i; renderAnchorTab(entry); });
+    strip.appendChild(item);
+  });
+
+  // Sync offset inputs — disable controls for no-face frames
+  const anc = entry.anchors[ancBodyIdx];
+  const labels = FRAME_LABELS[entry.analysis.gen]?.body_anim || [];
+  const frameLabel = bodyBand.sprites[ancBodyIdx]?.label || labels[ancBodyIdx] || '';
+  const isNoFace = NO_FACE.has(frameLabel);
+
+  document.getElementById('anc-ox').value = anc.offsetX;
+  document.getElementById('anc-oy').value = anc.offsetY;
+  document.getElementById('anc-use-face').checked  = anc.useFace !== false;
+  document.getElementById('anc-use-face').disabled = isNoFace;
+  document.getElementById('anc-ox').disabled        = isNoFace;
+  document.getElementById('anc-oy').disabled        = isNoFace;
+
+  const hint = isNoFace
+    ? `<span style="color:var(--muted);font-size:9px;">pre-assembled — no face overlay</span>`
+    : (labels[ancBodyIdx] || `Sprite ${ancBodyIdx}`);
+  document.getElementById('anc-label').innerHTML = hint;
+
+  document.getElementById('anc-locked-badge').style.display =
+    entry.anchorsLocked ? 'block' : 'none';
+
+  // Draw composite preview
+  drawAnchorPreview(entry, off, bodyBand, faceBand);
+
+  // Build full preview grid
+  buildAnchorPreviewGrid(entry, off, bodyBand, faceBand);
+}
+
+function drawAnchorPreview(entry, off, bodyBand, faceBand) {
+  const S=4;
+  const bodySp=bodyBand.sprites[ancBodyIdx];
+  const anc=entry.anchors[ancBodyIdx];
+  const faceSp=faceBand&&anc.useFace!==false?faceBand.sprites[0]:null;
+
+  const canvas=document.getElementById('anc-canvas');
+  canvas.width=bodySp.w*S; canvas.height=bodySp.h*S;
+  const ctx=canvas.getContext('2d'); ctx.imageSmoothingEnabled=false;
+
+  // Checker bg
+  for(let y=0;y<canvas.height;y+=8) for(let x=0;x<canvas.width;x+=8){
+    ctx.fillStyle=((x/8+y/8)%2===0)?'#1a1a2e':'#0e0e1a';
+    ctx.fillRect(x,y,8,8);
+  }
+  ctx.drawImage(off,bodySp.x,bodySp.y,bodySp.w,bodySp.h,0,0,bodySp.w*S,bodySp.h*S);
+  if(faceSp&&anc.useFace!==false){
+    ctx.drawImage(off,faceSp.x,faceSp.y,faceSp.w,faceSp.h,
+      anc.offsetX*S,anc.offsetY*S,faceSp.w*S,faceSp.h*S);
+  }
+}
+
+function buildAnchorPreviewGrid(entry, off, bodyBand, faceBand) {
+  const grid=document.getElementById('anc-preview-grid');
+  grid.innerHTML='';
+  const S=3;
+  bodyBand.sprites.forEach((bodySp,i)=>{
+    const anc=entry.anchors[i];
+    const faceSp=faceBand&&anc.useFace!==false?faceBand.sprites[0]:null;
+    const c=document.createElement('canvas');
+    c.width=bodySp.w*S; c.height=bodySp.h*S;
+    c.style.cssText='image-rendering:pixelated;border:1px solid var(--border);border-radius:2px;';
+    const ctx=c.getContext('2d'); ctx.imageSmoothingEnabled=false;
+    for(let y=0;y<c.height;y+=6) for(let x=0;x<c.width;x+=6){
+      ctx.fillStyle=((x/6+y/6)%2===0)?'#1a1a2e':'#0e0e1a'; ctx.fillRect(x,y,6,6);
+    }
+    ctx.drawImage(off,bodySp.x,bodySp.y,bodySp.w,bodySp.h,0,0,bodySp.w*S,bodySp.h*S);
+    if(faceSp) ctx.drawImage(off,faceSp.x,faceSp.y,faceSp.w,faceSp.h,
+      anc.offsetX*S,anc.offsetY*S,faceSp.w*S,faceSp.h*S);
+    grid.appendChild(c);
+  });
+}
+
+// Anchor input wiring
+function updateAnchorFromInputs() {
+  const entry=collection.find(c=>c.id===activeId); if(!entry||!entry.anchors)return;
+  entry.anchors[ancBodyIdx].offsetX  = parseInt(document.getElementById('anc-ox').value)||0;
+  entry.anchors[ancBodyIdx].offsetY  = parseInt(document.getElementById('anc-oy').value)||0;
+  entry.anchors[ancBodyIdx].useFace  = document.getElementById('anc-use-face').checked;
+  entry.markDirty();
+  const bodyBand=entry.analysis?.bands.find(b=>b.role==='body_anim');
+  const faceBand=entry.analysis?.bands.find(b=>b.role==='face_small');
+  if(bodyBand){
+    const off=document.createElement('canvas');
+    off.width=entry.bitmap.width; off.height=entry.bitmap.height;
+    off.getContext('2d').drawImage(entry.bitmap,0,0);
+    drawAnchorPreview(entry,off,bodyBand,faceBand);
+    buildAnchorPreviewGrid(entry,off,bodyBand,faceBand);
+  }
+}
+
+document.getElementById('anc-ox').addEventListener('input', updateAnchorFromInputs);
+document.getElementById('anc-oy').addEventListener('input', updateAnchorFromInputs);
+document.getElementById('anc-use-face').addEventListener('change', updateAnchorFromInputs);
+
+// Arrow key nudge + Enter to advance frame + mouse drag on anchor canvas
+{
+  const canvas = document.getElementById('anc-canvas');
+  canvas.tabIndex = 0;
+  canvas.style.cursor = 'move';
+  canvas.style.outline = 'none';
+  canvas.addEventListener('focus', () => canvas.style.outline = '2px solid var(--cyan)');
+  canvas.addEventListener('blur',  () => canvas.style.outline = 'none');
+
+  // ── Helper: redraw after anchor change ──────────────────────────────────
+  function redrawAfterAnchor(entry) {
+    document.getElementById('anc-ox').value = entry.anchors[ancBodyIdx].offsetX;
+    document.getElementById('anc-oy').value = entry.anchors[ancBodyIdx].offsetY;
+    updateAnchorFromInputs();
+  }
+
+  // ── Mouse drag ───────────────────────────────────────────────────────────
+  let dragging = false, dragX0 = 0, dragY0 = 0, ancX0 = 0, ancY0 = 0;
+  const SCALE = 4; // canvas drawn at 4× sprite pixels
+
+  canvas.addEventListener('mousedown', e => {
+    const entry = collection.find(c=>c.id===activeId);
+    if (!entry?.anchors) return;
+    dragging = true;
+    dragX0 = e.clientX; dragY0 = e.clientY;
+    ancX0  = entry.anchors[ancBodyIdx].offsetX;
+    ancY0  = entry.anchors[ancBodyIdx].offsetY;
+    canvas.focus();
+    e.preventDefault();
+  });
+
+  window.addEventListener('mousemove', e => {
+    if (!dragging) return;
+    const entry = collection.find(c=>c.id===activeId);
+    if (!entry?.anchors) return;
+    // Snap to whole sprite pixels — divide screen delta by canvas scale
+    entry.anchors[ancBodyIdx].offsetX = ancX0 + Math.round((e.clientX - dragX0) / SCALE);
+    entry.anchors[ancBodyIdx].offsetY = ancY0 + Math.round((e.clientY - dragY0) / SCALE);
+    redrawAfterAnchor(entry);
+  });
+
+  window.addEventListener('mouseup', () => { dragging = false; });
+
+  // ── Keyboard: arrows nudge, Enter advances to next sprite ────────────────
+  canvas.addEventListener('keydown', e => {
+    const entry = collection.find(c=>c.id===activeId);
+    if (!entry?.anchors) return;
+    const anc = entry.anchors[ancBodyIdx];
+
+    if (e.key === 'ArrowLeft')  { anc.offsetX--; e.preventDefault(); redrawAfterAnchor(entry); }
+    else if (e.key === 'ArrowRight') { anc.offsetX++; e.preventDefault(); redrawAfterAnchor(entry); }
+    else if (e.key === 'ArrowUp')    { anc.offsetY--; e.preventDefault(); redrawAfterAnchor(entry); }
+    else if (e.key === 'ArrowDown')  { anc.offsetY++; e.preventDefault(); redrawAfterAnchor(entry); }
+    else if (e.key === 'Enter') {
+      // Advance to next body sprite, wrapping around
+      const bodyBand = entry.analysis?.bands.find(b=>b.role==='body_anim');
+      if (bodyBand) {
+        ancBodyIdx = (ancBodyIdx + 1) % bodyBand.sprites.length;
+        e.preventDefault();
+        renderAnchorTab(entry);
+        canvas.focus(); // keep focus after re-render
+      }
+    }
+  }, { passive: false });
+}
+
+document.getElementById('btn-lock-anchors').addEventListener('click',()=>{
+  const entry=collection.find(c=>c.id===activeId); if(!entry)return;
+  entry.anchorsLocked=true;
+  document.getElementById('anc-locked-badge').style.display='block';
+  entry.markDirty();
+  toast('Anchors locked');
+});
+
+// ═══════════════════════════════════════════════════════════════════════════
+// INFO TAB
+// ═══════════════════════════════════════════════════════════════════════════
+
+function populateInfoTab(entry) {
+  document.getElementById('l-name').value    = entry.json.displayName || '';
+  document.getElementById('l-variant').value = entry.json.variant     || '';
+  document.getElementById('l-gen').value     = entry.json.generation  || 'adult';
+  const parts=entry.id.split('-');
+  document.getElementById('l-num').value     = parseInt(parts[2])||1;
+  document.getElementById('l-var-num').value = parseInt(parts[3])||0;
+  // Beta flag — read from loaded dex if available
+  const dexEntry = (window._loadedDex?.characters||[]).find(c=>c.id===entry.id);
+  document.getElementById('l-enabled').checked  = dexEntry?.enabled || entry.json.enabled || false;
+  updateIdPreview();
+}
+
+function updateIdPreview() {
+  const gen    = document.getElementById('l-gen').value;
+  const num    = String(parseInt(document.getElementById('l-num').value)||1).padStart(3,'0');
+  const varNum = String(parseInt(document.getElementById('l-var-num').value)||0).padStart(3,'0');
+  document.getElementById('id-preview').textContent =
+    `ID: TAM-${GEN_PREFIX[gen]||'002'}-${num}-${varNum}`;
+}
+
+['l-gen','l-num','l-var-num'].forEach(id=>{
+  document.getElementById(id).addEventListener('input', updateIdPreview);
+  document.getElementById(id).addEventListener('change', updateIdPreview);
+});
+
+document.getElementById('btn-apply-info').addEventListener('click',()=>{
+  const entry=collection.find(c=>c.id===activeId); if(!entry)return;
+  const gen    = document.getElementById('l-gen').value;
+  const num    = String(parseInt(document.getElementById('l-num').value)||1).padStart(3,'0');
+  const varNum = String(parseInt(document.getElementById('l-var-num').value)||0).padStart(3,'0');
+  const newId  = `TAM-${GEN_PREFIX[gen]||'002'}-${num}-${varNum}`;
+
+  entry.json.displayName = document.getElementById('l-name').value.trim()||'Unknown';
+  entry.json.variant     = document.getElementById('l-variant').value.trim()||undefined;
+  entry.json.generation  = gen;
+  entry.json.id          = newId;
+  entry.json.enabled        = document.getElementById('l-enabled').checked;
+
+  document.getElementById('ch-name').textContent = entry.json.displayName;
+  document.getElementById('ch-id').textContent   = newId;
+  const vEl=document.getElementById('ch-variant');
+  if(entry.json.variant){vEl.textContent=`(${entry.json.variant})`;vEl.style.display='';}
+  else vEl.style.display='none';
+
+  entry.markDirty();
+  buildCharList(document.getElementById('char-search').value);
+  toast('Info updated — commit to save');
+});
+
+// ═══════════════════════════════════════════════════════════════════════════
+// DETECTION SETTINGS (sliders in sheet tab)
+// ═══════════════════════════════════════════════════════════════════════════
+
+['rowgap','facegap','scale'].forEach(p=>{
+  const slider=document.getElementById('p-'+p);
+  const label =document.getElementById('v-'+p);
+  slider.addEventListener('input',()=>{
+    label.textContent=slider.value;
+    const entry=collection.find(c=>c.id===activeId); if(!entry)return;
+    if(p==='scale'){ entry.dispScale=parseInt(slider.value); }
+    else if(p==='rowgap'){ entry.rowGap=parseInt(slider.value); entry.analysis=null; }
+    else if(p==='facegap'){ entry.faceGap=parseInt(slider.value); entry.analysis=null; }
+    renderSheetTab(entry);
+  });
+});
+
+document.getElementById('btn-reanalyze').addEventListener('click',async()=>{
+  const entry=collection.find(c=>c.id===activeId); if(!entry||!entry.bitmap)return;
+  entry.analysis=null; entry.userRoles=[];
+  showLoading(`Re-analyzing ${entry.name}...`);
+  await entry.ensureAnalysis();
+  hideLoading();
+  renderActiveTab(entry);
+  toast('Re-analyzed');
+});
+
+// ═══════════════════════════════════════════════════════════════════════════
+// COMMIT (write JSON back to disk)
+// ═══════════════════════════════════════════════════════════════════════════
+
+async function commitEntry(entry) {
+  const json    = entry.buildJSON();
+  const text    = JSON.stringify(json, null, 2);
+  try {
+    const writable = await entry.jsonHandle.createWritable();
+    await writable.write(text);
+    await writable.close();
+    entry.json  = json;
+    entry.dirty = false;
+    refreshListItem(entry.id);
+    return true;
+  } catch(e) {
+    toast(`❌ Failed to write ${entry.jsonHandle.name}: ${e.message}`);
+    return false;
+  }
+}
+
+document.getElementById('btn-commit').addEventListener('click',async()=>{
+  const entry=collection.find(c=>c.id===activeId); if(!entry)return;
+  showLoading('Committing...');
+  const ok=await commitEntry(entry);
+  hideLoading();
+  if(ok){
+    document.getElementById('btn-commit').disabled=true;
+    updateDirtyState();
+    toast(`✓ Committed ${entry.name}`);
+  }
+});
+
+document.getElementById('btn-commit-all').addEventListener('click',async()=>{
+  const dirty=collection.filter(c=>c.dirty);
+  if(!dirty.length){toast('Nothing to commit');return;}
+  showLoading(`Committing ${dirty.length} files...`);
+  let ok=0;
+  for(const entry of dirty){
+    setLoadingMsg(`Committing ${entry.name}...`,`${ok}/${dirty.length}`);
+    if(await commitEntry(entry)) ok++;
+  }
+  hideLoading();
+  updateDirtyState();
+  toast(`✓ Committed ${ok}/${dirty.length} files`);
+});
+
+function updateDirtyState() {
+  const anyDirty=collection.some(c=>c.dirty);
+  document.getElementById('btn-commit-all').disabled=!anyDirty;
+  const entry=collection.find(c=>c.id===activeId);
+  if(entry) document.getElementById('btn-commit').disabled=!entry.dirty;
+  buildCharList(document.getElementById('char-search').value);
+  updateHeaderStatus();
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// UTILITIES
+// ═══════════════════════════════════════════════════════════════════════════
+
+function updateHeaderStatus() {
+  const dirty = collection.filter(c=>c.dirty).length;
+  const total = collection.length;
+  document.getElementById('header-status').textContent =
+    total===0 ? 'Open a folder to begin'
+    : dirty>0  ? `${total} characters · ${dirty} unsaved`
+    : `${total} characters · all saved`;
+}
+
+function toast(msg) {
+  const el=document.getElementById('toast');
+  el.textContent=msg; el.style.transform='translateY(0)'; el.style.opacity='1';
+  clearTimeout(el._t);
+  el._t=setTimeout(()=>{el.style.transform='translateY(50px)';el.style.opacity='0';},2500);
+}
+
+function showLoading(msg='Loading...', sub='') {
+  document.getElementById('loading-msg').textContent = msg;
+  document.getElementById('loading-sub').textContent = sub;
+  document.getElementById('loading').classList.add('show');
+}
+
+function setLoadingMsg(msg, sub='') {
+  document.getElementById('loading-msg').textContent = msg;
+  document.getElementById('loading-sub').textContent = sub;
+}
+
+function hideLoading() {
+  document.getElementById('loading').classList.remove('show');
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════════════════════════════
+
+// ── Export TamaDex ─────────────────────────────────────────────────────────
+function exportTamaDex() {
+  if (!collection.length) return;
+
+  // Load existing dex to preserve beta flags if one was loaded
+  const existing = window._loadedDex || {};
+  const existingMap = {};
+  (existing.characters || []).forEach(c => existingMap[c.id] = c);
+
+  const characters = collection.map(entry => {
+    const prev = existingMap[entry.id] || {};
+    return {
+      id:          entry.id,
+      displayName: entry.json.displayName,
+      variant:     entry.json.variant || null,
+      generation:  entry.json.generation || 'adult',
+      sheet:       entry.json.sheet || '',
+      hasAnchors:  !!(entry.json.bodyAnimAnchors?.length),
+      enabled:        prev.enabled || false,  // preserve existing beta flag
+    };
+  });
+
+  // Sort: adults first, then babies; within each by id
+  characters.sort((a,b) => {
+    if (a.generation !== b.generation)
+      return a.generation === 'adult' ? -1 : 1;
+    return a.id.localeCompare(b.id);
+  });
+
+  const manifest = {
+    generated:  new Date().toISOString().split('T')[0],
+    total:      characters.length,
+    enabledCount:  characters.filter(c=>c.enabled).length,
+    characters,
+  };
+
+  const blob = new Blob([JSON.stringify(manifest, null, 2)], {type:'application/json'});
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href = url; a.download = 'tamadex.json'; a.click();
+  URL.revokeObjectURL(url);
+  toast('★ Exported tamadex.json');
+}
+
+document.getElementById('btn-export-dex').addEventListener('click', exportTamaDex);
+document.getElementById('btn-open-folder').addEventListener('click', openFolder);
+document.getElementById('btn-manifest-mode').addEventListener('click', openManifestEditor);
+document.getElementById('btn-preview-mode').addEventListener('click', openPreviewMode);
+
+// ═══════════════════════════════════════════════════════════════════════════
+// JSON PREVIEW MODE
+// ═══════════════════════════════════════════════════════════════════════════
+
+const PREVIEW = { json: null, img: null, visibleBands: new Set(), scale: 2 };
+
+const BAND_COLORS = {
+  base:       '#ff6eb4',
+  body_anim:  '#4ef0d8',
+  face_small: '#ffe066',
+  small_anim: '#a78bfa',
+  body_zoom:  '#6bffb8',
+  face_zoom:  '#6bffb8',
+};
+
+function openPreviewMode() {
+  document.getElementById('json-preview-editor').style.display = 'flex';
+  document.getElementById('editor-area').style.display          = 'none';
+  document.getElementById('char-list').style.display            = 'none';
+}
+function closePreviewMode() {
+  document.getElementById('json-preview-editor').style.display = 'none';
+  document.getElementById('editor-area').style.display          = 'flex';
+  document.getElementById('char-list').style.display            = 'flex';
+}
+document.getElementById('btn-preview-close').addEventListener('click', closePreviewMode);
+
+// File loading
+document.getElementById('btn-preview-load-json').addEventListener('click', () =>
+  document.getElementById('preview-json-input').click());
+document.getElementById('btn-preview-load-sheet').addEventListener('click', () =>
+  document.getElementById('preview-sheet-input').click());
+
+document.getElementById('preview-json-input').addEventListener('change', e => {
+  const file = e.target.files[0]; if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    try {
+      PREVIEW.json = JSON.parse(ev.target.result);
+      updatePreviewFileInfo();
+      if (PREVIEW.img) renderPreview();
+      toast(`JSON loaded: ${file.name}`);
+    } catch(err) { toast('⚠ Invalid JSON'); }
+  };
+  reader.readAsText(file);
+});
+
+document.getElementById('preview-sheet-input').addEventListener('change', e => {
+  const file = e.target.files[0]; if (!file) return;
+  const url = URL.createObjectURL(file);
+  const img = new Image();
+  img.onload = () => {
+    PREVIEW.img = img;
+    updatePreviewFileInfo();
+    if (PREVIEW.json) renderPreview();
+    toast(`Sheet loaded: ${file.name}`);
+  };
+  img.src = url;
+});
+
+function updatePreviewFileInfo() {
+  const el = document.getElementById('preview-file-info');
+  const lines = [];
+  if (PREVIEW.json) {
+    lines.push(`ID: ${PREVIEW.json.id || '—'}`);
+    lines.push(`Name: ${PREVIEW.json.displayName || '—'}`);
+    lines.push(`Bands: ${PREVIEW.json.bands?.length || 0}`);
+    if (PREVIEW.json._note) lines.push(`⚠ ${PREVIEW.json._note}`);
+  }
+  if (PREVIEW.img) lines.push(`Sheet: ${PREVIEW.img.width}×${PREVIEW.img.height}px`);
+  el.innerHTML = lines.map(l => `<div>${l}</div>`).join('');
+}
+
+function buildBandToggles() {
+  const container = document.getElementById('preview-band-toggles');
+  container.innerHTML = '';
+  if (!PREVIEW.json?.bands) return;
+
+  PREVIEW.visibleBands.clear();
+  PREVIEW.json.bands.forEach(band => {
+    PREVIEW.visibleBands.add(band.role);
+    const row = document.createElement('label');
+    row.style.cssText = 'display:flex;align-items:center;gap:6px;cursor:pointer;';
+    const cb = document.createElement('input');
+    cb.type = 'checkbox'; cb.checked = true;
+    cb.addEventListener('change', () => {
+      if (cb.checked) PREVIEW.visibleBands.add(band.role);
+      else PREVIEW.visibleBands.delete(band.role);
+      renderPreview();
+    });
+    const dot = document.createElement('div');
+    dot.style.cssText = `width:10px;height:10px;border:2px solid ${BAND_COLORS[band.role]||'#fff'};flex-shrink:0;`;
+    const lbl = document.createElement('span');
+    lbl.style.color = 'var(--text)';
+    lbl.textContent = band.role;
+    row.appendChild(cb); row.appendChild(dot); row.appendChild(lbl);
+    container.appendChild(row);
+  });
+}
+
+function runValidation() {
+  const el = document.getElementById('preview-validation');
+  if (!PREVIEW.json?.bands) { el.innerHTML = ''; return; }
+  const issues = [];
+
+  PREVIEW.json.bands.forEach(band => {
+    if (band.role === 'face_small') {
+      const count = band.sprites?.length || 0;
+      if (count < 16 || count > 18) {
+        issues.push(`<span style="color:var(--red);">⚠ face_small: ${count} sprites (expected 16)</span>`);
+      } else {
+        issues.push(`<span style="color:var(--green);">✓ face_small: ${count} sprites</span>`);
+      }
+      band.sprites?.forEach(s => {
+        if (s.w < 5) issues.push(`<span style="color:var(--red);">⚠ Stray: face[${s.index}] w=${s.w}px (${s.label||'?'})</span>`);
+        if (s.w > 44) issues.push(`<span style="color:var(--yellow);">⚡ Wide: face[${s.index}] w=${s.w}px — possible merge (${s.label||'?'})</span>`);
+      });
+    }
+    if (band.role === 'body_anim') {
+      const count = band.sprites?.length || 0;
+      if (count !== 9) issues.push(`<span style="color:var(--red);">⚠ body_anim: ${count} sprites (expected 9)</span>`);
+      else issues.push(`<span style="color:var(--green);">✓ body_anim: 9 sprites</span>`);
+    }
+  });
+
+  const hasAnchors = !!PREVIEW.json.bodyAnimAnchors?.length;
+  issues.push(hasAnchors
+    ? `<span style="color:var(--green);">✓ bodyAnimAnchors set</span>`
+    : `<span style="color:var(--red);">⚠ bodyAnimAnchors missing</span>`);
+
+  el.innerHTML = issues.join('<br>');
+}
+
+function renderPreview() {
+  if (!PREVIEW.json || !PREVIEW.img) return;
+  buildBandToggles();
+  runValidation();
+
+  const canvas = document.getElementById('preview-canvas');
+  const S = PREVIEW.scale;
+  canvas.width  = PREVIEW.img.width  * S;
+  canvas.height = PREVIEW.img.height * S;
+  canvas.style.display = 'block';
+  document.getElementById('preview-empty').style.display = 'none';
+
+  const ctx = canvas.getContext('2d');
+  ctx.imageSmoothingEnabled = false;
+
+  // Draw sheet at 2×
+  ctx.drawImage(PREVIEW.img, 0, 0, canvas.width, canvas.height);
+
+  // Draw band overlays
+  PREVIEW.json.bands?.forEach(band => {
+    if (!PREVIEW.visibleBands.has(band.role)) return;
+    const color = BAND_COLORS[band.role] || '#ffffff';
+
+    band.sprites?.forEach(sprite => {
+      const x = sprite.x * S, y = sprite.y * S;
+      const w = sprite.w * S, h = sprite.h * S;
+
+      // Problem detection
+      const isStray  = band.role === 'face_small' && sprite.w < 5;
+      const isWide   = band.role === 'face_small' && sprite.w > 44;
+      const isProblem = isStray || isWide;
+
+      // Fill tint
+      ctx.fillStyle = isProblem ? 'rgba(255,107,107,0.25)' : `${color}18`;
+      ctx.fillRect(x, y, w, h);
+
+      // Border
+      ctx.strokeStyle = isProblem ? '#ff6b6b' : color;
+      ctx.lineWidth   = isProblem ? 2 : 1;
+      ctx.strokeRect(x + 0.5, y + 0.5, w - 1, h - 1);
+
+      // Label
+      ctx.fillStyle = isProblem ? '#ff6b6b' : color;
+      ctx.font = `${Math.max(7, S * 4)}px monospace`;
+      const lbl = sprite.label || String(sprite.index);
+      ctx.fillText(lbl, x + 2, y + 9 * S / 2);
+    });
+
+    // Draw face anchors on body_anim
+    if (band.role === 'body_anim' && PREVIEW.json.bodyAnimAnchors) {
+      band.sprites?.forEach((sprite, i) => {
+        const anchor = PREVIEW.json.bodyAnimAnchors[i];
+        if (!anchor?.useFace) return;
+        const ax = (sprite.x + anchor.offsetX) * S;
+        const ay = (sprite.y + anchor.offsetY) * S;
+        // Crosshair
+        ctx.strokeStyle = '#ff9f6b';
+        ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.moveTo(ax - 6, ay); ctx.lineTo(ax + 6, ay); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(ax, ay - 6); ctx.lineTo(ax, ay + 6); ctx.stroke();
+        // Dot
+        ctx.fillStyle = '#ff9f6b';
+        ctx.beginPath(); ctx.arc(ax, ay, 2, 0, Math.PI * 2); ctx.fill();
+      });
+    }
+  });
+
+  // Click to inspect
+  canvas.onclick = e => {
+    const rect = canvas.getBoundingClientRect();
+    const mx = (e.clientX - rect.left) / S;
+    const my = (e.clientY - rect.top)  / S;
+    let hit = null;
+    PREVIEW.json.bands?.forEach(band => {
+      band.sprites?.forEach(sprite => {
+        if (mx >= sprite.x && mx <= sprite.x + sprite.w &&
+            my >= sprite.y && my <= sprite.y + sprite.h) {
+          hit = { band: band.role, sprite };
+        }
+      });
+    });
+    const info = document.getElementById('preview-selected-info');
+    if (hit) {
+      const s = hit.sprite;
+      const isStray = hit.band === 'face_small' && s.w < 5;
+      const isWide  = hit.band === 'face_small' && s.w > 44;
+      info.innerHTML = `
+        <div style="color:var(--text);">Band: ${hit.band}</div>
+        <div>Index: ${s.index}</div>
+        <div>Label: ${s.label || '—'}</div>
+        <div>x: ${s.x}  y: ${s.y}</div>
+        <div>w: ${s.w}  h: ${s.h}</div>
+        ${isStray ? '<div style="color:var(--red);">⚠ Stray pixel!</div>' : ''}
+        ${isWide  ? '<div style="color:var(--yellow);">⚡ Possibly merged!</div>' : ''}
+      `;
+    } else {
+      info.textContent = 'Click a sprite to inspect';
+    }
+  };
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// MANIFEST GENERATOR
+// ═══════════════════════════════════════════════════════════════════════════
+
+const MANIFEST = {
+  entries: [], // [{ id, name, file, bitmap, url }]
+};
+
+function openManifestEditor() {
+  document.getElementById('manifest-editor').style.display = 'flex';
+  document.getElementById('editor-area').style.display     = 'none';
+  document.getElementById('char-list').style.display       = 'none';
+}
+
+function closeManifestEditor() {
+  document.getElementById('manifest-editor').style.display = 'none';
+  document.getElementById('editor-area').style.display     = 'flex';
+  document.getElementById('char-list').style.display       = 'flex';
+  // Revoke object URLs to free memory
+  MANIFEST.entries.forEach(e => { if (e.url) URL.revokeObjectURL(e.url); });
+  MANIFEST.entries = [];
+}
+
+document.getElementById('btn-manifest-close').addEventListener('click', closeManifestEditor);
+
+// ── Load folder ─────────────────────────────────────────────────────────
+document.getElementById('btn-manifest-load').addEventListener('click', () => {
+  document.getElementById('manifest-folder-input').click();
+});
+
+document.getElementById('manifest-folder-input').addEventListener('change', async e => {
+  const files = [...e.target.files].filter(f => f.name.toLowerCase().endsWith('.png'));
+  if (!files.length) { toast('No PNG files found in folder'); return; }
+
+  // Revoke old URLs
+  MANIFEST.entries.forEach(en => { if (en.url) URL.revokeObjectURL(en.url); });
+  MANIFEST.entries = [];
+
+  const prefix = document.getElementById('manifest-id-prefix').value.trim() || 'bg';
+
+  for (let i = 0; i < files.length; i++) {
+    const file = files[i];
+    const url  = URL.createObjectURL(file);
+    const id   = `${prefix}_${String(i+1).padStart(3,'0')}`;
+    const name = autoName(file.name);
+    MANIFEST.entries.push({ id, name, file: file.name, url });
+  }
+
+  renderManifestGrid();
+  document.getElementById('btn-manifest-export').disabled = false;
+  document.getElementById('manifest-stats').textContent =
+    `${files.length} PNG${files.length!==1?'s':''} loaded`;
+  toast(`Loaded ${files.length} backgrounds`);
+});
+
+// ── Auto-name: clean filename → display name ───────────────────────────
+function autoName(filename) {
+  return filename
+    .replace(/\.[^.]+$/, '')           // remove extension
+    .replace(/LCD Handhelds - Tamagotchi (Smart|On) - Backgrounds - /i, '') // strip prefix
+    .replace(/[-_]/g, ' ')             // dashes/underscores → spaces
+    .replace(/\s+/g, ' ')              // collapse spaces
+    .trim();
+}
+
+document.getElementById('btn-manifest-autoname').addEventListener('click', () => {
+  MANIFEST.entries.forEach(e => { e.name = autoName(e.file); });
+  renderManifestGrid();
+  toast('✦ Names updated');
+});
+
+// ── Render grid ──────────────────────────────────────────────────────────
+function renderManifestGrid() {
+  const grid  = document.getElementById('manifest-grid');
+  const empty = document.getElementById('manifest-empty');
+  grid.innerHTML  = '';
+  empty.style.display = MANIFEST.entries.length ? 'none' : 'block';
+  grid.style.display  = MANIFEST.entries.length ? 'grid'  : 'none';
+
+  MANIFEST.entries.forEach((entry, idx) => {
+    const card = document.createElement('div');
+    card.style.cssText = `
+      display:flex;flex-direction:column;gap:6px;
+      border:1px solid var(--border);border-radius:5px;
+      overflow:hidden;background:var(--raised);
+    `;
+
+    // Preview image
+    const img = document.createElement('img');
+    img.src   = entry.url;
+    img.style.cssText = 'width:100%;aspect-ratio:1;object-fit:cover;image-rendering:pixelated;display:block;';
+
+    // ID badge
+    const badge = document.createElement('div');
+    badge.style.cssText = 'font-size:9px;color:var(--cyan);letter-spacing:1px;padding:0 8px;';
+    badge.textContent   = entry.id;
+
+    // Editable name
+    const nameInput = document.createElement('input');
+    nameInput.type  = 'text';
+    nameInput.value = entry.name;
+    nameInput.style.cssText = `
+      background:transparent;border:none;border-top:1px solid var(--border);
+      color:var(--text);font-family:'DM Mono',monospace;font-size:10px;
+      padding:5px 8px;width:100%;outline:none;
+    `;
+    nameInput.addEventListener('focus', () => nameInput.style.background = 'var(--surface)');
+    nameInput.addEventListener('blur',  () => nameInput.style.background = 'transparent');
+    nameInput.addEventListener('input', () => { MANIFEST.entries[idx].name = nameInput.value; });
+
+    // Filename label
+    const fileLabel = document.createElement('div');
+    fileLabel.style.cssText = 'font-size:8px;color:var(--muted);padding:0 8px 6px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;';
+    fileLabel.title         = entry.file;
+    fileLabel.textContent   = entry.file;
+
+    card.appendChild(img);
+    card.appendChild(badge);
+    card.appendChild(nameInput);
+    card.appendChild(fileLabel);
+    grid.appendChild(card);
+  });
+}
+
+// ── Export manifest.json ────────────────────────────────────────────────
+document.getElementById('btn-manifest-export').addEventListener('click', () => {
+  if (!MANIFEST.entries.length) return;
+
+  const type = document.getElementById('manifest-type').value;
+  const out  = {
+    [type]: MANIFEST.entries.map(e => ({
+      id:   e.id,
+      name: e.name,
+      file: e.file,
+    })),
+  };
+
+  const blob = new Blob([JSON.stringify(out, null, 2)], { type: 'application/json' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href = url; a.download = 'manifest.json'; a.click();
+  URL.revokeObjectURL(url);
+  toast(`Exported manifest.json (${MANIFEST.entries.length} entries)`);
+});
+document.getElementById('btn-eggs-mode').addEventListener('click', openEggEditor);
+
+// ═══════════════════════════════════════════════════════════════════════════
+// EGG EDITOR
+// ═══════════════════════════════════════════════════════════════════════════
+
+const EGG = {
+  bitmap:   null,   // ImageBitmap of loaded sheet
+  off:      null,   // offscreen canvas
+  variants: [],     // [{id, name, idleFrames:[], hatchFrames:[]}]
+  previewVariant: 0,
+  previewFrame:   0,
+  previewPlaying: false,
+  previewRaf:     null,
+  lastTick:       0,
+};
+
+function openEggEditor() {
+  document.getElementById('egg-editor').style.display    = 'flex';
+  document.getElementById('editor-area').style.display   = 'none';
+  document.getElementById('char-list').style.display     = 'none';
+}
+
+function closeEggEditor() {
+  document.getElementById('egg-editor').style.display    = 'none';
+  document.getElementById('editor-area').style.display   = 'flex';
+  document.getElementById('char-list').style.display     = 'flex';
+  eggStopPreview();
+}
+
+document.getElementById('btn-eggs-close').addEventListener('click', closeEggEditor);
+
+// ── Load sheet ─────────────────────────────────────────────────────────────
+document.getElementById('btn-egg-load').addEventListener('click', () => {
+  document.getElementById('egg-sheet-input').click();
+});
+
+document.getElementById('egg-sheet-input').addEventListener('change', async e => {
+  const file = e.target.files[0]; if (!file) return;
+  const url  = URL.createObjectURL(file);
+  const img  = await new Promise(r => { const i=new Image(); i.onload=()=>r(i); i.src=url; });
+  URL.revokeObjectURL(url);
+  EGG.bitmap = await createImageBitmap(img);
+  EGG.off    = document.createElement('canvas');
+  EGG.off.width  = EGG.bitmap.width;
+  EGG.off.height = EGG.bitmap.height;
+  EGG.off.getContext('2d').drawImage(EGG.bitmap, 0, 0);
+
+  // Draw sheet preview at 2×
+  const sc = document.getElementById('egg-sheet-canvas');
+  sc.width  = EGG.bitmap.width  * 2;
+  sc.height = EGG.bitmap.height * 2;
+  const sctx = sc.getContext('2d'); sctx.imageSmoothingEnabled = false;
+  sctx.drawImage(EGG.bitmap, 0, 0, sc.width, sc.height);
+
+  document.getElementById('egg-empty').style.display       = 'none';
+  document.getElementById('egg-sheet-wrap').style.display  = 'block';
+  toast(`Loaded ${file.name} — ${EGG.bitmap.width}×${EGG.bitmap.height}px`);
+});
+
+// ── Set number → ID preview ────────────────────────────────────────────────
+function updateEggIdPreview() {
+  const n = String(parseInt(document.getElementById('egg-set-num').value)||1).padStart(3,'0');
+  const varCount = EGG.variants.length || 3;
+  document.getElementById('egg-id-preview').textContent =
+    `TAM-000-${n}-000 … ${String(varCount-1).padStart(3,'0')}`;
+}
+document.getElementById('egg-set-num').addEventListener('input', updateEggIdPreview);
+
+// ── Analyze grid ───────────────────────────────────────────────────────────
+document.getElementById('btn-egg-analyze').addEventListener('click', () => {
+  if (!EGG.bitmap) { toast('Load a sheet first'); return; }
+
+  const cw      = parseInt(document.getElementById('egg-cell-w').value)    || 34;
+  const ch      = parseInt(document.getElementById('egg-cell-h').value)    || 36;
+  const idleN   = parseInt(document.getElementById('egg-idle-count').value) || 5;
+  const setNum  = String(parseInt(document.getElementById('egg-set-num').value)||1).padStart(3,'0');
+
+  const rowCount = Math.floor(EGG.bitmap.height / ch);
+  EGG.variants   = [];
+
+  // Hatch frame 1: cracked egg at same width as idle cell (34px), x=170
+  // Hatch frame 2: burst explosion (x=207, 30px)
+  const HATCH_FRAMES = [
+    { x: 170, w: cw, label: 'crack' },
+    { x: 207, w: 30, label: 'burst' },
+  ];
+
+  for (let r = 0; r < rowCount; r++) {
+    const varNum = String(r).padStart(3,'0');
+    const id     = `TAM-000-${setNum}-${varNum}`;
+    const y      = r * ch;
+
+    const idleFrames = [];
+    for (let f = 0; f < idleN; f++) {
+      idleFrames.push({ x: f * cw, y, w: cw, h: ch });
+    }
+
+    const hatchFrames = HATCH_FRAMES.map(hf => ({
+      x: hf.x, y, w: hf.w, h: ch, label: hf.label,
+    }));
+
+    EGG.variants.push({ id, name: `Variant ${r+1}`, idleFrames, hatchFrames });
+  }
+
+  renderEggVariants();
+  eggStartPreview();
+  document.getElementById('egg-variants-wrap').style.display = 'block';
+  document.getElementById('btn-egg-export').disabled = false;
+  updateEggIdPreview();
+  toast(`Found ${rowCount} variants`);
+});
+
+// ── Render variant strips ──────────────────────────────────────────────────
+function renderEggVariants() {
+  const grid = document.getElementById('egg-variants-grid');
+  grid.innerHTML = '';
+  const S = 3; // display scale
+
+  EGG.variants.forEach((variant, vi) => {
+    const section = document.createElement('div');
+    section.style.cssText = 'display:flex;flex-direction:column;gap:8px;';
+
+    // Header row with name input and ID
+    const head = document.createElement('div');
+    head.style.cssText = 'display:flex;align-items:center;gap:10px;';
+    head.innerHTML = `
+      <span style="font-size:9px;color:var(--orange);letter-spacing:1px;text-transform:uppercase;">
+        ${variant.id}
+      </span>
+      <input type="text" value="${variant.name}"
+        style="background:var(--raised);border:1px solid var(--border);color:var(--text);
+               font-family:'DM Mono',monospace;font-size:11px;padding:3px 8px;border-radius:3px;
+               outline:none;width:160px;"
+        oninput="EGG.variants[${vi}].name=this.value">`;
+    section.appendChild(head);
+
+    // Sprite frames row
+    const frames = document.createElement('div');
+    frames.style.cssText = 'display:flex;gap:6px;align-items:flex-end;flex-wrap:wrap;';
+
+    // Idle frames
+    const idleLabel = document.createElement('div');
+    idleLabel.style.cssText = 'font-size:9px;color:var(--muted);align-self:center;margin-right:2px;';
+    idleLabel.textContent = 'Idle';
+    frames.appendChild(idleLabel);
+
+    variant.idleFrames.forEach((sp, fi) => {
+      const c = document.createElement('canvas');
+      c.width  = sp.w * S; c.height = sp.h * S;
+      c.style.cssText = 'image-rendering:pixelated;border:1px solid var(--border);border-radius:2px;background:#000;';
+      const ctx = c.getContext('2d'); ctx.imageSmoothingEnabled = false;
+      ctx.drawImage(EGG.off, sp.x,sp.y,sp.w,sp.h, 0,0,sp.w*S,sp.h*S);
+      frames.appendChild(c);
+    });
+
+    // Separator
+    const sep = document.createElement('div');
+    sep.style.cssText = 'width:1px;background:var(--border);height:40px;align-self:center;margin:0 4px;';
+    frames.appendChild(sep);
+
+    // Hatch frames
+    const hatchLabel = document.createElement('div');
+    hatchLabel.style.cssText = 'font-size:9px;color:var(--muted);align-self:center;margin-right:2px;';
+    hatchLabel.textContent = 'Hatch';
+    frames.appendChild(hatchLabel);
+
+    variant.hatchFrames.forEach((sp, fi) => {
+      const c = document.createElement('canvas');
+      c.width  = sp.w * S; c.height = sp.h * S;
+      c.style.cssText = 'image-rendering:pixelated;border:1px solid var(--border);border-radius:2px;background:#000;';
+      const ctx = c.getContext('2d'); ctx.imageSmoothingEnabled = false;
+      ctx.drawImage(EGG.off, sp.x,sp.y,sp.w,sp.h, 0,0,sp.w*S,sp.h*S);
+      frames.appendChild(c);
+    });
+
+    section.appendChild(frames);
+
+    // Divider
+    const div = document.createElement('div');
+    div.style.cssText = 'border-bottom:1px solid var(--border);padding-top:4px;';
+    section.appendChild(div);
+
+    grid.appendChild(section);
+  });
+}
+
+// ── Preview ────────────────────────────────────────────────────────────────
+function eggStartPreview() {
+  eggStopPreview();
+  EGG.previewPlaying = true;
+  EGG.previewFrame   = 0;
+  EGG.lastTick       = 0;
+  function tick(ts) {
+    if (!EGG.previewPlaying) return;
+    if (ts - EGG.lastTick >= 120) { // ~8fps shimmer
+      EGG.lastTick = ts;
+      eggDrawPreview();
+      const v = EGG.variants[EGG.previewVariant];
+      if (v) EGG.previewFrame = (EGG.previewFrame + 1) % v.idleFrames.length;
+    }
+    EGG.previewRaf = requestAnimationFrame(tick);
+  }
+  EGG.previewRaf = requestAnimationFrame(tick);
+}
+
+function eggStopPreview() {
+  EGG.previewPlaying = false;
+  if (EGG.previewRaf) { cancelAnimationFrame(EGG.previewRaf); EGG.previewRaf = null; }
+}
+
+function eggDrawPreview() {
+  const v   = EGG.variants[EGG.previewVariant]; if (!v) return;
+  const sp  = v.idleFrames[EGG.previewFrame % v.idleFrames.length]; if (!sp) return;
+  const S   = 2;
+  const c   = document.getElementById('egg-preview-canvas');
+  c.width   = sp.w * S; c.height = sp.h * S;
+  const ctx = c.getContext('2d'); ctx.imageSmoothingEnabled = false;
+  ctx.fillStyle = '#000'; ctx.fillRect(0,0,c.width,c.height);
+  ctx.drawImage(EGG.off, sp.x,sp.y,sp.w,sp.h, 0,0,sp.w*S,sp.h*S);
+}
+
+function updateEggPreviewLabel() {
+  const v = EGG.variants[EGG.previewVariant];
+  document.getElementById('egg-preview-label').textContent =
+    v ? `${v.name} (${v.id})` : '—';
+}
+
+document.getElementById('egg-prev-var').addEventListener('click', () => {
+  EGG.previewVariant = (EGG.previewVariant - 1 + EGG.variants.length) % EGG.variants.length;
+  EGG.previewFrame = 0;
+  updateEggPreviewLabel();
+});
+
+document.getElementById('egg-next-var').addEventListener('click', () => {
+  EGG.previewVariant = (EGG.previewVariant + 1) % EGG.variants.length;
+  EGG.previewFrame = 0;
+  updateEggPreviewLabel();
+});
+
+document.getElementById('egg-preview-play').addEventListener('click', eggStartPreview);
+document.getElementById('egg-preview-stop').addEventListener('click', eggStopPreview);
+
+// ── Export JSON ────────────────────────────────────────────────────────────
+document.getElementById('btn-egg-export').addEventListener('click', () => {
+  if (!EGG.variants.length) return;
+
+  const setNum  = String(parseInt(document.getElementById('egg-set-num').value)||1).padStart(3,'0');
+  const setName = document.getElementById('egg-set-name').value.trim() || 'Egg Set';
+
+  const out = {
+    setId:     `TAM-000-${setNum}`,
+    setName,
+    sheet:     'Eggs.png',
+    animations: {
+      idle: {
+        fps:    6,
+        loop:   true,
+        // Sequence uses 1-based frame indices into idleFrames
+        // Pattern: 1,2,1,3 — frames 4 and 5 unused
+        sequence: [0, 1, 0, 2],
+      },
+      hatch: {
+        fps:    8,
+        loop:   false,
+        // One-shot transition — plays frames 6,7 (crack then burst) then fires hatch event
+        // Frame indices into hatchFrames array
+        sequence: [0, 1],
+        onComplete: 'hatch', // signal to game engine to trigger baby spawn
+      },
+    },
+    variants:  EGG.variants.map(v => ({
+      id:          v.id,
+      name:        v.name,
+      idleFrames:  v.idleFrames,
+      hatchFrames: v.hatchFrames,
+    })),
+  };
+
+  const blob = new Blob([JSON.stringify(out, null, 2)], {type:'application/json'});
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href = url; a.download = `TAM-000-${setNum}.json`; a.click();
+  URL.revokeObjectURL(url);
+  toast(`Exported TAM-000-${setNum}.json`);
+});
+
+// ── Load TamaDex (to preserve beta flags when re-exporting) ──────────────
+// If a tamadex.json is in the folder, load it automatically
+async function tryLoadExistingDex() {
+  try {
+    const dexHandle = await dirHandle.getFileHandle('tamadex.json');
+    const text = await (await dexHandle.getFile()).text();
+    window._loadedDex = JSON.parse(text);
+    const enabledCount = window._loadedDex.characters?.filter(c=>c.enabled).length || 0;
+    if (enabledCount > 0) toast(`TamaDex loaded — ${enabledCount} enabled characters`);
+  } catch(e) {
+    window._loadedDex = null; // no existing dex, that's fine
+  }
+}
+
+// Check File System Access API support
+if (!('showDirectoryPicker' in window)) {
+  document.getElementById('header-status').textContent =
+    '⚠ File System Access API not supported — please use Chrome or Edge';
+  document.getElementById('btn-open-folder').disabled = true;
+}
+</script>
+</body>
+</html>
