@@ -770,6 +770,15 @@ const GITHUB_REPO   = 'gotchigarden';
 // GitHub Pages base URL — assets served from here allow cross-origin requests
 const PAGES_BASE = `https://${GITHUB_USER}.github.io/${GITHUB_REPO}`;
 
+// ─── AUDIO ────────────────────────────────────────────────────────────────
+const _sfxAddPoint = new Audio(`${PAGES_BASE}/addpoint.mp3`);
+_sfxAddPoint.preload = 'auto';
+function playAddPoint() {
+  const s = _sfxAddPoint.cloneNode(); // allow overlapping plays
+  s.volume = 0.6;
+  s.play().catch(() => {}); // silently ignore if blocked before user gesture
+}
+
 const TAMA_PATH = 'sprites/tamas';
 const BG_PATH   = 'sprites/background';
 
@@ -1957,6 +1966,7 @@ class GotchiCell {
     const dot = document.getElementById('dot-'+this.student.id);
     if (el)  el.textContent = this.student.gotchiPoints+' pts';
     if (dot) {dot.classList.add('flash');setTimeout(()=>dot.classList.remove('flash'),600);}
+    if (n > 0) playAddPoint();
     if (selected===this.student.id) refreshStudentPanel();
     updateHeader();
     // Persist to DB
@@ -2005,6 +2015,7 @@ function startRealtimeListeners() {
 
         // Broadcast wave to that student's pets if they got points
         if (delta > 0) {
+          playAddPoint();
           const cell = cells.find(c => c.student.id === student.id);
           if (cell) cell.forceAnimation('wave');
           setTimeout(() => {
