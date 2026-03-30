@@ -668,6 +668,11 @@ header {
             <span class="shop-label">New Egg</span>
             <span class="shop-cost" style="color:var(--yellow);font-size:9px;">5 pts</span>
           </button>
+          <button class="shop-btn auth-gated locked" id="btn-gacha" style="grid-column:1/-1;">
+            <span class="shop-icon">🎰</span>
+            <span class="shop-label">Gacha Machine</span>
+            <span class="shop-cost" style="color:var(--pink);font-size:9px;">5 pts · Use physical machine</span>
+          </button>
         </div>
       </div>
 
@@ -2384,6 +2389,42 @@ document.getElementById('btn-add-egg').addEventListener('click', () => {
   openOverlay('overlay-buy-confirm');
 });
 
+// ─── GACHA MACHINE ────────────────────────────────────────────────────────
+document.getElementById('btn-gacha').addEventListener('click', () => {
+  if (!selected) return;
+  const student = STUDENTS.find(s => s.id === selected);
+  if (!student) return;
+
+  if (student.gotchiPoints < PRICES.prize) {
+    toast(`⚠ Not enough GotchiPts (need ${PRICES.prize})`);
+    return;
+  }
+
+  document.getElementById('buy-confirm-text').innerHTML =
+    `Redeem a<br>
+     <strong style="color:var(--text);">🎰 Gacha Machine</strong> turn<br>
+     for <strong style="color:var(--pink);">${PRICES.prize} GotchiPts</strong>?<br>
+     <span style="font-size:10px;color:var(--muted);">Go use the physical machine in the classroom!</span><br>
+     <span style="font-size:10px;color:var(--muted);">Balance after: ${student.gotchiPoints - PRICES.prize} pts</span>`;
+
+  const confirmBtn = document.getElementById('btn-buy-confirm-yes');
+  const handler = () => {
+    confirmBtn.removeEventListener('click', handler);
+    closeOverlay('overlay-buy-confirm');
+
+    student.gotchiPoints -= PRICES.prize;
+    const el = document.getElementById('pts-' + student.id);
+    if (el) el.textContent = student.gotchiPoints + ' pts';
+    document.getElementById('sel-pts').textContent = student.gotchiPoints;
+    updateHeader();
+    dbUpdateStudent(student.id, { gotchi_pts: student.gotchiPoints });
+
+    toast('🎰 Gacha redeemed! Go use the machine!');
+  };
+  confirmBtn.addEventListener('click', handler);
+  openOverlay('overlay-buy-confirm');
+});
+
 // ─── TEACHER MENU ─────────────────────────────────────────────────────────
 const teacherDropdown = document.getElementById('teacher-dropdown');
 document.getElementById('btn-teacher-menu').addEventListener('click', e => {
@@ -2405,7 +2446,7 @@ const PRICES = {
   egg:        5,   // new egg from shop
   bg_basic:   5,   // standard background
   bg_rare:    15,  // rare background (future)
-  prize:      20,  // physical prize machine redemption (future)
+  prize:      5,   // gacha machine redemption
 };
 // Food prices live in FOODS array above
 const EVOLVE_COST = PRICES.evolve; // alias used throughout
