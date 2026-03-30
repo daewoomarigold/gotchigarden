@@ -1957,52 +1957,94 @@ function renderAnchorTab(entry) {
 
 function drawAnchorPreview(entry, off, bodyBand, faceBand) {
   const S=4;
-  const bodySp=bodyBand.sprites[ancBodyIdx];
-  const anc=entry.anchors[ancBodyIdx];
-  const faceSp=faceBand&&anc.useFace!==false?faceBand.sprites[0]:null;
+  const bodySp = bodyBand.sprites[ancBodyIdx];
+  const anc    = entry.anchors[ancBodyIdx];
+  const faceSp = faceBand && anc.useFace !== false ? faceBand.sprites[0] : null;
 
-  const canvas=document.getElementById('anc-canvas');
-  canvas.width=bodySp.w*S; canvas.height=bodySp.h*S;
-  const ctx=canvas.getContext('2d'); ctx.imageSmoothingEnabled=false;
+  // Center-based draw position of face relative to body top-left
+  const faceDrawX = faceSp ? (bodySp.w/2 + anc.offsetX - faceSp.w/2) : 0;
+  const faceDrawY = faceSp ? (bodySp.h/2 + anc.offsetY - faceSp.h/2) : 0;
+
+  // Expand canvas to fit both body and face, even if face is outside body bounds
+  const minX   = faceSp ? Math.min(0, faceDrawX) : 0;
+  const minY   = faceSp ? Math.min(0, faceDrawY) : 0;
+  const maxX   = faceSp ? Math.max(bodySp.w, faceDrawX + faceSp.w) : bodySp.w;
+  const maxY   = faceSp ? Math.max(bodySp.h, faceDrawY + faceSp.h) : bodySp.h;
+
+  const canvasW = Math.round(maxX - minX);
+  const canvasH = Math.round(maxY - minY);
+  const bodyOffX = Math.round(-minX);
+  const bodyOffY = Math.round(-minY);
+
+  const canvas = document.getElementById('anc-canvas');
+  canvas.width  = canvasW * S;
+  canvas.height = canvasH * S;
+  const ctx = canvas.getContext('2d');
+  ctx.imageSmoothingEnabled = false;
 
   // Checker bg
-  for(let y=0;y<canvas.height;y+=8) for(let x=0;x<canvas.width;x+=8){
-    ctx.fillStyle=((x/8+y/8)%2===0)?'#1a1a2e':'#0e0e1a';
-    ctx.fillRect(x,y,8,8);
+  for (let y=0; y<canvas.height; y+=8) for (let x=0; x<canvas.width; x+=8) {
+    ctx.fillStyle = ((x/8+y/8)%2===0) ? '#1a1a2e' : '#0e0e1a';
+    ctx.fillRect(x, y, 8, 8);
   }
-  ctx.drawImage(off,bodySp.x,bodySp.y,bodySp.w,bodySp.h,0,0,bodySp.w*S,bodySp.h*S);
-  if(faceSp&&anc.useFace!==false){
-    // Center-based: offset = face_center - body_center
-    // draw_x = body_center + offsetX - face_w/2
-    const drawX = (bodySp.w/2 + anc.offsetX - faceSp.w/2) * S;
-    const drawY = (bodySp.h/2 + anc.offsetY - faceSp.h/2) * S;
-    ctx.drawImage(off,faceSp.x,faceSp.y,faceSp.w,faceSp.h,
-      drawX,drawY,faceSp.w*S,faceSp.h*S);
+
+  // Draw body at offset
+  ctx.drawImage(off, bodySp.x, bodySp.y, bodySp.w, bodySp.h,
+    bodyOffX*S, bodyOffY*S, bodySp.w*S, bodySp.h*S);
+
+  // Draw face
+  if (faceSp && anc.useFace !== false) {
+    ctx.drawImage(off, faceSp.x, faceSp.y, faceSp.w, faceSp.h,
+      (faceDrawX + bodyOffX)*S, (faceDrawY + bodyOffY)*S,
+      faceSp.w*S, faceSp.h*S);
   }
 }
 
 function buildAnchorPreviewGrid(entry, off, bodyBand, faceBand) {
-  const grid=document.getElementById('anc-preview-grid');
-  grid.innerHTML='';
-  const S=3;
-  bodyBand.sprites.forEach((bodySp,i)=>{
-    const anc=entry.anchors[i];
-    const faceSp=faceBand&&anc.useFace!==false?faceBand.sprites[0]:null;
-    const c=document.createElement('canvas');
-    c.width=bodySp.w*S; c.height=bodySp.h*S;
-    c.style.cssText='image-rendering:pixelated;border:1px solid var(--border);border-radius:2px;';
-    const ctx=c.getContext('2d'); ctx.imageSmoothingEnabled=false;
-    for(let y=0;y<c.height;y+=6) for(let x=0;x<c.width;x+=6){
-      ctx.fillStyle=((x/6+y/6)%2===0)?'#1a1a2e':'#0e0e1a'; ctx.fillRect(x,y,6,6);
+  const grid = document.getElementById('anc-preview-grid');
+  grid.innerHTML = '';
+  const S = 3;
+  bodyBand.sprites.forEach((bodySp, i) => {
+    const anc    = entry.anchors[i];
+    const faceSp = faceBand && anc.useFace !== false ? faceBand.sprites[0] : null;
+
+    const faceDrawX = faceSp ? (bodySp.w/2 + anc.offsetX - faceSp.w/2) : 0;
+    const faceDrawY = faceSp ? (bodySp.h/2 + anc.offsetY - faceSp.h/2) : 0;
+
+    const minX   = faceSp ? Math.min(0, faceDrawX) : 0;
+    const minY   = faceSp ? Math.min(0, faceDrawY) : 0;
+    const maxX   = faceSp ? Math.max(bodySp.w, faceDrawX + faceSp.w) : bodySp.w;
+    const maxY   = faceSp ? Math.max(bodySp.h, faceDrawY + faceSp.h) : bodySp.h;
+
+    const canvasW = Math.round(maxX - minX);
+    const canvasH = Math.round(maxY - minY);
+    const bodyOffX = Math.round(-minX);
+    const bodyOffY = Math.round(-minY);
+
+    const c = document.createElement('canvas');
+    c.width  = canvasW * S;
+    c.height = canvasH * S;
+    c.style.cssText = 'image-rendering:pixelated;border:1px solid var(--border);border-radius:2px;';
+    const ctx = c.getContext('2d');
+    ctx.imageSmoothingEnabled = false;
+
+    // Checker bg
+    for (let y=0; y<c.height; y+=6) for (let x=0; x<c.width; x+=6) {
+      ctx.fillStyle = ((x/6+y/6)%2===0) ? '#1a1a2e' : '#0e0e1a';
+      ctx.fillRect(x, y, 6, 6);
     }
-    ctx.drawImage(off,bodySp.x,bodySp.y,bodySp.w,bodySp.h,0,0,bodySp.w*S,bodySp.h*S);
-    if(faceSp){
-      // Center-based: offset = face_center - body_center
-      const drawX = (bodySp.w/2 + anc.offsetX - faceSp.w/2) * S;
-      const drawY = (bodySp.h/2 + anc.offsetY - faceSp.h/2) * S;
-      ctx.drawImage(off,faceSp.x,faceSp.y,faceSp.w,faceSp.h,
-        drawX,drawY,faceSp.w*S,faceSp.h*S);
+
+    // Body
+    ctx.drawImage(off, bodySp.x, bodySp.y, bodySp.w, bodySp.h,
+      bodyOffX*S, bodyOffY*S, bodySp.w*S, bodySp.h*S);
+
+    // Face
+    if (faceSp) {
+      ctx.drawImage(off, faceSp.x, faceSp.y, faceSp.w, faceSp.h,
+        (faceDrawX + bodyOffX)*S, (faceDrawY + bodyOffY)*S,
+        faceSp.w*S, faceSp.h*S);
     }
+
     grid.appendChild(c);
   });
 }
