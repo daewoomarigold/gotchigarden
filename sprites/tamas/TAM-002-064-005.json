@@ -423,5 +423,53 @@
     }
   ],
   "animations": [],
-  "variant": "Sanji Tsuyomi"
+  "variant": "Sanji Tsuyomi",
+  "bodyAnimAnchors": [
+    {
+      "offsetX": 15,
+      "offsetY": 13,
+      "useFace": true
+    },
+    {
+      "offsetX": 15,
+      "offsetY": 12,
+      "useFace": true
+    },
+    {
+      "offsetX": 15,
+      "offsetY": 14,
+      "useFace": true
+    },
+    {
+      "offsetX": 18,
+      "offsetY": 13,
+      "useFace": true
+    },
+    {
+      "offsetX": 12,
+      "offsetY": 14,
+      "useFace": true
+    },
+    {
+      "offsetX": 11,
+      "offsetY": 12,
+      "useFace": true
+    },
+    {
+      "offsetX": 12,
+      "offsetY": 15,
+      "useFace": true
+    },
+    {
+      "offsetX": 13,
+      "offsetY": 10,
+      "useFace": false
+    },
+    {
+      "offsetX": 13,
+      "offsetY": 10,
+      "useFace": false
+    }
+  ],
+  "enabled": true
 }

@@ -431,7 +431,7 @@
       "useFace": true
     },
     {
-      "offsetX": 11,
+      "offsetX": 10,
       "offsetY": 24,
       "useFace": true
     },
@@ -446,28 +446,28 @@
       "useFace": true
     },
     {
-      "offsetX": 5,
-      "offsetY": 26,
-      "useFace": true
-    },
-    {
-      "offsetX": 5,
+      "offsetX": 6,
       "offsetY": 25,
       "useFace": true
     },
     {
-      "offsetX": 5,
-      "offsetY": 28,
+      "offsetX": 6,
+      "offsetY": 24,
       "useFace": true
     },
     {
-      "offsetX": 0,
-      "offsetY": 0,
+      "offsetX": 6,
+      "offsetY": 27,
+      "useFace": true
+    },
+    {
+      "offsetX": 7,
+      "offsetY": 9,
       "useFace": false
     },
     {
-      "offsetX": 0,
-      "offsetY": 0,
+      "offsetX": 7,
+      "offsetY": 9,
       "useFace": false
     }
   ]

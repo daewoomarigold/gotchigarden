@@ -375,5 +375,53 @@
     }
   ],
   "animations": [],
-  "variant": "Jelly Weeptchi"
+  "variant": "Jelly Weeptchi",
+  "bodyAnimAnchors": [
+    {
+      "offsetX": 18,
+      "offsetY": 27,
+      "useFace": true
+    },
+    {
+      "offsetX": 18,
+      "offsetY": 25,
+      "useFace": true
+    },
+    {
+      "offsetX": 14,
+      "offsetY": 30,
+      "useFace": true
+    },
+    {
+      "offsetX": 22,
+      "offsetY": 25,
+      "useFace": true
+    },
+    {
+      "offsetX": 10,
+      "offsetY": 29,
+      "useFace": true
+    },
+    {
+      "offsetX": 11,
+      "offsetY": 26,
+      "useFace": true
+    },
+    {
+      "offsetX": 10,
+      "offsetY": 32,
+      "useFace": true
+    },
+    {
+      "offsetX": 20,
+      "offsetY": 12,
+      "useFace": false
+    },
+    {
+      "offsetX": 20,
+      "offsetY": 12,
+      "useFace": false
+    }
+  ],
+  "enabled": true
 }

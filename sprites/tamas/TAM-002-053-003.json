@@ -423,5 +423,53 @@
     }
   ],
   "animations": [],
-  "variant": "Melody Pop"
+  "variant": "Melody Pop",
+  "bodyAnimAnchors": [
+    {
+      "offsetX": 1,
+      "offsetY": 29,
+      "useFace": true
+    },
+    {
+      "offsetX": 1,
+      "offsetY": 29,
+      "useFace": true
+    },
+    {
+      "offsetX": 1,
+      "offsetY": 30,
+      "useFace": true
+    },
+    {
+      "offsetX": 6,
+      "offsetY": 28,
+      "useFace": true
+    },
+    {
+      "offsetX": 0,
+      "offsetY": 30,
+      "useFace": true
+    },
+    {
+      "offsetX": 0,
+      "offsetY": 29,
+      "useFace": true
+    },
+    {
+      "offsetX": 0,
+      "offsetY": 32,
+      "useFace": true
+    },
+    {
+      "offsetX": 0,
+      "offsetY": 11,
+      "useFace": false
+    },
+    {
+      "offsetX": 0,
+      "offsetY": 11,
+      "useFace": false
+    }
+  ],
+  "enabled": true
 }

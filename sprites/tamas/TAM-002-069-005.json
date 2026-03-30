@@ -168,7 +168,7 @@
       "role": "face_small",
       "rowStart": 306,
       "rowEnd": 334,
-      "frameCount": 17,
+      "frameCount": 16,
       "sprites": [
         {
           "index": 0,
@@ -222,61 +222,61 @@
           "index": 6,
           "x": 402,
           "y": 306,
-          "w": 52,
+          "w": 75,
           "h": 29,
           "label": "neutral_eyes_closed"
         },
         {
           "index": 7,
-          "x": 471,
+          "x": 487,
           "y": 306,
-          "w": 6,
+          "w": 19,
           "h": 29,
           "label": "smile_eyes_closed"
         },
         {
           "index": 8,
-          "x": 487,
+          "x": 555,
           "y": 306,
-          "w": 19,
+          "w": 21,
           "h": 29,
           "label": "eyes_open_happy"
         },
         {
           "index": 9,
-          "x": 555,
+          "x": 619,
           "y": 306,
-          "w": 21,
+          "w": 20,
           "h": 29,
           "label": "eyes_closed_happy"
         },
         {
           "index": 10,
-          "x": 619,
+          "x": 683,
           "y": 306,
-          "w": 20,
+          "w": 22,
           "h": 29,
           "label": "sad_crying"
         },
         {
           "index": 11,
-          "x": 683,
+          "x": 750,
           "y": 306,
-          "w": 22,
+          "w": 21,
           "h": 29,
           "label": "disappointed"
         },
         {
           "index": 12,
-          "x": 750,
+          "x": 819,
           "y": 306,
-          "w": 21,
+          "w": 14,
           "h": 29,
           "label": "fever"
         },
         {
           "index": 13,
-          "x": 819,
+          "x": 883,
           "y": 306,
           "w": 14,
           "h": 29,
@@ -284,7 +284,7 @@
         },
         {
           "index": 14,
-          "x": 883,
+          "x": 949,
           "y": 306,
           "w": 14,
           "h": 29,
@@ -292,18 +292,11 @@
         },
         {
           "index": 15,
-          "x": 949,
+          "x": 1015,
           "y": 306,
           "w": 14,
           "h": 29,
           "label": "contemplating"
-        },
-        {
-          "index": 16,
-          "x": 1015,
-          "y": 306,
-          "w": 14,
-          "h": 29
         }
       ]
     },
@@ -397,5 +390,53 @@
     }
   ],
   "animations": [],
-  "variant": "Wawa Fortune"
+  "variant": "Wawa Fortune",
+  "bodyAnimAnchors": [
+    {
+      "offsetX": 15,
+      "offsetY": 15,
+      "useFace": true
+    },
+    {
+      "offsetX": 19,
+      "offsetY": 14,
+      "useFace": true
+    },
+    {
+      "offsetX": 16,
+      "offsetY": 18,
+      "useFace": true
+    },
+    {
+      "offsetX": 18,
+      "offsetY": 13,
+      "useFace": true
+    },
+    {
+      "offsetX": 12,
+      "offsetY": 17,
+      "useFace": true
+    },
+    {
+      "offsetX": 12,
+      "offsetY": 16,
+      "useFace": true
+    },
+    {
+      "offsetX": 12,
+      "offsetY": 19,
+      "useFace": true
+    },
+    {
+      "offsetX": 16,
+      "offsetY": 11,
+      "useFace": false
+    },
+    {
+      "offsetX": 16,
+      "offsetY": 11,
+      "useFace": false
+    }
+  ],
+  "enabled": true
 }

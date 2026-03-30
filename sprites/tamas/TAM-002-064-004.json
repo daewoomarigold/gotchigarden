@@ -336,7 +336,7 @@
       "index": 5,
       "role": "face_zoom",
       "rowStart": 345,
-      "rowEnd": 407,
+      "rowEnd": 405,
       "frameCount": 9,
       "sprites": [
         {
@@ -344,7 +344,7 @@
           "x": 27,
           "y": 345,
           "w": 74,
-          "h": 63,
+          "h": 61,
           "label": "normal"
         },
         {
@@ -352,7 +352,7 @@
           "x": 157,
           "y": 345,
           "w": 74,
-          "h": 63,
+          "h": 61,
           "label": "eyes_closed"
         },
         {
@@ -360,7 +360,7 @@
           "x": 284,
           "y": 345,
           "w": 83,
-          "h": 63,
+          "h": 61,
           "label": "happy"
         },
         {
@@ -368,7 +368,7 @@
           "x": 417,
           "y": 345,
           "w": 74,
-          "h": 63,
+          "h": 61,
           "label": "crying"
         },
         {
@@ -376,7 +376,7 @@
           "x": 543,
           "y": 345,
           "w": 82,
-          "h": 63,
+          "h": 61,
           "label": "annoyed"
         },
         {
@@ -384,7 +384,7 @@
           "x": 678,
           "y": 345,
           "w": 72,
-          "h": 63,
+          "h": 61,
           "label": "blush_angry"
         },
         {
@@ -392,7 +392,7 @@
           "x": 807,
           "y": 345,
           "w": 77,
-          "h": 63,
+          "h": 61,
           "label": "worried"
         },
         {
@@ -400,7 +400,7 @@
           "x": 932,
           "y": 345,
           "w": 84,
-          "h": 63,
+          "h": 61,
           "label": "blush_happy"
         },
         {
@@ -408,12 +408,60 @@
           "x": 1067,
           "y": 345,
           "w": 74,
-          "h": 63,
+          "h": 61,
           "label": "somber"
         }
       ]
     }
   ],
   "animations": [],
-  "variant": "Ms Tsuyomummy"
+  "variant": "Ms Tsuyomummy",
+  "bodyAnimAnchors": [
+    {
+      "offsetX": 9,
+      "offsetY": 14,
+      "useFace": true
+    },
+    {
+      "offsetX": 10,
+      "offsetY": 13,
+      "useFace": true
+    },
+    {
+      "offsetX": 8,
+      "offsetY": 15,
+      "useFace": true
+    },
+    {
+      "offsetX": 11,
+      "offsetY": 14,
+      "useFace": true
+    },
+    {
+      "offsetX": 7,
+      "offsetY": 15,
+      "useFace": true
+    },
+    {
+      "offsetX": 6,
+      "offsetY": 14,
+      "useFace": true
+    },
+    {
+      "offsetX": 7,
+      "offsetY": 17,
+      "useFace": true
+    },
+    {
+      "offsetX": 11,
+      "offsetY": 10,
+      "useFace": false
+    },
+    {
+      "offsetX": 11,
+      "offsetY": 10,
+      "useFace": false
+    }
+  ],
+  "enabled": true
 }

@@ -208,7 +208,7 @@
       "role": "face_small",
       "rowStart": 325,
       "rowEnd": 351,
-      "frameCount": 20,
+      "frameCount": 16,
       "sprites": [
         {
           "index": 0,
@@ -262,109 +262,81 @@
           "index": 6,
           "x": 416,
           "y": 325,
-          "w": 10,
+          "w": 39,
           "h": 27,
           "label": "neutral_eyes_closed"
         },
         {
           "index": 7,
-          "x": 434,
+          "x": 467,
           "y": 325,
-          "w": 21,
+          "w": 74,
           "h": 27,
           "label": "smile_eyes_closed"
         },
         {
           "index": 8,
-          "x": 467,
+          "x": 569,
           "y": 325,
-          "w": 9,
+          "w": 25,
           "h": 27,
           "label": "eyes_open_happy"
         },
         {
           "index": 9,
-          "x": 484,
+          "x": 637,
           "y": 325,
-          "w": 6,
+          "w": 24,
           "h": 27,
           "label": "eyes_closed_happy"
         },
         {
           "index": 10,
-          "x": 501,
+          "x": 704,
           "y": 325,
-          "w": 23,
+          "w": 25,
           "h": 27,
           "label": "sad_crying"
         },
         {
           "index": 11,
-          "x": 535,
+          "x": 772,
           "y": 325,
-          "w": 6,
+          "w": 25,
           "h": 27,
           "label": "disappointed"
         },
         {
           "index": 12,
-          "x": 569,
+          "x": 841,
           "y": 325,
-          "w": 25,
+          "w": 23,
           "h": 27,
           "label": "fever"
         },
         {
           "index": 13,
-          "x": 637,
+          "x": 908,
           "y": 325,
-          "w": 24,
+          "w": 22,
           "h": 27,
           "label": "surprised"
         },
         {
           "index": 14,
-          "x": 704,
+          "x": 976,
           "y": 325,
-          "w": 25,
+          "w": 22,
           "h": 27,
           "label": "worried"
         },
         {
           "index": 15,
-          "x": 772,
-          "y": 325,
-          "w": 25,
-          "h": 27,
-          "label": "contemplating"
-        },
-        {
-          "index": 16,
-          "x": 841,
-          "y": 325,
-          "w": 23,
-          "h": 27
-        },
-        {
-          "index": 17,
-          "x": 908,
-          "y": 325,
-          "w": 22,
-          "h": 27
-        },
-        {
-          "index": 18,
-          "x": 976,
-          "y": 325,
-          "w": 22,
-          "h": 27
-        },
-        {
-          "index": 19,
           "x": 1044,
           "y": 325,
           "w": 22,
-          "h": 27
+          "h": 27,
+          "label": "contemplating"
         }
       ]
     },
@@ -457,5 +429,53 @@
       ]
     }
   ],
-  "animations": []
+  "animations": [],
+  "bodyAnimAnchors": [
+    {
+      "offsetX": 10,
+      "offsetY": 4,
+      "useFace": true
+    },
+    {
+      "offsetX": 12,
+      "offsetY": 3,
+      "useFace": true
+    },
+    {
+      "offsetX": 11,
+      "offsetY": 5,
+      "useFace": true
+    },
+    {
+      "offsetX": 13,
+      "offsetY": 3,
+      "useFace": true
+    },
+    {
+      "offsetX": 9,
+      "offsetY": 5,
+      "useFace": true
+    },
+    {
+      "offsetX": 6,
+      "offsetY": 4,
+      "useFace": true
+    },
+    {
+      "offsetX": 7,
+      "offsetY": 8,
+      "useFace": true
+    },
+    {
+      "offsetX": 10,
+      "offsetY": 9,
+      "useFace": false
+    },
+    {
+      "offsetX": 10,
+      "offsetY": 9,
+      "useFace": false
+    }
+  ],
+  "enabled": true
 }

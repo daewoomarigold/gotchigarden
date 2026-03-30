@@ -426,7 +426,7 @@
   "enabled": true,
   "bodyAnimAnchors": [
     {
-      "offsetX": 9,
+      "offsetX": 10,
       "offsetY": 20,
       "useFace": true
     },
@@ -456,18 +456,18 @@
       "useFace": true
     },
     {
-      "offsetX": 8,
+      "offsetX": 9,
       "offsetY": 23,
       "useFace": true
     },
     {
-      "offsetX": 0,
-      "offsetY": 0,
+      "offsetX": 10,
+      "offsetY": 9,
       "useFace": false
     },
     {
-      "offsetX": 0,
-      "offsetY": 0,
+      "offsetX": 10,
+      "offsetY": 9,
       "useFace": false
     }
   ]

@@ -427,7 +427,7 @@
   "bodyAnimAnchors": [
     {
       "offsetX": 8,
-      "offsetY": 19,
+      "offsetY": 18,
       "useFace": true
     },
     {
@@ -437,12 +437,17 @@
     },
     {
       "offsetX": 8,
-      "offsetY": 21,
+      "offsetY": 19,
       "useFace": true
     },
     {
       "offsetX": 11,
-      "offsetY": 17,
+      "offsetY": 18,
+      "useFace": true
+    },
+    {
+      "offsetX": 5,
+      "offsetY": 20,
       "useFace": true
     },
     {
@@ -451,23 +456,18 @@
       "useFace": true
     },
     {
-      "offsetX": 5,
-      "offsetY": 18,
-      "useFace": true
-    },
-    {
-      "offsetX": 5,
+      "offsetX": 4,
       "offsetY": 23,
       "useFace": true
     },
     {
-      "offsetX": 0,
-      "offsetY": 0,
+      "offsetX": 8,
+      "offsetY": 9,
       "useFace": false
     },
     {
-      "offsetX": 0,
-      "offsetY": 0,
+      "offsetX": 8,
+      "offsetY": 9,
       "useFace": false
     }
   ]

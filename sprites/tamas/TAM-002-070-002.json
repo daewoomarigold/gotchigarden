@@ -383,5 +383,53 @@
     }
   ],
   "animations": [],
-  "variant": "Little Weep"
+  "variant": "Little Weep",
+  "bodyAnimAnchors": [
+    {
+      "offsetX": 17,
+      "offsetY": 23,
+      "useFace": true
+    },
+    {
+      "offsetX": 17,
+      "offsetY": 22,
+      "useFace": true
+    },
+    {
+      "offsetX": 17,
+      "offsetY": 30,
+      "useFace": true
+    },
+    {
+      "offsetX": 18,
+      "offsetY": 22,
+      "useFace": true
+    },
+    {
+      "offsetX": 10,
+      "offsetY": 25,
+      "useFace": true
+    },
+    {
+      "offsetX": 11,
+      "offsetY": 23,
+      "useFace": true
+    },
+    {
+      "offsetX": 10,
+      "offsetY": 32,
+      "useFace": true
+    },
+    {
+      "offsetX": 19,
+      "offsetY": 11,
+      "useFace": false
+    },
+    {
+      "offsetX": 19,
+      "offsetY": 11,
+      "useFace": false
+    }
+  ],
+  "enabled": true
 }

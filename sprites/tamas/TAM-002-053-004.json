@@ -423,5 +423,53 @@
     }
   ],
   "animations": [],
-  "variant": "Nami Poptchi"
+  "variant": "Nami Poptchi",
+  "bodyAnimAnchors": [
+    {
+      "offsetX": 6,
+      "offsetY": 20,
+      "useFace": true
+    },
+    {
+      "offsetX": 6,
+      "offsetY": 20,
+      "useFace": true
+    },
+    {
+      "offsetX": 6,
+      "offsetY": 21,
+      "useFace": true
+    },
+    {
+      "offsetX": 7,
+      "offsetY": 19,
+      "useFace": true
+    },
+    {
+      "offsetX": 1,
+      "offsetY": 21,
+      "useFace": true
+    },
+    {
+      "offsetX": 1,
+      "offsetY": 20,
+      "useFace": true
+    },
+    {
+      "offsetX": 1,
+      "offsetY": 23,
+      "useFace": true
+    },
+    {
+      "offsetX": 6,
+      "offsetY": 9,
+      "useFace": false
+    },
+    {
+      "offsetX": 6,
+      "offsetY": 9,
+      "useFace": false
+    }
+  ],
+  "enabled": true
 }

@@ -206,23 +206,6 @@
     {
       "index": 4,
       "role": "face_small",
-      "rowStart": 324,
-      "rowEnd": 331,
-      "frameCount": 1,
-      "sprites": [
-        {
-          "index": 0,
-          "x": 440,
-          "y": 324,
-          "w": 9,
-          "h": 8,
-          "label": "normal"
-        }
-      ]
-    },
-    {
-      "index": 5,
-      "role": "face_zoom",
       "rowStart": 338,
       "rowEnd": 350,
       "frameCount": 16,
@@ -241,7 +224,7 @@
           "y": 338,
           "w": 21,
           "h": 13,
-          "label": "eyes_closed"
+          "label": "blush"
         },
         {
           "index": 2,
@@ -257,7 +240,7 @@
           "y": 338,
           "w": 21,
           "h": 13,
-          "label": "crying"
+          "label": "annoyed"
         },
         {
           "index": 4,
@@ -265,7 +248,7 @@
           "y": 338,
           "w": 23,
           "h": 13,
-          "label": "annoyed"
+          "label": "normal_2"
         },
         {
           "index": 5,
@@ -273,15 +256,15 @@
           "y": 338,
           "w": 23,
           "h": 13,
-          "label": "blush_angry"
+          "label": "wowed"
         },
         {
           "index": 6,
           "x": 424,
-          "y": 338,
+          "y": 324,
           "w": 40,
-          "h": 13,
-          "label": "worried"
+          "h": 27,
+          "label": "neutral_eyes_closed"
         },
         {
           "index": 7,
@@ -289,7 +272,7 @@
           "y": 338,
           "w": 26,
           "h": 13,
-          "label": "blush_happy"
+          "label": "smile_eyes_closed"
         },
         {
           "index": 8,
@@ -297,59 +280,195 @@
           "y": 338,
           "w": 27,
           "h": 13,
-          "label": "somber"
+          "label": "eyes_open_happy"
         },
         {
           "index": 9,
           "x": 635,
           "y": 338,
           "w": 25,
-          "h": 13
+          "h": 13,
+          "label": "eyes_closed_happy"
         },
         {
           "index": 10,
           "x": 703,
           "y": 338,
           "w": 25,
-          "h": 13
+          "h": 13,
+          "label": "sad_crying"
         },
         {
           "index": 11,
           "x": 771,
           "y": 338,
           "w": 25,
-          "h": 13
+          "h": 13,
+          "label": "disappointed"
         },
         {
           "index": 12,
           "x": 841,
           "y": 338,
           "w": 21,
-          "h": 13
+          "h": 13,
+          "label": "fever"
         },
         {
           "index": 13,
           "x": 907,
           "y": 338,
           "w": 21,
-          "h": 13
+          "h": 13,
+          "label": "surprised"
         },
         {
           "index": 14,
           "x": 975,
           "y": 338,
           "w": 21,
-          "h": 13
+          "h": 13,
+          "label": "worried"
         },
         {
           "index": 15,
           "x": 1043,
           "y": 338,
           "w": 21,
-          "h": 13
+          "h": 13,
+          "label": "contemplating"
+        }
+      ]
+    },
+    {
+      "index": 5,
+      "role": "face_zoom",
+      "rowStart": 375,
+      "rowEnd": 416,
+      "frameCount": 9,
+      "sprites": [
+        {
+          "index": 0,
+          "x": 35,
+          "y": 375,
+          "w": 66,
+          "h": 42,
+          "label": "normal"
+        },
+        {
+          "index": 1,
+          "x": 167,
+          "y": 375,
+          "w": 66,
+          "h": 42,
+          "label": "eyes_closed"
+        },
+        {
+          "index": 2,
+          "x": 290,
+          "y": 375,
+          "w": 84,
+          "h": 42,
+          "label": "happy"
+        },
+        {
+          "index": 3,
+          "x": 426,
+          "y": 375,
+          "w": 71,
+          "h": 42,
+          "label": "crying"
+        },
+        {
+          "index": 4,
+          "x": 560,
+          "y": 375,
+          "w": 72,
+          "h": 42,
+          "label": "annoyed"
+        },
+        {
+          "index": 5,
+          "x": 668,
+          "y": 375,
+          "w": 120,
+          "h": 42,
+          "label": "blush_angry"
+        },
+        {
+          "index": 6,
+          "x": 827,
+          "y": 375,
+          "w": 80,
+          "h": 42,
+          "label": "worried"
+        },
+        {
+          "index": 7,
+          "x": 949,
+          "y": 375,
+          "w": 86,
+          "h": 42,
+          "label": "blush_happy"
+        },
+        {
+          "index": 8,
+          "x": 1091,
+          "y": 375,
+          "w": 66,
+          "h": 42,
+          "label": "somber"
         }
       ]
     }
   ],
-  "animations": []
+  "animations": [],
+  "bodyAnimAnchors": [
+    {
+      "offsetX": 8,
+      "offsetY": 11,
+      "useFace": true
+    },
+    {
+      "offsetX": 8,
+      "offsetY": 10,
+      "useFace": true
+    },
+    {
+      "offsetX": 7,
+      "offsetY": 12,
+      "useFace": true
+    },
+    {
+      "offsetX": 7,
+      "offsetY": 9,
+      "useFace": true
+    },
+    {
+      "offsetX": 6,
+      "offsetY": 12,
+      "useFace": true
+    },
+    {
+      "offsetX": 6,
+      "offsetY": 11,
+      "useFace": true
+    },
+    {
+      "offsetX": 5,
+      "offsetY": 16,
+      "useFace": true
+    },
+    {
+      "offsetX": 13,
+      "offsetY": 9,
+      "useFace": false
+    },
+    {
+      "offsetX": 13,
+      "offsetY": 9,
+      "useFace": false
+    }
+  ],
+  "enabled": true
 }

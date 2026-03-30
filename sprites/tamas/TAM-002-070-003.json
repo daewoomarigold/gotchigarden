@@ -336,7 +336,7 @@
       "index": 5,
       "role": "face_zoom",
       "rowStart": 356,
-      "rowEnd": 407,
+      "rowEnd": 405,
       "frameCount": 9,
       "sprites": [
         {
@@ -344,7 +344,7 @@
           "x": 39,
           "y": 356,
           "w": 56,
-          "h": 52,
+          "h": 50,
           "label": "normal"
         },
         {
@@ -352,7 +352,7 @@
           "x": 168,
           "y": 356,
           "w": 56,
-          "h": 52,
+          "h": 50,
           "label": "eyes_closed"
         },
         {
@@ -360,7 +360,7 @@
           "x": 296,
           "y": 356,
           "w": 62,
-          "h": 52,
+          "h": 50,
           "label": "happy"
         },
         {
@@ -368,7 +368,7 @@
           "x": 425,
           "y": 356,
           "w": 66,
-          "h": 52,
+          "h": 50,
           "label": "crying"
         },
         {
@@ -376,7 +376,7 @@
           "x": 555,
           "y": 356,
           "w": 62,
-          "h": 52,
+          "h": 50,
           "label": "annoyed"
         },
         {
@@ -384,7 +384,7 @@
           "x": 689,
           "y": 356,
           "w": 56,
-          "h": 52,
+          "h": 50,
           "label": "blush_angry"
         },
         {
@@ -392,7 +392,7 @@
           "x": 818,
           "y": 356,
           "w": 72,
-          "h": 52,
+          "h": 50,
           "label": "worried"
         },
         {
@@ -400,7 +400,7 @@
           "x": 944,
           "y": 356,
           "w": 65,
-          "h": 52,
+          "h": 50,
           "label": "blush_happy"
         },
         {
@@ -408,12 +408,60 @@
           "x": 1078,
           "y": 356,
           "w": 56,
-          "h": 52,
+          "h": 50,
           "label": "somber"
         }
       ]
     }
   ],
   "animations": [],
-  "variant": "Nemo Weeptchi"
+  "variant": "Nemo Weeptchi",
+  "bodyAnimAnchors": [
+    {
+      "offsetX": 12,
+      "offsetY": 23,
+      "useFace": true
+    },
+    {
+      "offsetX": 12,
+      "offsetY": 21,
+      "useFace": true
+    },
+    {
+      "offsetX": 10,
+      "offsetY": 27,
+      "useFace": true
+    },
+    {
+      "offsetX": 13,
+      "offsetY": 21,
+      "useFace": true
+    },
+    {
+      "offsetX": 9,
+      "offsetY": 24,
+      "useFace": true
+    },
+    {
+      "offsetX": 9,
+      "offsetY": 22,
+      "useFace": true
+    },
+    {
+      "offsetX": 8,
+      "offsetY": 29,
+      "useFace": true
+    },
+    {
+      "offsetX": 14,
+      "offsetY": 11,
+      "useFace": false
+    },
+    {
+      "offsetX": 14,
+      "offsetY": 11,
+      "useFace": false
+    }
+  ],
+  "enabled": true
 }
