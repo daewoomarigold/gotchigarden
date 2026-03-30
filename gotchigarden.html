@@ -1884,7 +1884,7 @@ class GotchiCell {
 
     this.wrap.appendChild(vp);
     this.wrap.appendChild(plate);
-    this.wrap.addEventListener('click', () => selectStudent(this.student.id));
+    this.wrap.addEventListener('click', () => { playTap(); selectStudent(this.student.id); });
     container.appendChild(this.wrap);
   }
 
@@ -2240,6 +2240,7 @@ function buildPetRoster(cell) {
     card.appendChild(c);
     card.appendChild(label);
     card.addEventListener('click', () => {
+      playTap();
       selectedPetIdx = idx;
       buildPetRoster(cell);
       buildPetActions(cell);
