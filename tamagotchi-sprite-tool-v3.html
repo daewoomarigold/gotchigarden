@@ -1110,13 +1110,18 @@ function refineFaceSmall(sprites, pixels, w, bandRow1, bandRow2) {
   }
   merged = fwdPass;
 
-  // ── Step 2: re-split wide groups using a tight gap ───────────────────────
-  // Only do this when we still have too few sprites (under-split scenario)
+  // ── Step 2: re-split wide groups using a meaningful gap ──────────────────
+  // Only fires when we have too few sprites (under-split scenario).
+  // Uses a REAL_SPLIT_GAP of 20px — the minimum observed gap between any two
+  // real separate sprites is 23px, so any internal gap < 20px is sprite texture,
+  // not a true boundary. This prevents the fever expression (internal gaps 3-7px)
+  // from being shredded into sub-sprites.
+  const REAL_SPLIT_GAP = 20;
   if (merged.length < TARGET) {
     const resplit = [];
     for (const sp of merged) {
       if (sp.w > WIDE_SPLIT_W) {
-        // Re-run column scan within this sprite's x range using tight gap
+        // Re-run column scan within this sprite's x range
         const colMax = new Float32Array(sp.w);
         for (let x = 0; x < sp.w; x++) {
           let mx = 0;
@@ -1131,11 +1136,11 @@ function refineFaceSmall(sprites, pixels, w, bandRow1, bandRow2) {
         if (!active.length) { resplit.push(sp); continue; }
         const segs = []; let cs = active[0];
         for (let i = 1; i < active.length; i++) {
-          if (active[i] - active[i-1] > TIGHT_GAP) { segs.push([cs, active[i-1]]); cs = active[i]; }
+          if (active[i] - active[i-1] > REAL_SPLIT_GAP) { segs.push([cs, active[i-1]]); cs = active[i]; }
         }
         segs.push([cs, active[active.length-1]]);
         if (segs.length <= 1) {
-          // Didn't split — keep as-is (legitimately wide sprite like fever or neutral_eyes_closed)
+          // No real boundary found — legitimately wide sprite, keep as-is
           resplit.push(sp);
         } else {
           for (const [lx, rx] of segs) {
