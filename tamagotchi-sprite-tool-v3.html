@@ -1110,18 +1110,19 @@ function refineFaceSmall(sprites, pixels, w, bandRow1, bandRow2) {
   }
   merged = fwdPass;
 
-  // ── Step 2: re-split wide groups using a meaningful gap ──────────────────
-  // Only fires when we have too few sprites (under-split scenario).
-  // Uses a REAL_SPLIT_GAP of 20px — the minimum observed gap between any two
-  // real separate sprites is 23px, so any internal gap < 20px is sprite texture,
-  // not a true boundary. This prevents the fever expression (internal gaps 3-7px)
-  // from being shredded into sub-sprites.
-  const REAL_SPLIT_GAP = 20;
+  // ── Step 2: re-split wide groups (under-split scenario) ──────────────────
+  // Fires when count < TARGET. Scans inside any wide group for a "real" boundary.
+  // Strategy: split at the FIRST gap > EXPR_SPLIT_GAP (3px) that comes after a
+  // "substantial" leading sub-segment (w >= 20px). Everything after the first
+  // split point is re-merged into one blob regardless of internal gaps — this
+  // handles cases like: [face w=23][gap=4][cloud1 w=15][gap=3][cloud2 w=15][gap=7][cloud3 w=20]
+  // → splits into [face] and [all-clouds-merged], not 4 pieces.
+  const EXPR_SPLIT_GAP   = 3;   // gap > this triggers split (after a substantial first seg)
+  const SUBSTANTIAL_W    = 20;  // first sub-seg must be at least this wide to allow split
   if (merged.length < TARGET) {
     const resplit = [];
     for (const sp of merged) {
       if (sp.w > WIDE_SPLIT_W) {
-        // Re-run column scan within this sprite's x range
         const colMax = new Float32Array(sp.w);
         for (let x = 0; x < sp.w; x++) {
           let mx = 0;
@@ -1134,24 +1135,57 @@ function refineFaceSmall(sprites, pixels, w, bandRow1, bandRow2) {
         const active = [];
         for (let x = 0; x < sp.w; x++) if (colMax[x] > BG_THRESH) active.push(x);
         if (!active.length) { resplit.push(sp); continue; }
-        const segs = []; let cs = active[0];
+
+        // Build raw sub-segments at gap > EXPR_SPLIT_GAP
+        const rawSegs = []; let cs = active[0];
         for (let i = 1; i < active.length; i++) {
-          if (active[i] - active[i-1] > REAL_SPLIT_GAP) { segs.push([cs, active[i-1]]); cs = active[i]; }
+          if (active[i] - active[i-1] > EXPR_SPLIT_GAP) { rawSegs.push([cs, active[i-1]]); cs = active[i]; }
         }
-        segs.push([cs, active[active.length-1]]);
-        if (segs.length <= 1) {
-          // No real boundary found — legitimately wide sprite, keep as-is
-          resplit.push(sp);
+        rawSegs.push([cs, active[active.length-1]]);
+
+        // Only actually split if: first sub-seg is substantial AND there are 2+ segs
+        const firstW = rawSegs[0][1] - rawSegs[0][0] + 1;
+        if (rawSegs.length >= 2 && firstW >= SUBSTANTIAL_W) {
+          // First sub-seg becomes its own sprite
+          resplit.push({ x: sp.x + rawSegs[0][0], y: sp.y, w: firstW, h: sp.h });
+          // All remaining sub-segs merge into one sprite
+          const restX = rawSegs[1][0];
+          const restEnd = rawSegs[rawSegs.length - 1][1];
+          resplit.push({ x: sp.x + restX, y: sp.y, w: restEnd - restX + 1, h: sp.h });
         } else {
-          for (const [lx, rx] of segs) {
-            resplit.push({ x: sp.x + lx, y: sp.y, w: rx - lx + 1, h: sp.h });
-          }
+          resplit.push(sp);
         }
       } else {
         resplit.push(sp);
       }
     }
     merged = resplit;
+  }
+
+  // ── Step 2b: cluster merge (over-split scenario) ──────────────────────────
+  // Fires when count > TARGET. Consecutive groups with gaps < CLUSTER_GAP are
+  // abnormally close (real inter-sprite minimum is 23px) and belong together.
+  // Merges them greedily until count reaches TARGET or no more clusters exist.
+  const CLUSTER_GAP = 15;
+  if (merged.length > TARGET) {
+    let changed = true;
+    while (changed && merged.length > TARGET) {
+      changed = false;
+      // Find the smallest gap between adjacent groups
+      let minGap = Infinity, minIdx = -1;
+      for (let i = 1; i < merged.length; i++) {
+        const gap = merged[i].x - (merged[i-1].x + merged[i-1].w);
+        if (gap < CLUSTER_GAP && gap < minGap) { minGap = gap; minIdx = i; }
+      }
+      if (minIdx === -1) break; // no more cluster gaps
+      // Merge minIdx-1 and minIdx
+      const a = merged[minIdx - 1];
+      const b = merged[minIdx];
+      const newRight = b.x + b.w;
+      a.w = newRight - a.x;
+      merged.splice(minIdx, 1);
+      changed = true;
+    }
   }
 
   // ── Step 3: trim phantoms from the end if over TARGET ────────────────────
