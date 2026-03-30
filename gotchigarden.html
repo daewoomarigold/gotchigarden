@@ -701,7 +701,7 @@ header {
     <div class="panel-title">Confirm Purchase</div>
     <div id="buy-confirm-text" style="font-size:12px;color:var(--muted);line-height:1.6;"></div>
     <div class="btn-row">
-      <button class="btn yellow full" id="btn-buy-confirm-yes">✓ Buy</button>
+      <button class="btn yellow full" id="btn-buy-confirm-yes" onclick="playYes()">✓ Buy</button>
       <button class="btn full" onclick="closeOverlay('overlay-buy-confirm')">✕ Cancel</button>
     </div>
   </div>
@@ -777,12 +777,27 @@ const PAGES_BASE = `https://${GITHUB_USER}.github.io/${GITHUB_REPO}`;
 
 // ─── AUDIO ────────────────────────────────────────────────────────────────
 const _sfxAddPoint = new Audio(`${PAGES_BASE}/addpoint.mp3`);
-_sfxAddPoint.preload = 'auto';
+const _sfxTap      = new Audio(`${PAGES_BASE}/tap.mp3`);
+const _sfxYes      = new Audio(`${PAGES_BASE}/yes.mp3`);
+[_sfxAddPoint, _sfxTap, _sfxYes].forEach(a => a.preload = 'auto');
+
 function playAddPoint() {
-  const s = _sfxAddPoint.cloneNode(); // allow overlapping plays
-  s.volume = 0.6;
-  s.play().catch(() => {}); // silently ignore if blocked before user gesture
+  const s = _sfxAddPoint.cloneNode(); s.volume = 0.6; s.play().catch(() => {});
 }
+function playTap() {
+  const s = _sfxTap.cloneNode(); s.volume = 0.5; s.play().catch(() => {});
+}
+function playYes() {
+  const s = _sfxYes.cloneNode(); s.volume = 0.6; s.play().catch(() => {});
+}
+
+// Global button tap sound — fires for every button/a click except confirm-yes (handled separately)
+document.addEventListener('click', e => {
+  const btn = e.target.closest('button, a[role="button"]');
+  if (!btn) return;
+  if (btn.id === 'btn-buy-confirm-yes') return; // yes.mp3 handled on confirm
+  playTap();
+}, { capture: true });
 
 const TAMA_PATH = 'sprites/tamas';
 const BG_PATH   = 'sprites/background';
