@@ -771,6 +771,10 @@ function rawUrl(folder, filename) {
 }
 
 // ─── SUPABASE ─────────────────────────────────────────────────────────────
+// ─── DB MIGRATION NEEDED ───────────────────────────────────────────────────
+// Run this SQL once in Supabase SQL editor if fed_at column doesn't exist:
+//   ALTER TABLE pets ADD COLUMN IF NOT EXISTS fed_at timestamptz;
+// ─────────────────────────────────────────────────────────────────────────────
 const SUPABASE_URL  = 'https://jhjgdcobpzfrvbmxumsc.supabase.co';
 const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpoamdkY29icHpmcnZibXh1bXNjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ2NzYzOTksImV4cCI6MjA5MDI1MjM5OX0.N_FlCBAusOVM6oKgxBJdHMhimLNpklJIiTCYav3R4F8';
 const db = supabase.createClient(SUPABASE_URL, SUPABASE_ANON, {
@@ -960,11 +964,27 @@ async function loadTamaDex() {
 
 // ─── FOOD SYSTEM ──────────────────────────────────────────────────────────
 const FOODS = [
-  { id: 'food_basic_a',   name: 'Basic Food A',   tier: 'basic',   cost: 2,  icon: '🍙', desc: 'Standard evolution path' },
-  { id: 'food_basic_b',   name: 'Basic Food B',   tier: 'basic',   cost: 2,  icon: '🍎', desc: 'Standard evolution path' },
-  { id: 'food_premium_a', name: 'Premium Food A', tier: 'premium', cost: 8,  icon: '🍱', desc: 'Variant-capable evolution path' },
-  { id: 'food_premium_b', name: 'Premium Food B', tier: 'premium', cost: 8,  icon: '🍣', desc: 'Variant-capable evolution path' },
+  { id: 'food_basic',   name: 'Basic Food',   tier: 'basic',   cost: 2,  icon: '🍙', desc: 'Standard evolution path' },
+  { id: 'food_premium', name: 'Premium Food', tier: 'premium', cost: 8,  icon: '🍱', desc: 'Variant-capable evolution path' },
 ];
+
+const EVOLVE_WAIT_DAYS = 6; // babies must wait this many days after feeding to evolve
+
+function daysSinceFed(pet) {
+  if (!pet.fedAt) return 0;
+  return (Date.now() - new Date(pet.fedAt).getTime()) / (1000 * 60 * 60 * 24);
+}
+
+function isEvolveReady(pet) {
+  if (pet.stage !== 'baby') return true; // adults can always evolve (to variant, later)
+  if (!pet.fedWith) return false;        // must be fed first
+  return daysSinceFed(pet) >= EVOLVE_WAIT_DAYS;
+}
+
+function daysUntilReady(pet) {
+  if (!pet.fedAt) return EVOLVE_WAIT_DAYS;
+  return Math.max(0, Math.ceil(EVOLVE_WAIT_DAYS - daysSinceFed(pet)));
+}
 
 // A tama is variant-capable if a sibling with same family# but slot > 000 exists
 function isVariantCapable(charId, dex) {
@@ -1202,6 +1222,16 @@ async function triggerEvolve(studentId, petIdx = 0) {
   // Baby must be fed before evolving
   if (pet.stage === 'baby' && !pet.fedWith) {
     toast('🍙 Feed me first!'); return;
+  }
+
+  // Baby must have waited 6 days since feeding
+  if (pet.stage === 'baby') {
+    const ready = isEvolveReady(pet);
+    if (!ready) {
+      const daysLeft = daysUntilReady(pet);
+      toast(`⏳ ${daysLeft} day${daysLeft !== 1 ? 's' : ''} until evolution is ready`);
+      return;
+    }
   }
 
   // Check cost
@@ -1591,6 +1621,9 @@ class Pet {
       this.minY = minY; this.maxY = maxY;
       this._lastTick  = 0;
       this._forced    = null;
+      // Feed/evolution tracking (populated from DB after construction)
+      this.fedWith = null;
+      this.fedAt   = null;
     }
   }
 
@@ -1805,6 +1838,7 @@ class GotchiCell {
           } else {
             const pet = await this.addTama(dbPet.char_id, dbPet.id);
             if (pet) pet.fedWith = dbPet.fed_with || null;
+            if (pet) pet.fedAt   = dbPet.fed_at   || null;
           }
         }
       }
@@ -2193,14 +2227,32 @@ function buildPetActions(cell) {
       body.appendChild(fedDiv);
     }
 
-    // Evolve button — only if fed
+    // Evolve button — only if fed and 6-day wait complete
     const nextStage = getNextStage(pet.stage);
     if (nextStage) {
-      const isFed = !!pet.fedWith;
-      const btn   = document.createElement('button');
-      btn.className = 'btn btn-full auth-gated' + (!currentUser || !isFed ? ' locked' : '');
-      btn.style.cssText = `border-color:${isFed ? 'var(--cyan)' : 'var(--muted)'};color:${isFed ? 'var(--cyan)' : 'var(--muted)'};margin-top:4px;`;
-      btn.textContent = isFed ? `✨ Evolve (${EVOLVE_COST} pt)` : '🍙 Feed me first!';
+      const isFed   = !!pet.fedWith;
+      const isReady = isEvolveReady(pet);
+      const daysLeft = daysUntilReady(pet);
+      const btn = document.createElement('button');
+
+      let label, color, locked;
+      if (!isFed) {
+        label  = '🍙 Feed me first!';
+        color  = 'var(--muted)';
+        locked = true;
+      } else if (!isReady) {
+        label  = `⏳ Ready in ${daysLeft} day${daysLeft !== 1 ? 's' : ''}`;
+        color  = 'var(--muted)';
+        locked = true;
+      } else {
+        label  = `✨ Evolve (${EVOLVE_COST} pt)`;
+        color  = 'var(--cyan)';
+        locked = false;
+      }
+
+      btn.className = 'btn btn-full auth-gated' + (!currentUser || locked ? ' locked' : '');
+      btn.style.cssText = `border-color:${color};color:${color};margin-top:4px;`;
+      btn.textContent = label;
       btn.addEventListener('click', () => triggerEvolve(selected, selectedPetIdx));
       body.appendChild(btn);
     }
@@ -2453,8 +2505,8 @@ function purchaseFood(food, pet) {
   document.getElementById('buy-confirm-text').innerHTML =
     `Feed <strong style="color:var(--text);">${food.icon} ${food.name}</strong><br>
      to your baby tama?<br>
-     <span style="font-size:10px;color:var(--orange);">${food.tier === 'premium' ? '✨ Unlocks variant-capable evolution path' : 'Standard evolution path'}</span><br>
-     <span style="font-size:10px;color:var(--muted);">Cost: ${food.cost} pt · Balance after: ${student.gotchiPoints - food.cost} pts</span>`;
+     <span style="font-size:10px;color:${food.tier === 'premium' ? 'var(--orange)' : 'var(--green)'};">${food.tier === 'premium' ? '✨ Unlocks variant-capable evolution path' : '🌱 Standard evolution path'}</span><br>
+     <span style="font-size:10px;color:var(--muted);">Evolution ready in ${EVOLVE_WAIT_DAYS} days · Cost: ${food.cost} pt · Balance after: ${student.gotchiPoints - food.cost} pts</span>`;
 
   const confirmBtn = document.getElementById('btn-buy-confirm-yes');
   const handler = async () => {
@@ -2469,8 +2521,10 @@ function purchaseFood(food, pet) {
     dbUpdateStudent(student.id, { gotchi_pts: student.gotchiPoints });
 
     // Feed the pet
+    const fedAt = new Date().toISOString();
     pet.fedWith = food.id;
-    if (pet.dbId) dbUpsertPet({ id: pet.dbId, fed_with: food.id });
+    pet.fedAt   = fedAt;
+    if (pet.dbId) dbUpsertPet({ id: pet.dbId, fed_with: food.id, fed_at: fedAt });
 
     // Refresh actions panel
     const cell = cells.find(c => c.student.id === selected);
