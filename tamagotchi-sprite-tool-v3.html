@@ -1972,8 +1972,12 @@ function drawAnchorPreview(entry, off, bodyBand, faceBand) {
   }
   ctx.drawImage(off,bodySp.x,bodySp.y,bodySp.w,bodySp.h,0,0,bodySp.w*S,bodySp.h*S);
   if(faceSp&&anc.useFace!==false){
+    // Center-based: offset = face_center - body_center
+    // draw_x = body_center + offsetX - face_w/2
+    const drawX = (bodySp.w/2 + anc.offsetX - faceSp.w/2) * S;
+    const drawY = (bodySp.h/2 + anc.offsetY - faceSp.h/2) * S;
     ctx.drawImage(off,faceSp.x,faceSp.y,faceSp.w,faceSp.h,
-      anc.offsetX*S,anc.offsetY*S,faceSp.w*S,faceSp.h*S);
+      drawX,drawY,faceSp.w*S,faceSp.h*S);
   }
 }
 
@@ -1992,8 +1996,13 @@ function buildAnchorPreviewGrid(entry, off, bodyBand, faceBand) {
       ctx.fillStyle=((x/6+y/6)%2===0)?'#1a1a2e':'#0e0e1a'; ctx.fillRect(x,y,6,6);
     }
     ctx.drawImage(off,bodySp.x,bodySp.y,bodySp.w,bodySp.h,0,0,bodySp.w*S,bodySp.h*S);
-    if(faceSp) ctx.drawImage(off,faceSp.x,faceSp.y,faceSp.w,faceSp.h,
-      anc.offsetX*S,anc.offsetY*S,faceSp.w*S,faceSp.h*S);
+    if(faceSp){
+      // Center-based: offset = face_center - body_center
+      const drawX = (bodySp.w/2 + anc.offsetX - faceSp.w/2) * S;
+      const drawY = (bodySp.h/2 + anc.offsetY - faceSp.h/2) * S;
+      ctx.drawImage(off,faceSp.x,faceSp.y,faceSp.w,faceSp.h,
+        drawX,drawY,faceSp.w*S,faceSp.h*S);
+    }
     grid.appendChild(c);
   });
 }
@@ -2506,8 +2515,9 @@ function renderPreview() {
       band.sprites?.forEach((sprite, i) => {
         const anchor = PREVIEW.json.bodyAnimAnchors[i];
         if (!anchor?.useFace) return;
-        const ax = (sprite.x + anchor.offsetX) * S;
-        const ay = (sprite.y + anchor.offsetY) * S;
+        // Center-based: anchor point = body_center + offset
+        const ax = (sprite.x + sprite.w/2 + anchor.offsetX) * S;
+        const ay = (sprite.y + sprite.h/2 + anchor.offsetY) * S;
         // Crosshair
         ctx.strokeStyle = '#ff9f6b';
         ctx.lineWidth = 1;
