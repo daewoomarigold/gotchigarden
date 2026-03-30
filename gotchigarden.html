@@ -1212,7 +1212,7 @@ function spotlightAnnounce(text, duration = 3000) {
 }
 
 // ─── EVOLVE SEQUENCE (baby→adult, adult→variant) ──────────────────────────
-async function triggerEvolve(studentId, petIdx = 0) {
+async function triggerEvolve(studentId, petIdx = 0, force = false) {
   const cell = cells.find(c => c.student.id === studentId);
   if (!cell) return;
   const pet     = cell.pets[petIdx];
@@ -1225,7 +1225,7 @@ async function triggerEvolve(studentId, petIdx = 0) {
   }
 
   // Baby must have waited 6 days since feeding
-  if (pet.stage === 'baby') {
+  if (pet.stage === 'baby' && !force) {
     const ready = isEvolveReady(pet);
     if (!ready) {
       const daysLeft = daysUntilReady(pet);
@@ -2427,7 +2427,7 @@ document.getElementById('btn-debug-evolve').addEventListener('click', () => {
   const pet = cell.pets[selectedPetIdx];
   if (!pet) return;
   if (pet.stage === 'egg') triggerHatch(selected, selectedPetIdx);
-  else triggerEvolve(selected, selectedPetIdx);
+  else triggerEvolve(selected, selectedPetIdx, true); // true = bypass time gate
 });
 
 document.getElementById('btn-debug-undo').addEventListener('click', async () => {
