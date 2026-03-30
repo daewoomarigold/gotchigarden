@@ -1029,46 +1029,63 @@ function guessRoles(bands, gen) {
 // FACE_SMALL POST-PROCESSING  (refineFaceSmall)
 // ═══════════════════════════════════════════════════════════════════════════
 // Problems this fixes:
-//  1. OVER-SPLIT: accent/stray pixels after a wide sprite get their own
-//     detection group, shifting all labels right and creating a phantom 17th.
-//     Fix: tiny groups (w < STRAY_W) that immediately follow a wider sprite
-//     with gap <= ACCENT_GAP are merged into that preceding sprite.
-//  2. UNDER-SPLIT: sprites that share a column or are very close horizontally
-//     are detected as one huge group.
-//     Fix: after accent merging, any remaining group wider than WIDE_SPLIT_W
-//     is re-examined at a tighter gap (TIGHT_GAP) to see if it should split.
-//  3. PHANTOM TRIM: if we still have > 16 sprites after merging, trim from
-//     the end as long as the last sprite is a plausible stray (w < STRAY_W
-//     OR it starts past x=1010 on a standard 1080-wide sheet).
+//  1a. BACKWARD ACCENT: tiny trailing pixel group after a wide sprite (e.g.
+//      fire breath accent after neutral_eyes_closed). Merged into predecessor.
+//  1b. FORWARD ACCENT: tiny leading pixel group before a sprite (e.g. heart
+//      floating above annoyed on Kuromi Gao). Detected when gap_to_next <
+//      gap_from_prev — the accent belongs to the following sprite.
+//  2.  UNDER-SPLIT: two sprites merged into one wide group. Re-scanned at
+//      tight gap to separate them.
+//  3.  PHANTOM TRIM: >16 sprites after merging — trim from end.
 
 function refineFaceSmall(sprites, pixels, w, bandRow1, bandRow2) {
   if (!sprites.length) return sprites;
 
-  const STRAY_W      = 7;   // width below which a group is a candidate accent/stray
-  const ACCENT_GAP   = 25;  // max horizontal gap to merge a stray into predecessor
-  const PREV_WIDE_W  = 30;  // predecessor must be at least this wide to trigger accent merge
+  const STRAY_W      = 10;  // width below which a group is a candidate accent/stray
+  const ACCENT_GAP   = 25;  // max gap (backward) to merge a stray into predecessor
+  const PREV_WIDE_W  = 30;  // predecessor must be wide to trigger backward accent merge
+  const FWD_GAP      = 15;  // max gap_to_next to trigger forward accent merge
   const WIDE_SPLIT_W = 55;  // groups wider than this get re-split attempt
   const TIGHT_GAP    = 2;   // gap used when re-splitting a wide group
   const TARGET       = 16;
 
-  // ── Step 1: merge tiny accent groups into the preceding sprite ────────────
-  // Accent rule: cur is tiny (w≤STRAY_W), gap is small (≤ACCENT_GAP),
-  // AND the preceding sprite is wide (w≥PREV_WIDE_W).
-  // The wide-predecessor guard prevents merging genuinely tiny sprites
-  // (like eyebrow dots on narrow-faced characters) into each other.
+  // ── Step 1a: backward accent merge ───────────────────────────────────────
+  // Tiny group, small gap, wide predecessor → extend predecessor's bbox.
   let merged = [sprites[0]];
   for (let i = 1; i < sprites.length; i++) {
     const prev = merged[merged.length - 1];
     const cur  = sprites[i];
     const gap  = cur.x - (prev.x + prev.w);
-    const isAccent = cur.w <= STRAY_W && gap >= 0 && gap <= ACCENT_GAP && prev.w >= PREV_WIDE_W;
-    if (isAccent) {
-      // Extend prev bounding box to include cur
+    const isBackwardAccent = cur.w <= STRAY_W && gap >= 0 && gap <= ACCENT_GAP && prev.w >= PREV_WIDE_W;
+    if (isBackwardAccent) {
       prev.w = (cur.x + cur.w) - prev.x;
     } else {
       merged.push(cur);
     }
   }
+
+  // ── Step 1b: forward accent merge ────────────────────────────────────────
+  // Tiny group whose gap to the NEXT sprite is much smaller than its gap
+  // from the PREVIOUS sprite — it's a leading accent belonging to the next.
+  // We absorb it into the next sprite by extending next's left edge.
+  const fwdPass = [];
+  for (let i = 0; i < merged.length; i++) {
+    const cur = merged[i];
+    if (cur.w <= STRAY_W && i < merged.length - 1) {
+      const nxt     = merged[i + 1];
+      const gap_to  = nxt.x - (cur.x + cur.w);
+      const gap_from = i > 0 ? (cur.x - (merged[i-1].x + merged[i-1].w)) : 999;
+      if (gap_to >= 0 && gap_to <= FWD_GAP && gap_from > gap_to) {
+        // Extend next sprite leftward to include cur
+        nxt.w = (nxt.x + nxt.w) - cur.x;
+        nxt.x = cur.x;
+        // Skip cur (absorbed into next)
+        continue;
+      }
+    }
+    fwdPass.push(cur);
+  }
+  merged = fwdPass;
 
   // ── Step 2: re-split wide groups using a tight gap ───────────────────────
   // Only do this when we still have too few sprites (under-split scenario)
