@@ -1044,23 +1044,27 @@ function guessRoles(bands, gen) {
 function refineFaceSmall(sprites, pixels, w, bandRow1, bandRow2) {
   if (!sprites.length) return sprites;
 
-  const STRAY_W     = 7;   // width below which a group is a candidate accent/stray
-  const ACCENT_GAP  = 10;  // max horizontal gap to merge a stray into predecessor
-  const WIDE_SPLIT_W = 55; // groups wider than this get re-split attempt
-  const TIGHT_GAP   = 2;   // gap used when re-splitting a wide group
-  const TARGET      = 16;
+  const STRAY_W      = 7;   // width below which a group is a candidate accent/stray
+  const ACCENT_GAP   = 25;  // max horizontal gap to merge a stray into predecessor
+  const PREV_WIDE_W  = 30;  // predecessor must be at least this wide to trigger accent merge
+  const WIDE_SPLIT_W = 55;  // groups wider than this get re-split attempt
+  const TIGHT_GAP    = 2;   // gap used when re-splitting a wide group
+  const TARGET       = 16;
 
   // ── Step 1: merge tiny accent groups into the preceding sprite ────────────
+  // Accent rule: cur is tiny (w≤STRAY_W), gap is small (≤ACCENT_GAP),
+  // AND the preceding sprite is wide (w≥PREV_WIDE_W).
+  // The wide-predecessor guard prevents merging genuinely tiny sprites
+  // (like eyebrow dots on narrow-faced characters) into each other.
   let merged = [sprites[0]];
   for (let i = 1; i < sprites.length; i++) {
     const prev = merged[merged.length - 1];
     const cur  = sprites[i];
     const gap  = cur.x - (prev.x + prev.w);
-    // A tiny group right after any sprite with small gap = accent
-    if (cur.w <= STRAY_W && gap <= ACCENT_GAP && gap >= 0) {
+    const isAccent = cur.w <= STRAY_W && gap >= 0 && gap <= ACCENT_GAP && prev.w >= PREV_WIDE_W;
+    if (isAccent) {
       // Extend prev bounding box to include cur
-      const newRight = cur.x + cur.w;
-      prev.w = newRight - prev.x;
+      prev.w = (cur.x + cur.w) - prev.x;
     } else {
       merged.push(cur);
     }
