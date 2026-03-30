@@ -1956,23 +1956,23 @@ function renderAnchorTab(entry) {
 }
 
 function drawAnchorPreview(entry, off, bodyBand, faceBand) {
-  const S=4;
+  const S = 4;
   const bodySp = bodyBand.sprites[ancBodyIdx];
   const anc    = entry.anchors[ancBodyIdx];
   const faceSp = faceBand && anc.useFace !== false ? faceBand.sprites[0] : null;
 
-  // Center-based draw position of face relative to body top-left
-  const faceDrawX = faceSp ? (bodySp.w/2 + anc.offsetX - faceSp.w/2) : 0;
-  const faceDrawY = faceSp ? (bodySp.h/2 + anc.offsetY - faceSp.h/2) : 0;
+  // offsetX/Y is face top-left relative to body top-left
+  const faceDrawX = faceSp ? anc.offsetX : 0;
+  const faceDrawY = faceSp ? anc.offsetY : 0;
 
-  // Expand canvas to fit both body and face, even if face is outside body bounds
-  const minX   = faceSp ? Math.min(0, faceDrawX) : 0;
-  const minY   = faceSp ? Math.min(0, faceDrawY) : 0;
-  const maxX   = faceSp ? Math.max(bodySp.w, faceDrawX + faceSp.w) : bodySp.w;
-  const maxY   = faceSp ? Math.max(bodySp.h, faceDrawY + faceSp.h) : bodySp.h;
+  // Expand canvas to contain both body and face
+  const minX = Math.min(0, faceDrawX);
+  const minY = Math.min(0, faceDrawY);
+  const maxX = faceSp ? Math.max(bodySp.w, faceDrawX + faceSp.w) : bodySp.w;
+  const maxY = faceSp ? Math.max(bodySp.h, faceDrawY + faceSp.h) : bodySp.h;
 
-  const canvasW = Math.round(maxX - minX);
-  const canvasH = Math.round(maxY - minY);
+  const canvasW  = Math.round(maxX - minX);
+  const canvasH  = Math.round(maxY - minY);
   const bodyOffX = Math.round(-minX);
   const bodyOffY = Math.round(-minY);
 
@@ -1982,17 +1982,14 @@ function drawAnchorPreview(entry, off, bodyBand, faceBand) {
   const ctx = canvas.getContext('2d');
   ctx.imageSmoothingEnabled = false;
 
-  // Checker bg
   for (let y=0; y<canvas.height; y+=8) for (let x=0; x<canvas.width; x+=8) {
     ctx.fillStyle = ((x/8+y/8)%2===0) ? '#1a1a2e' : '#0e0e1a';
     ctx.fillRect(x, y, 8, 8);
   }
 
-  // Draw body at offset
   ctx.drawImage(off, bodySp.x, bodySp.y, bodySp.w, bodySp.h,
     bodyOffX*S, bodyOffY*S, bodySp.w*S, bodySp.h*S);
 
-  // Draw face
   if (faceSp && anc.useFace !== false) {
     ctx.drawImage(off, faceSp.x, faceSp.y, faceSp.w, faceSp.h,
       (faceDrawX + bodyOffX)*S, (faceDrawY + bodyOffY)*S,
@@ -2008,8 +2005,8 @@ function buildAnchorPreviewGrid(entry, off, bodyBand, faceBand) {
     const anc    = entry.anchors[i];
     const faceSp = faceBand && anc.useFace !== false ? faceBand.sprites[0] : null;
 
-    const faceDrawX = faceSp ? (bodySp.w/2 + anc.offsetX - faceSp.w/2) : 0;
-    const faceDrawY = faceSp ? (bodySp.h/2 + anc.offsetY - faceSp.h/2) : 0;
+    const faceDrawX = faceSp ? anc.offsetX : 0;
+    const faceDrawY = faceSp ? anc.offsetY : 0;
 
     const minX   = faceSp ? Math.min(0, faceDrawX) : 0;
     const minY   = faceSp ? Math.min(0, faceDrawY) : 0;
@@ -2557,9 +2554,9 @@ function renderPreview() {
       band.sprites?.forEach((sprite, i) => {
         const anchor = PREVIEW.json.bodyAnimAnchors[i];
         if (!anchor?.useFace) return;
-        // Center-based: anchor point = body_center + offset
-        const ax = (sprite.x + sprite.w/2 + anchor.offsetX) * S;
-        const ay = (sprite.y + sprite.h/2 + anchor.offsetY) * S;
+        // Top-left based: anchor point = body top-left + offset (center of face)
+        const ax = (sprite.x + anchor.offsetX + (faceBand?.sprites[0]?.w||0)/2) * S;
+        const ay = (sprite.y + anchor.offsetY + (faceBand?.sprites[0]?.h||0)/2) * S;
         // Crosshair
         ctx.strokeStyle = '#ff9f6b';
         ctx.lineWidth = 1;
