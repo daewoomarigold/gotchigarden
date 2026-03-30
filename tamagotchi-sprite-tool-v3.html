@@ -1066,14 +1066,21 @@ function refineFaceSmall(sprites, pixels, w, bandRow1, bandRow2) {
   const TARGET       = 16;
 
   // ── Step 1a: backward accent merge ───────────────────────────────────────
-  // Tiny group, small gap, wide predecessor → extend predecessor's bbox.
+  // Two sub-cases:
+  //  • TIGHT (gap ≤ 9px): always merge regardless of prev width.
+  //    The minimum gap between any two real separate sprites is 23px across
+  //    all known sheets, so ≤9px is always a trailing decoration (Nyorotchi dots).
+  //  • WIDE (gap ≤ ACCENT_GAP=25px): only merge if predecessor is wide (≥ PREV_WIDE_W).
+  //    Catches fire-breath / sparkle accents after big expressions.
+  const TIGHT_MERGE_GAP = 9;
   let merged = [sprites[0]];
   for (let i = 1; i < sprites.length; i++) {
     const prev = merged[merged.length - 1];
     const cur  = sprites[i];
     const gap  = cur.x - (prev.x + prev.w);
-    const isBackwardAccent = cur.w <= STRAY_W && gap >= 0 && gap <= ACCENT_GAP && prev.w >= PREV_WIDE_W;
-    if (isBackwardAccent) {
+    const isTightAccent = cur.w <= STRAY_W && gap >= 0 && gap <= TIGHT_MERGE_GAP;
+    const isWideAccent  = cur.w <= STRAY_W && gap > TIGHT_MERGE_GAP && gap <= ACCENT_GAP && prev.w >= PREV_WIDE_W;
+    if (isTightAccent || isWideAccent) {
       prev.w = (cur.x + cur.w) - prev.x;
     } else {
       merged.push(cur);
