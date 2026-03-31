@@ -404,6 +404,7 @@ async function selectClass(cls) {
   document.getElementById('search-input').value = '';
   renderClassList();
   await loadStudents();
+  startRealtimeListener();
 }
 
 // ─── NEW CLASS MODAL ──────────────────────────────────────────────────────
@@ -576,6 +577,42 @@ async function loadStudents() {
   students = data || [];
   renderStudents();
   updateStats();
+}
+
+// ─── REALTIME ─────────────────────────────────────────────────────────────
+let _realtimeChannel = null;
+
+function startRealtimeListener() {
+  // Tear down any existing channel first
+  if (_realtimeChannel) {
+    db.removeChannel(_realtimeChannel);
+    _realtimeChannel = null;
+  }
+  if (!currentClassId) return;
+
+  _realtimeChannel = db
+    .channel(`teacher-class-${currentClassId}`)
+    .on('postgres_changes', {
+      event:  'UPDATE',
+      schema: 'public',
+      table:  'students',
+      filter: `class_id=eq.${currentClassId}`,
+    }, payload => {
+      const updated = payload.new;
+      // Patch local students array
+      const s = students.find(x => x.id === updated.id);
+      if (!s) return;
+      s.gotchi_pts = updated.gotchi_pts;
+
+      // Update the pts input for this row — skip if teacher is actively editing it
+      const input = document.querySelector(`.pts-input[data-id="${updated.id}"]`);
+      if (input && document.activeElement !== input) {
+        input.value = updated.gotchi_pts;
+      }
+
+      updateStats();
+    })
+    .subscribe();
 }
 
 function renderStudents(filter='') {
