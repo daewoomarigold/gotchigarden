@@ -2388,7 +2388,7 @@ function buildPetActions(cell) {
     }
 
     btn.className = 'btn btn-full auth-gated' + (!currentUser || locked ? ' locked' : '');
-    btn.style.cssText = `border-color:${color};color:${color};`;
+    btn.style.cssText = `border-color:${color};color:${color};font-size:14px;`;
     btn.textContent = label;
     btn.addEventListener('click', () => triggerHatch(selected, selectedPetIdx));
     body.appendChild(btn);
@@ -2407,7 +2407,7 @@ function buildPetActions(cell) {
         const btn = document.createElement('button');
         btn.className = 'btn btn-full auth-gated' + (currentUser ? '' : ' locked');
         const tierColor = food.tier === 'premium' ? 'var(--orange)' : 'var(--green)';
-        btn.style.cssText = `border-color:${tierColor};color:${tierColor};display:flex;justify-content:space-between;align-items:center;`;
+        btn.style.cssText = `border-color:${tierColor};color:${tierColor};display:flex;justify-content:space-between;align-items:center;font-size:14px;`;
         btn.innerHTML = `<span>${food.icon} ${food.name}</span><span style="font-size:13px;opacity:0.8;">${food.cost}pt</span>`;
         btn.title = food.desc;
         btn.addEventListener('click', () => purchaseFood(food, pet));
@@ -2447,7 +2447,7 @@ function buildPetActions(cell) {
       }
 
       btn.className = 'btn btn-full auth-gated' + (!currentUser || locked ? ' locked' : '');
-      btn.style.cssText = `border-color:${color};color:${color};margin-top:4px;`;
+      btn.style.cssText = `border-color:${color};color:${color};margin-top:4px;font-size:14px;`;
       btn.textContent = label;
       btn.addEventListener('click', () => triggerEvolve(selected, selectedPetIdx));
       body.appendChild(btn);
