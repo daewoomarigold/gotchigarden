@@ -523,6 +523,47 @@ header {
   overflow: hidden;
   text-overflow: ellipsis;
 }
+/* ── Variant shop cards ── */
+.variant-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  cursor: pointer;
+  border: 2px solid var(--border);
+  border-radius: 5px;
+  overflow: hidden;
+  transition: border-color 0.12s;
+  background: var(--raised);
+}
+.variant-card:hover  { border-color: var(--cyan); }
+.variant-card.active { border-color: var(--yellow); cursor: default; }
+.variant-card-preview {
+  width: 100%;
+  aspect-ratio: 1;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+  display: block;
+  object-fit: contain;
+  background: rgba(0,0,0,0.2);
+}
+.variant-card-label {
+  font-size: 9px;
+  color: var(--muted);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  padding: 5px 6px 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.variant-card-active-tag {
+  font-size: 8px;
+  color: var(--yellow);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  padding: 0 6px 6px;
+  text-align: center;
+}
 /* ── Auth gate — locked buttons ── */
 .auth-gated {
   position: relative;
@@ -723,6 +764,26 @@ header {
       <!-- populated by JS -->
     </div>
     <button class="btn full" onclick="closeOverlay('overlay-bg-picker')">Close</button>
+  </div>
+</div>
+
+<!-- Variant shop overlay -->
+<div class="overlay" id="overlay-variant-shop" onclick="closeOnBackdrop(event,'overlay-variant-shop')">
+  <div class="panel" style="width:540px;max-width:95vw;">
+    <div class="panel-title">✨ Variant Shop</div>
+    <div id="variant-shop-subhead" style="font-size:10px;color:var(--muted);letter-spacing:1px;margin-top:-6px;"></div>
+    <div id="variant-shop-grid" style="
+      display:grid;
+      grid-template-columns:repeat(auto-fill,minmax(120px,1fr));
+      gap:10px;
+      max-height:58vh;
+      overflow-y:auto;
+      margin:10px 0;
+      padding-right:4px;
+    ">
+      <!-- populated by JS -->
+    </div>
+    <button class="btn full" onclick="closeOverlay('overlay-variant-shop')">Close</button>
   </div>
 </div>
 
@@ -1036,6 +1097,17 @@ function isVariantCapable(charId, dex) {
   return dex.characters.some(c => {
     const cp = c.id.split('-');
     return cp[1] === '002' && cp[2] === family && cp[3] !== '000';
+  });
+}
+
+// True for any adult (base or variant) that has at least one enabled variant sibling
+function hasVariants(charId, dex) {
+  const parts = charId.split('-');
+  if (parts.length < 4 || parts[1] !== '002') return false;
+  const family = parts[2];
+  return dex.characters.some(c => {
+    const cp = c.id.split('-');
+    return c.enabled && cp[1] === '002' && cp[2] === family && cp[3] !== '000';
   });
 }
 
@@ -2330,9 +2402,29 @@ function buildPetActions(cell) {
       body.appendChild(btn);
     }
 
-  // ── Adult: variant shop coming soon ──────────────────────────────────
+  // ── Adult: variant shop ───────────────────────────────────────────────
   } else {
-    // Variant evolution handled via the variant shop (coming soon)
+    const charId = pet.charJSON?.id;
+    if (charId) {
+      // Load tamadex (uses cache after first call — fast)
+      loadTamaDex().then(dex => {
+        if (!hasVariants(charId, dex)) {
+          const noVar = document.createElement('div');
+          noVar.style.cssText = 'font-size:10px;color:var(--muted);padding:4px 0;line-height:1.5;';
+          noVar.textContent = 'No variant forms available for this tama.';
+          body.appendChild(noVar);
+          return;
+        }
+        const btn = document.createElement('button');
+        btn.className = 'btn btn-full auth-gated' + (currentUser ? '' : ' locked');
+        btn.style.cssText = 'border-color:var(--cyan);color:var(--cyan);';
+        btn.textContent = '✨ Variant Shop';
+        btn.addEventListener('click', () => openVariantShop(pet));
+        body.appendChild(btn);
+      }).catch(() => {
+        // silently skip if tamadex can't load
+      });
+    }
   }
 }
 
@@ -2487,6 +2579,7 @@ const PRICES = {
   bg_basic:   5,   // standard background
   bg_rare:    15,  // rare background (future)
   prize:      5,   // gacha machine redemption
+  variant:    10,  // switch to a variant form
 };
 // Food prices live in FOODS array above
 const EVOLVE_COST = PRICES.evolve; // alias used throughout
@@ -2803,6 +2896,198 @@ async function applyBackground(bg) {
   );
 
   toast(`🖼 Background changed to ${bg.name}`);
+}
+
+// ─── VARIANT SHOP ────────────────────────────────────────────────────────
+async function openVariantShop(pet) {
+  if (!selected || !currentUser) return;
+  const student = STUDENTS.find(s => s.id === selected);
+  if (!student || !pet?.charJSON) return;
+
+  openOverlay('overlay-variant-shop');
+
+  const grid    = document.getElementById('variant-shop-grid');
+  const subhead = document.getElementById('variant-shop-subhead');
+  grid.innerHTML = '<div style="color:var(--muted);font-size:11px;padding:8px;">Loading...</div>';
+  subhead.textContent = '';
+
+  try {
+    const dex = await loadTamaDex();
+    const currentCharId = pet.charJSON.id;
+    const parts  = currentCharId.split('-');
+    const family = parts[2];
+
+    // Collect all enabled variants for this family
+    const variants = dex.characters.filter(c => {
+      const cp = c.id.split('-');
+      return c.enabled && cp[1] === '002' && cp[2] === family && cp[3] !== '000';
+    });
+
+    if (!variants.length) {
+      subhead.textContent = 'No variants available for this tama.';
+      grid.innerHTML = '';
+      return;
+    }
+
+    // Always include the base adult (000) as the first option so they can revert
+    const baseId    = `TAM-002-${family}-000`;
+    const baseEntry = dex.characters.find(c => c.id === baseId);
+    const entries   = baseEntry
+      ? [baseEntry, ...variants]
+      : [...variants];
+
+    subhead.textContent =
+      `${pet.charJSON.displayName} · ${variants.length} variant${variants.length !== 1 ? 's' : ''} · ${PRICES.variant} pt each`;
+
+    grid.innerHTML = '';
+
+    for (const entry of entries) {
+      const isActive  = entry.id === currentCharId;
+      const isBase    = entry.id === baseId;
+
+      const card = document.createElement('div');
+      card.className = 'variant-card' + (isActive ? ' active' : '');
+
+      // ── Preview canvas ─────────────────────────────────────────────────
+      const cnv = document.createElement('canvas');
+      cnv.className = 'variant-card-preview';
+      cnv.width  = 1; cnv.height = 1; // placeholder until image loads
+
+      fetchJSON(entry.id).then(async varJSON => {
+        const sheetImg = await fetchImage(TAMA_PATH, varJSON.sheet);
+        // Row 1, col 1 of the sheet = body_anim band, first sprite (stand)
+        const bodyBand = varJSON.bands?.find(b => b.role === 'body_anim');
+        const baseBand = varJSON.bands?.find(b => b.role === 'base');
+        const sp = bodyBand?.sprites?.[0] || baseBand?.sprites?.[0];
+        if (!sp) return;
+
+        cnv.width  = sp.w;
+        cnv.height = sp.h;
+        const ctx  = cnv.getContext('2d');
+        ctx.imageSmoothingEnabled = false;
+        ctx.drawImage(sheetImg, sp.x, sp.y, sp.w, sp.h, 0, 0, sp.w, sp.h);
+      }).catch(() => {
+        cnv.width = 32; cnv.height = 32;
+        const ctx = cnv.getContext('2d');
+        ctx.fillStyle = '#222'; ctx.fillRect(0, 0, 32, 32);
+        ctx.fillStyle = '#666'; ctx.font = '9px monospace'; ctx.textAlign = 'center';
+        ctx.fillText('?', 16, 20);
+      });
+
+      // ── Name label ─────────────────────────────────────────────────────
+      const label = document.createElement('div');
+      label.className = 'variant-card-label';
+      label.textContent = isBase
+        ? `${entry.displayName} (base)`
+        : entry.displayName;
+
+      card.appendChild(cnv);
+      card.appendChild(label);
+
+      if (isActive) {
+        // Show "current" badge, no buy button
+        const tag = document.createElement('div');
+        tag.className = 'variant-card-active-tag';
+        tag.textContent = '★ Current';
+        card.appendChild(tag);
+      } else {
+        // Buy / switch button
+        const buyBtn = document.createElement('button');
+        buyBtn.style.cssText = `
+          margin:0 6px 6px;padding:3px 0;
+          background:none;border:1px solid var(--cyan);
+          color:var(--cyan);font-family:'DM Mono',monospace;
+          font-size:9px;border-radius:3px;cursor:pointer;letter-spacing:1px;
+        `;
+        buyBtn.textContent = `SWITCH • ${PRICES.variant} pt`;
+        buyBtn.addEventListener('click', e => {
+          e.stopPropagation();
+          purchaseVariant(pet, student, entry);
+        });
+        card.appendChild(buyBtn);
+      }
+
+      grid.appendChild(card);
+    }
+  } catch(e) {
+    grid.innerHTML = `<div style="color:var(--red);font-size:11px;padding:8px;">⚠ ${e.message}</div>`;
+  }
+}
+
+function purchaseVariant(pet, student, entry) {
+  if (!currentUser) return;
+  const price = PRICES.variant;
+
+  if (student.gotchiPoints < price) {
+    toast(`⚠ Not enough GotchiPts (need ${price})`);
+    return;
+  }
+
+  document.getElementById('buy-confirm-text').innerHTML =
+    `Switch to<br>
+     <strong style="color:var(--text);">${entry.displayName}</strong><br>
+     for <strong style="color:var(--yellow);">${price} GotchiPt${price !== 1 ? 's' : ''}</strong>?<br>
+     <span style="font-size:10px;color:var(--muted);">Switching back costs the same price.</span><br>
+     <span style="font-size:10px;color:var(--muted);">Balance after: ${student.gotchiPoints - price} pts</span>`;
+
+  const confirmBtn = document.getElementById('btn-buy-confirm-yes');
+  const handler = async () => {
+    confirmBtn.removeEventListener('click', handler);
+    closeOverlay('overlay-buy-confirm');
+
+    // Deduct points
+    student.gotchiPoints -= price;
+    const ptEl = document.getElementById('pts-' + student.id);
+    if (ptEl) ptEl.textContent = student.gotchiPoints + ' pts';
+    document.getElementById('sel-pts').textContent = student.gotchiPoints;
+    updateHeader();
+    dbUpdateStudent(student.id, { gotchi_pts: student.gotchiPoints });
+
+    // Hot-swap the pet's sprite in place
+    await applyVariant(pet, entry.id);
+
+    // Persist new char_id to DB
+    if (pet.dbId) dbUpsertPet({ id: pet.dbId, char_id: entry.id });
+
+    toast(`✨ Switched to ${entry.displayName}!`);
+
+    // Refresh roster portrait + actions panel, then re-open the shop
+    const cell = cells.find(c => c.student.id === selected);
+    if (cell) {
+      buildPetRoster(cell);
+      buildPetActions(cell);
+    }
+    await openVariantShop(pet);
+  };
+  confirmBtn.addEventListener('click', handler);
+  openOverlay('overlay-buy-confirm');
+}
+
+async function applyVariant(pet, newCharId) {
+  const newJSON  = await fetchJSON(newCharId);
+  const sheetImg = await fetchImage(TAMA_PATH, newJSON.sheet);
+
+  // Rebuild offscreen canvas
+  const off = document.createElement('canvas');
+  off.width  = sheetImg.naturalWidth  || sheetImg.width;
+  off.height = sheetImg.naturalHeight || sheetImg.height;
+  const oc   = off.getContext('2d');
+  oc.imageSmoothingEnabled = false;
+  oc.drawImage(sheetImg, 0, 0);
+
+  // Patch the pet in place — next frame will pick up the new JSON + canvas
+  pet.charJSON = newJSON;
+  pet.off      = off;
+  pet._body    = {}; pet._face = {}; pet._anch = {};
+
+  const bb = newJSON.bands?.find(b => b.role === 'body_anim');
+  const fb = newJSON.bands?.find(b => b.role === 'face_small');
+  if (bb) bb.sprites.forEach(s => pet._body[s.label] = s);
+  if (fb) fb.sprites.forEach(s => pet._face[s.label] = s);
+  if (newJSON.bodyAnimAnchors && bb)
+    bb.sprites.forEach((s, i) =>
+      pet._anch[s.label] = newJSON.bodyAnimAnchors[i] || { offsetX: 0, offsetY: 0, useFace: true }
+    );
 }
 
 // ─── CELL COLOR PICKER ────────────────────────────────────────────────────
