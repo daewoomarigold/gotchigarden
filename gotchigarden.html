@@ -287,8 +287,7 @@ header {
 .shop-icon  { font-size: 1.4rem; }
 .shop-label { font-family: 'Pixelify Sans', monospace; font-size: 0.85rem; color: var(--text); }
 .shop-cost  { font-size: 13px; letter-spacing: 1px; }
-.shop-cost.muted { color: var(--muted); }
-.overlay { display:none; position:fixed; inset:0; z-index:100; background:rgba(10,4,20,0.82); backdrop-filter:blur(3px); align-items:center; justify-content:center; }
+.shop-cost.muted { color: var(--muted); }.overlay { display:none; position:fixed; inset:0; z-index:100; background:rgba(10,4,20,0.82); backdrop-filter:blur(3px); align-items:center; justify-content:center; }
 .overlay.open { display:flex; }
 
 .panel {
@@ -498,7 +497,7 @@ header {
 .pet-card:hover   { border-color: var(--cyan); }
 .pet-card.selected { border-color: var(--yellow); background: rgba(255,224,102,0.08); }
 .pet-card-label {
-  font-size: 8px;
+  font-size: 13px;
   color: var(--muted);
   letter-spacing: 0.5px;
   text-transform: uppercase;
@@ -528,7 +527,7 @@ header {
   display: block;
 }
 .bg-card-label {
-  font-size: 9px;
+  font-size: 13px;
   color: var(--muted);
   letter-spacing: 1px;
   text-transform: uppercase;
@@ -561,7 +560,7 @@ header {
   background: rgba(0,0,0,0.2);
 }
 .variant-card-label {
-  font-size: 9px;
+  font-size: 13px;
   color: var(--muted);
   letter-spacing: 1px;
   text-transform: uppercase;
@@ -571,7 +570,7 @@ header {
   text-overflow: ellipsis;
 }
 .variant-card-active-tag {
-  font-size: 8px;
+  font-size: 12px;
   color: var(--yellow);
   letter-spacing: 1px;
   text-transform: uppercase;
@@ -673,7 +672,7 @@ header {
             padding:8px;display:none;flex-direction:column;gap:6px;
             min-width:180px;z-index:50;box-shadow:0 4px 16px rgba(0,0,0,0.5);
           ">
-            <div style="font-size:9px;color:var(--red);letter-spacing:2px;text-transform:uppercase;padding-bottom:4px;border-bottom:1px solid var(--border);">⚙ Debug</div>
+            <div style="font-size:13px;color:var(--red);letter-spacing:2px;text-transform:uppercase;padding-bottom:4px;border-bottom:1px solid var(--border);">⚙ Debug</div>
             <button class="btn btn-full" id="btn-debug-evolve"
               style="border-color:var(--cyan);color:var(--cyan);">↑ Force Evolve</button>
             <button class="btn btn-full" id="btn-debug-undo"
@@ -720,17 +719,17 @@ header {
         <button class="shop-btn auth-gated locked" id="btn-open-bg-picker" onclick="openBgPicker()">
           <span class="shop-icon">🖼</span>
           <span class="shop-label">BG</span>
-          <span class="shop-cost" style="color:var(--cyan);font-size:8px;">Pick one</span>
+          <span class="shop-cost" style="color:var(--cyan);font-size:13px;">Pick one</span>
         </button>
         <button class="shop-btn auth-gated locked" id="btn-add-egg">
           <span class="shop-icon">🥚</span>
           <span class="shop-label">Egg</span>
-          <span class="shop-cost" style="color:var(--yellow);font-size:8px;">5 pts</span>
+          <span class="shop-cost" style="color:var(--yellow);font-size:13px;">5 pts</span>
         </button>
         <button class="shop-btn auth-gated locked" id="btn-gacha" style="grid-column:1/-1;">
           <span class="shop-icon">🎰</span>
           <span class="shop-label">Gacha Machine</span>
-          <span class="shop-cost" style="color:var(--pink);font-size:8px;">5 pts · Physical</span>
+          <span class="shop-cost" style="color:var(--pink);font-size:13px;">5 pts · Physical</span>
         </button>
       </div>
 
@@ -742,7 +741,7 @@ header {
             style="width:36px;height:28px;border:2px solid var(--border);border-radius:4px;
                    background:none;cursor:pointer;padding:2px;">
           <div style="flex:1;min-width:0;">
-            <div id="cell-color-hex" style="font-size:9px;color:var(--cyan);letter-spacing:1px;">#87CEEB</div>
+            <div id="cell-color-hex" style="font-size:13px;color:var(--cyan);letter-spacing:1px;">#87CEEB</div>
           </div>
           <button class="btn" id="btn-cell-color-reset" style="font-size:9px;padding:3px 8px;">↺</button>
         </div>
@@ -756,7 +755,7 @@ header {
 <div class="overlay" id="overlay-buy-confirm" onclick="closeOnBackdrop(event,'overlay-buy-confirm')" style="z-index:300;">
   <div class="panel" style="width:320px;text-align:center;gap:16px;">
     <div class="panel-title">Confirm Purchase</div>
-    <div id="buy-confirm-text" style="font-size:12px;color:var(--muted);line-height:1.6;"></div>
+    <div id="buy-confirm-text" style="font-size:14px;color:var(--muted);line-height:1.7;"></div>
     <div class="btn-row">
       <button class="btn yellow full" id="btn-buy-confirm-yes" onclick="playYes()">✓ Buy</button>
       <button class="btn full" onclick="closeOverlay('overlay-buy-confirm')">✕ Cancel</button>
@@ -787,7 +786,7 @@ header {
 <div class="overlay" id="overlay-variant-shop" onclick="closeOnBackdrop(event,'overlay-variant-shop')">
   <div class="panel" style="width:540px;max-width:95vw;">
     <div class="panel-title">✨ Variant Shop</div>
-    <div id="variant-shop-subhead" style="font-size:10px;color:var(--muted);letter-spacing:1px;margin-top:-6px;"></div>
+    <div id="variant-shop-subhead" style="font-size:13px;color:var(--muted);letter-spacing:1px;margin-top:-6px;"></div>
     <div id="variant-shop-grid" style="
       display:grid;
       grid-template-columns:repeat(auto-fill,minmax(120px,1fr));
@@ -2400,7 +2399,7 @@ function buildPetActions(cell) {
     // Food shop — only if not yet fed
     if (!pet.fedWith) {
       const foodHead = document.createElement('div');
-      foodHead.style.cssText = 'font-size:9px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;margin-top:4px;';
+      foodHead.style.cssText = 'font-size:13px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;margin-top:4px;';
       foodHead.textContent = 'Feed your tama';
       body.appendChild(foodHead);
 
@@ -2409,7 +2408,7 @@ function buildPetActions(cell) {
         btn.className = 'btn btn-full auth-gated' + (currentUser ? '' : ' locked');
         const tierColor = food.tier === 'premium' ? 'var(--orange)' : 'var(--green)';
         btn.style.cssText = `border-color:${tierColor};color:${tierColor};display:flex;justify-content:space-between;align-items:center;`;
-        btn.innerHTML = `<span>${food.icon} ${food.name}</span><span style="font-size:9px;opacity:0.8;">${food.cost}pt</span>`;
+        btn.innerHTML = `<span>${food.icon} ${food.name}</span><span style="font-size:13px;opacity:0.8;">${food.cost}pt</span>`;
         btn.title = food.desc;
         btn.addEventListener('click', () => purchaseFood(food, pet));
         body.appendChild(btn);
@@ -2419,7 +2418,7 @@ function buildPetActions(cell) {
       // Already fed — show what they ate
       const food = FOODS.find(f => f.id === pet.fedWith);
       const fedDiv = document.createElement('div');
-      fedDiv.style.cssText = 'font-size:10px;color:var(--green);padding:4px 0;';
+      fedDiv.style.cssText = 'font-size:13px;color:var(--green);padding:4px 0;';
       fedDiv.textContent = `${food?.icon || '🍙'} Fed: ${food?.name || pet.fedWith}`;
       body.appendChild(fedDiv);
     }
@@ -2462,7 +2461,7 @@ function buildPetActions(cell) {
       loadTamaDex().then(dex => {
         if (!hasVariants(charId, dex)) {
           const noVar = document.createElement('div');
-          noVar.style.cssText = 'font-size:10px;color:var(--muted);padding:4px 0;line-height:1.5;';
+          noVar.style.cssText = 'font-size:13px;color:var(--muted);padding:4px 0;line-height:1.5;';
           noVar.textContent = 'No variant forms available for this tama.';
           body.appendChild(noVar);
           return;
@@ -2545,7 +2544,7 @@ document.getElementById('btn-add-egg').addEventListener('click', () => {
     `Are you sure you want to buy a<br>
      <strong style="color:var(--text);">New Egg</strong><br>
      for <strong style="color:var(--yellow);">${PRICES.egg} GotchiPts</strong>?<br>
-     <span style="font-size:10px;color:var(--muted);">Balance after: ${student.gotchiPoints - PRICES.egg} pts</span>`;
+     <span style="font-size:13px;color:var(--muted);">Balance after: ${student.gotchiPoints - PRICES.egg} pts</span>`;
 
   const confirmBtn = document.getElementById('btn-buy-confirm-yes');
   const handler = async () => {
@@ -2588,8 +2587,8 @@ document.getElementById('btn-gacha').addEventListener('click', () => {
     `Redeem a<br>
      <strong style="color:var(--text);">🎰 Gacha Machine</strong> turn<br>
      for <strong style="color:var(--pink);">${PRICES.prize} GotchiPts</strong>?<br>
-     <span style="font-size:10px;color:var(--muted);">Go use the physical machine in the classroom!</span><br>
-     <span style="font-size:10px;color:var(--muted);">Balance after: ${student.gotchiPoints - PRICES.prize} pts</span>`;
+     <span style="font-size:13px;color:var(--muted);">Go use the physical machine in the classroom!</span><br>
+     <span style="font-size:13px;color:var(--muted);">Balance after: ${student.gotchiPoints - PRICES.prize} pts</span>`;
 
   const confirmBtn = document.getElementById('btn-buy-confirm-yes');
   const handler = () => {
@@ -2751,8 +2750,8 @@ function purchaseFood(food, pet) {
   document.getElementById('buy-confirm-text').innerHTML =
     `Feed <strong style="color:var(--text);">${food.icon} ${food.name}</strong><br>
      to your baby tama?<br>
-     <span style="font-size:10px;color:${food.tier === 'premium' ? 'var(--orange)' : 'var(--green)'};">${food.tier === 'premium' ? '✨ Unlocks variant-capable evolution path' : '🌱 Standard evolution path'}</span><br>
-     <span style="font-size:10px;color:var(--muted);">Evolution ready in ${EVOLVE_WAIT_DAYS} days · Cost: ${food.cost} pt · Balance after: ${student.gotchiPoints - food.cost} pts</span>`;
+     <span style="font-size:13px;color:${food.tier === 'premium' ? 'var(--orange)' : 'var(--green)'};">${food.tier === 'premium' ? '✨ Unlocks variant-capable evolution path' : '🌱 Standard evolution path'}</span><br>
+     <span style="font-size:13px;color:var(--muted);">Evolution ready in ${EVOLVE_WAIT_DAYS} days · Cost: ${food.cost} pt · Balance after: ${student.gotchiPoints - food.cost} pts</span>`;
 
   const confirmBtn = document.getElementById('btn-buy-confirm-yes');
   const handler = async () => {
@@ -2852,7 +2851,7 @@ async function openBgPicker() {
           margin:0 6px 6px;padding:3px 0;
           background:none;border:1px solid var(--yellow);
           color:var(--yellow);font-family:'DM Mono',monospace;
-          font-size:9px;border-radius:3px;cursor:pointer;
+          font-size:13px;border-radius:3px;cursor:pointer;
           letter-spacing:1px;
         `;
         buyBtn.textContent = `BUY • ${PRICES.bg_basic} pt`;
@@ -2883,7 +2882,7 @@ function purchaseBackground(bg, price) {
     `Are you sure you want to buy<br>
      <strong style="color:var(--text);">${bg.name}</strong><br>
      for <strong style="color:var(--yellow);">${price} GotchiPt${price!==1?'s':''}</strong>?<br>
-     <span style="font-size:10px;color:var(--muted);">Balance after: ${student.gotchiPoints - price} pts</span>`;
+     <span style="font-size:13px;color:var(--muted);">Balance after: ${student.gotchiPoints - price} pts</span>`;
 
   // Wire confirm button
   const confirmBtn = document.getElementById('btn-buy-confirm-yes');
@@ -3048,7 +3047,7 @@ async function openVariantShop(pet) {
           margin:0 6px 6px;padding:3px 0;
           background:none;border:1px solid var(--cyan);
           color:var(--cyan);font-family:'DM Mono',monospace;
-          font-size:9px;border-radius:3px;cursor:pointer;letter-spacing:1px;
+          font-size:13px;border-radius:3px;cursor:pointer;letter-spacing:1px;
         `;
         buyBtn.textContent = `SWITCH • ${PRICES.variant} pt`;
         buyBtn.addEventListener('click', e => {
@@ -3078,8 +3077,8 @@ function purchaseVariant(pet, student, entry) {
     `Switch to<br>
      <strong style="color:var(--text);">${entry.displayName}</strong><br>
      for <strong style="color:var(--yellow);">${price} GotchiPt${price !== 1 ? 's' : ''}</strong>?<br>
-     <span style="font-size:10px;color:var(--muted);">Switching back costs the same price.</span><br>
-     <span style="font-size:10px;color:var(--muted);">Balance after: ${student.gotchiPoints - price} pts</span>`;
+     <span style="font-size:13px;color:var(--muted);">Switching back costs the same price.</span><br>
+     <span style="font-size:13px;color:var(--muted);">Balance after: ${student.gotchiPoints - price} pts</span>`;
 
   const confirmBtn = document.getElementById('btn-buy-confirm-yes');
   const handler = async () => {
