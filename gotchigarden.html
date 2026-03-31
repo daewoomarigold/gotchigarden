@@ -138,12 +138,14 @@ header {
 /* ── Spotlight header (simplified) ── */
 .spotlight-panel {
   display: flex;
+  flex-direction: row;
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 10px;
   overflow: hidden;
   box-shadow: 0 20px 60px rgba(0,0,0,0.7);
   max-height: 90vh;
+  max-width: 96vw;
 }
 
 .spotlight-left {
@@ -155,7 +157,7 @@ header {
 }
 
 .spotlight-cell-wrap {
-  width: min(600px, 60vw); height: min(600px, 60vw);
+  width: min(480px, 48vw); height: min(480px, 48vw);
   overflow: hidden;
   position: relative;
 }
@@ -164,21 +166,33 @@ header {
   display: block;
   image-rendering: pixelated;
   image-rendering: crisp-edges;
-  width: min(600px, 60vw); height: min(600px, 60vw);
+  width: min(480px, 48vw); height: min(480px, 48vw);
 }
 
-.spotlight-right {
-  width: 280px;
+/* ── Middle column: name / stats / pets / actions ── */
+.spotlight-middle {
+  width: 240px;
+  flex-shrink: 0;
   display: flex;
   flex-direction: column;
-  overflow-y: auto;
-  padding: 20px;
-  gap: 16px;
-  flex-shrink: 0;
+  overflow: hidden;
+  padding: 18px 16px;
+  gap: 0;
+  border-left: 1px solid var(--border);
 }
 
-.spotlight-right::-webkit-scrollbar { width: 4px; }
-.spotlight-right::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+/* ── Right column: shop + cell color ── */
+.spotlight-right {
+  width: 200px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding: 18px 16px;
+  gap: 0;
+  border-left: 1px solid var(--border);
+  background: rgba(0,0,0,0.12);
+}
 
 .spotlight-header {
   display: flex;
@@ -225,13 +239,13 @@ header {
 .spotlight-section {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  padding-top: 14px;
+  gap: 6px;
+  padding-top: 10px;
   border-top: 1px solid var(--border);
 }
 
 .spotlight-section-head {
-  font-size: 18px;
+  font-size: 16px;
   letter-spacing: 2px;
   text-transform: uppercase;
   color: var(--muted);
@@ -241,7 +255,7 @@ header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  font-size: 20px;
+  font-size: 18px;
 }
 
 .spotlight-stat-label { color: var(--muted); }
@@ -252,15 +266,15 @@ header {
 .shop-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 8px;
+  gap: 6px;
 }
 
 .shop-btn {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 4px;
-  padding: 12px 8px;
+  gap: 2px;
+  padding: 8px 4px;
   background: var(--raised);
   border: 1px solid var(--border);
   border-radius: 6px;
@@ -270,9 +284,9 @@ header {
 }
 .shop-btn:not(:disabled) { cursor: pointer; opacity: 1; }
 .shop-btn:not(:disabled):hover { border-color: var(--cyan); background: rgba(78,240,216,.06); }
-.shop-icon  { font-size: 2rem; }
-.shop-label { font-family: 'Pixelify Sans', monospace; font-size: 1.1rem; color: var(--text); }
-.shop-cost  { font-size: 16px; letter-spacing: 1px; }
+.shop-icon  { font-size: 1.4rem; }
+.shop-label { font-family: 'Pixelify Sans', monospace; font-size: 0.85rem; color: var(--text); }
+.shop-cost  { font-size: 13px; letter-spacing: 1px; }
 .shop-cost.muted { color: var(--muted); }
 .overlay { display:none; position:fixed; inset:0; z-index:100; background:rgba(10,4,20,0.82); backdrop-filter:blur(3px); align-items:center; justify-content:center; }
 .overlay.open { display:flex; }
@@ -643,8 +657,8 @@ header {
       </div>
     </div>
 
-    <!-- Right: info + shop -->
-    <div class="spotlight-right">
+    <!-- Middle: name / stats / pets / actions -->
+    <div class="spotlight-middle">
 
       <!-- Student header -->
       <div class="spotlight-header">
@@ -671,7 +685,7 @@ header {
       </div>
 
       <!-- Stats -->
-      <div class="spotlight-section">
+      <div class="spotlight-section" style="margin-top:10px;">
         <div class="spotlight-section-head">Stats</div>
         <div class="spotlight-stat-row">
           <span class="spotlight-stat-label">GotchiPts</span>
@@ -682,50 +696,52 @@ header {
       <!-- Pet roster -->
       <div class="spotlight-section">
         <div class="spotlight-section-head">Pets</div>
-        <div id="pet-roster" style="display:flex;flex-wrap:wrap;gap:6px;align-items:flex-end;margin-top:4px;">
+        <div id="pet-roster" style="display:flex;flex-wrap:wrap;gap:5px;align-items:flex-end;margin-top:2px;">
           <!-- populated by JS -->
         </div>
       </div>
 
-      <!-- Per-pet actions — updates based on selected pet -->
-      <div class="spotlight-section" id="pet-actions">
+      <!-- Per-pet actions -->
+      <div class="spotlight-section" id="pet-actions" style="flex:1;">
         <div class="spotlight-section-head" id="pet-actions-head">Actions</div>
-        <div id="pet-actions-body" style="display:flex;flex-direction:column;gap:6px;">
+        <div id="pet-actions-body" style="display:flex;flex-direction:column;gap:5px;margin-top:2px;">
           <!-- populated by JS -->
         </div>
       </div>
+
+    </div>
+
+    <!-- Right: shop + cell color -->
+    <div class="spotlight-right">
 
       <!-- Shop -->
-      <div class="spotlight-section">
-        <div class="spotlight-section-head">Tama Shop</div>
-        <div class="shop-grid">
-          <button class="shop-btn auth-gated locked" id="btn-open-bg-picker" onclick="openBgPicker()">
-            <span class="shop-icon">🖼</span>
-            <span class="shop-label">Background</span>
-            <span class="shop-cost" style="color:var(--cyan);font-size:9px;">Pick one</span>
-          </button>
-          <button class="shop-btn auth-gated locked" id="btn-add-egg">
-            <span class="shop-icon">🥚</span>
-            <span class="shop-label">New Egg</span>
-            <span class="shop-cost" style="color:var(--yellow);font-size:9px;">5 pts</span>
-          </button>
-          <button class="shop-btn auth-gated locked" id="btn-gacha" style="grid-column:1/-1;">
-            <span class="shop-icon">🎰</span>
-            <span class="shop-label">Gacha Machine</span>
-            <span class="shop-cost" style="color:var(--pink);font-size:9px;">5 pts · Use physical machine</span>
-          </button>
-        </div>
+      <div class="spotlight-section-head" style="font-size:16px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);padding-bottom:8px;">Tama Shop</div>
+      <div class="shop-grid">
+        <button class="shop-btn auth-gated locked" id="btn-open-bg-picker" onclick="openBgPicker()">
+          <span class="shop-icon">🖼</span>
+          <span class="shop-label">BG</span>
+          <span class="shop-cost" style="color:var(--cyan);font-size:8px;">Pick one</span>
+        </button>
+        <button class="shop-btn auth-gated locked" id="btn-add-egg">
+          <span class="shop-icon">🥚</span>
+          <span class="shop-label">Egg</span>
+          <span class="shop-cost" style="color:var(--yellow);font-size:8px;">5 pts</span>
+        </button>
+        <button class="shop-btn auth-gated locked" id="btn-gacha" style="grid-column:1/-1;">
+          <span class="shop-icon">🎰</span>
+          <span class="shop-label">Gacha Machine</span>
+          <span class="shop-cost" style="color:var(--pink);font-size:8px;">5 pts · Physical</span>
+        </button>
       </div>
 
       <!-- Cell color -->
-      <div class="spotlight-section auth-gated locked" id="cell-color-section">
+      <div class="spotlight-section auth-gated locked" id="cell-color-section" style="margin-top:10px;">
         <div class="spotlight-section-head">Cell Color</div>
-        <div style="display:flex;align-items:center;gap:10px;margin-top:2px;">
+        <div style="display:flex;align-items:center;gap:8px;margin-top:4px;flex-wrap:wrap;">
           <input type="color" id="cell-color-picker" value="#87CEEB"
-            style="width:40px;height:32px;border:2px solid var(--border);border-radius:4px;
+            style="width:36px;height:28px;border:2px solid var(--border);border-radius:4px;
                    background:none;cursor:pointer;padding:2px;">
-          <div style="flex:1;">
-            <div style="font-size:10px;color:var(--muted);">Background fill color</div>
+          <div style="flex:1;min-width:0;">
             <div id="cell-color-hex" style="font-size:9px;color:var(--cyan);letter-spacing:1px;">#87CEEB</div>
           </div>
           <button class="btn" id="btn-cell-color-reset" style="font-size:9px;padding:3px 8px;">↺</button>
