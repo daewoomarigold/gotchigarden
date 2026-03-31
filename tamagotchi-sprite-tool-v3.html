@@ -3876,11 +3876,11 @@ function foodApplyZoom() {
 // ── Click on sheet = add divider ──────────────────────────────────────────────
 document.getElementById('food-sheet-scroll').addEventListener('click', e => {
   if (!FOOD.img || FOOD.dragging) return;
-  const container = document.getElementById('food-sheet-container');
-  const scroll    = document.getElementById('food-sheet-scroll');
-  const rect      = container.getBoundingClientRect();
-  const rawY      = Math.round((e.clientY - rect.top + scroll.scrollTop) / FOOD.zoom);
-  if (rawY < 0 || rawY > FOOD.h) return;
+  const scroll = document.getElementById('food-sheet-scroll');
+  const rect   = scroll.getBoundingClientRect();
+  const rawY   = Math.round((e.clientY - rect.top + scroll.scrollTop) / FOOD.zoom);
+  const rawX   = Math.round((e.clientX - rect.left + scroll.scrollLeft) / FOOD.zoom);
+  if (rawY < 0 || rawY > FOOD.h || rawX < 0 || rawX > FOOD.w) return;
   FOOD.dividers.push(rawY);
   FOOD.dividers.sort((a,b) => a-b);
   foodRebuildRows();
@@ -3901,6 +3901,15 @@ window.addEventListener('mousemove', e => {
   foodRenderDividers();
 });
 window.addEventListener('mouseup', e => {
+  if (!FOOD.dragging) return;
+  FOOD.dragging = null;
+  foodRebuildRows();
+  foodRenderDividers();
+  foodRenderList();
+});
+
+// Reset drag if mouse leaves the window entirely (e.g. mouseup outside browser)
+window.addEventListener('blur', () => {
   if (!FOOD.dragging) return;
   FOOD.dragging = null;
   foodRebuildRows();
