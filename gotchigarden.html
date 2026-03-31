@@ -877,6 +877,7 @@ document.addEventListener('click', e => {
 
 const TAMA_PATH = 'sprites/tamas';
 const BG_PATH   = 'sprites/background';
+const FOOD_PATH = 'sprites/food';
 
 const DEFAULT_BG       = 'LCD Handhelds - Tamagotchi Smart - Backgrounds - Base_tile_52.png';
 const DEFAULT_BG_ID    = 'bg_052';
@@ -1080,8 +1081,8 @@ async function loadTamaDex() {
 
 // ─── FOOD SYSTEM ──────────────────────────────────────────────────────────
 const FOODS = [
-  { id: 'food_basic',   name: 'Basic Food',   tier: 'basic',   cost: 20, icon: '🍙', desc: 'Standard evolution path' },
-  { id: 'food_premium', name: 'Premium Food', tier: 'premium', cost: 35, icon: '🍱', desc: 'Variant-capable evolution path' },
+  { id: 'food_basic',   name: 'Basic Food',   tier: 'basic',   cost: 20, icon: '🍙', desc: 'Standard evolution path',          fooddexId: 'food_002' },
+  { id: 'food_premium', name: 'Premium Food', tier: 'premium', cost: 35, icon: '🍱', desc: 'Variant-capable evolution path',    fooddexId: 'food_021' },
 ];
 
 const EVOLVE_WAIT_DAYS = 6; // babies must wait this many days after feeding to evolve
@@ -1513,6 +1514,53 @@ function buildBgCanvas(bgImg, color = '#87CEEB') {
 
 function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 
+// ─── FOODDEX ──────────────────────────────────────────────────────────────────
+let _fooddex     = null;  // cached fooddex.json
+let _foodSheet   = null;  // cached food sprite sheet HTMLImageElement
+let _foodSheetOff = null; // offscreen canvas with transparency applied
+
+async function loadFooddex() {
+  if (_fooddex) return _fooddex;
+  const resp = await fetch(`${PAGES_BASE}/${FOOD_PATH}/fooddex.json?v=${Date.now()}`);
+  if (!resp.ok) throw new Error(`Could not load fooddex.json (${resp.status})`);
+  _fooddex = await resp.json();
+  return _fooddex;
+}
+
+async function loadFoodSheet() {
+  if (_foodSheetOff) return _foodSheetOff;
+  const img = await fetchImage(FOOD_PATH, 'LCD_Handhelds_-_Tamagotchi_Smart_-_Food_-_Base.png');
+  _foodSheet = img;
+  // Apply black→transparent (same as egg/tama sheets)
+  const off = document.createElement('canvas');
+  off.width  = img.naturalWidth  || img.width;
+  off.height = img.naturalHeight || img.height;
+  const oc   = off.getContext('2d');
+  oc.imageSmoothingEnabled = false;
+  oc.drawImage(img, 0, 0);
+  const id = oc.getImageData(0, 0, off.width, off.height);
+  const d  = id.data;
+  for (let i = 0; i < d.length; i += 4)
+    if (d[i] < 15 && d[i+1] < 15 && d[i+2] < 15) d[i+3] = 0;
+  oc.putImageData(id, 0, 0);
+  _foodSheetOff = off;
+  return off;
+}
+
+// Start eating animation on a pet after food is confirmed
+async function triggerEating(pet, food) {
+  try {
+    const [dex, sheet] = await Promise.all([loadFooddex(), loadFoodSheet()]);
+    const entry = dex.foods.find(f => f.id === food.fooddexId);
+    if (!entry) return; // fooddex entry missing — fail silently
+
+    pet._eating = { entry, biteIdx: 0, off: sheet };
+    pet.forceAnimation('eating');
+  } catch(e) {
+    console.warn('triggerEating failed:', e);
+  }
+}
+
 // ─── EGG ASSETS ───────────────────────────────────────────────────────────
 let eggJSON  = null;  // loaded from TAM-000-001.json
 let eggSheet = null;  // loaded Eggs.png as HTMLImageElement
@@ -1551,6 +1599,17 @@ const ANIMATION_DEFS = {
   sit: {
     adult:{fps:1,loop:true,frames:[{body:'sit',face:'normal',hold:1}]},
     baby: {fps:1,loop:true,frames:[{body:'normal',hold:1}]},
+  },
+  // eating: cycles eyes_open_happy → eyes_closed_happy; each "closed" frame = one bite
+  eating: {
+    adult:{fps:4,loop:true,frames:[
+      {body:'stand',face:'eyes_open_happy',  hold:3},
+      {body:'stand',face:'eyes_closed_happy',hold:2},
+    ]},
+    baby: {fps:4,loop:true,frames:[
+      {body:'normal',hold:3},
+      {body:'happy', hold:2},
+    ]},
   },
 };
 
@@ -1792,6 +1851,7 @@ class Pet {
       // Feed/evolution tracking (populated from DB after construction)
       this.fedWith = null;
       this.fedAt   = null;
+      this._eating = null; // { entry, biteIdx, off } while eating animation runs
     }
   }
 
@@ -1868,7 +1928,28 @@ class Pet {
       this._lastTick = ts;
       this.holdCounter++;
       const fd = def.frames[this.frameIdx % def.frames.length];
-      if (this.holdCounter>=(fd.hold||1)){this.holdCounter=0;this.frameIdx=(this.frameIdx+1)%def.frames.length;}
+      if (this.holdCounter>=(fd.hold||1)){
+        this.holdCounter=0;
+        const prevIdx = this.frameIdx;
+        this.frameIdx=(this.frameIdx+1)%def.frames.length;
+
+        // Eating: detect transition onto the "closed" frame → register a bite
+        if (this._eating && key === 'eating') {
+          const newFd = def.frames[this.frameIdx];
+          const isClosed = this.isBaby
+            ? (newFd?.body === 'happy')
+            : (newFd?.face === 'eyes_closed_happy');
+          if (isClosed) {
+            this._eating.biteIdx++;
+            if (this._eating.biteIdx >= 3) {
+              // All bites done — clear food and resume
+              this._eating = null;
+              this.forceAnimation(null);
+              return;
+            }
+          }
+        }
+      }
       this.stateTimer--;
       switch (this.state) {
         case 'stand':
@@ -1921,6 +2002,21 @@ class Pet {
       ctx.drawImage(this.off,fs.x,fs.y,fs.w,fs.h,px+fox,py+foy,fw,fh);
     }
     ctx.restore();
+
+    // Draw food sprite to the left of the tama while eating
+    if (this._eating && this._eating.biteIdx < 3) {
+      const frame = this._eating.entry.frames[this._eating.biteIdx];
+      if (frame) {
+        const fw = Math.round(frame.w * SPRITE_SCALE);
+        const fh = Math.round(frame.h * SPRITE_SCALE);
+        const GAP = 3;
+        // Default: food to the left; flip to right if tama is near left edge
+        let fx = px - fw - GAP;
+        if (fx < 0) fx = px + dw + GAP;
+        const fy = py + Math.round((dh - fh) / 2);
+        ctx.drawImage(this._eating.off, frame.x, frame.y, frame.w, frame.h, fx, fy, fw, fh);
+      }
+    }
   }
 
   forceAnimation(key) {
@@ -2771,8 +2867,11 @@ function purchaseFood(food, pet) {
     pet.fedAt   = fedAt;
     if (pet.dbId) dbUpsertPet({ id: pet.dbId, fed_with: food.id, fed_at: fedAt });
 
-    // Refresh actions panel
+    // Play eating animation
     const cell = cells.find(c => c.student.id === selected);
+    triggerEating(pet, food);
+
+    // Refresh actions panel
     if (cell) buildPetActions(cell);
 
     toast(`${food.icon} ${food.name} fed!`);
