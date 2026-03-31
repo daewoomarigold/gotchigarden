@@ -1991,8 +1991,27 @@ class Pet {
     const px  = Math.round(this.x), py = Math.round(this.y);
     const dw  = Math.round(bs.w * SPRITE_SCALE);
     const dh  = Math.round(bs.h * SPRITE_SCALE);
+
+    // Determine food position first so we can face toward it while eating
+    let foodFrame = null, foodFx = 0, foodFy = 0, foodToRight = false;
+    if (this._eating && this._eating.biteIdx < 3) {
+      const frame = this._eating.entry.frames[this._eating.biteIdx];
+      if (frame) {
+        const fw = Math.round(frame.w * SPRITE_SCALE);
+        const fh = Math.round(frame.h * SPRITE_SCALE);
+        const GAP = 3;
+        foodToRight = (px - fw - GAP) < 0;
+        foodFx = foodToRight ? px + dw + GAP : px - fw - GAP;
+        foodFy = py + Math.round((dh - fh) / 2);
+        foodFrame = { frame, fw, fh };
+      }
+    }
+
+    // While eating, face toward the food; otherwise use movement direction
+    const flipRight = this._eating ? foodToRight : this.facingRight;
+
     ctx.save();
-    if (this.facingRight){ctx.translate(px+dw/2,0);ctx.scale(-1,1);ctx.translate(-(px+dw/2),0);}
+    if (flipRight){ctx.translate(px+dw/2,0);ctx.scale(-1,1);ctx.translate(-(px+dw/2),0);}
     ctx.drawImage(this.off,bs.x,bs.y,bs.w,bs.h,px,py,dw,dh);
     if (!this.isBaby&&an.useFace&&fs) {
       const fw = Math.round(fs.w * SPRITE_SCALE);
@@ -2003,19 +2022,9 @@ class Pet {
     }
     ctx.restore();
 
-    // Draw food sprite to the left of the tama while eating
-    if (this._eating && this._eating.biteIdx < 3) {
-      const frame = this._eating.entry.frames[this._eating.biteIdx];
-      if (frame) {
-        const fw = Math.round(frame.w * SPRITE_SCALE);
-        const fh = Math.round(frame.h * SPRITE_SCALE);
-        const GAP = 3;
-        // Default: food to the left; flip to right if tama is near left edge
-        let fx = px - fw - GAP;
-        if (fx < 0) fx = px + dw + GAP;
-        const fy = py + Math.round((dh - fh) / 2);
-        ctx.drawImage(this._eating.off, frame.x, frame.y, frame.w, frame.h, fx, fy, fw, fh);
-      }
+    // Draw food sprite beside the tama
+    if (foodFrame) {
+      ctx.drawImage(this._eating.off, foodFrame.frame.x, foodFrame.frame.y, foodFrame.frame.w, foodFrame.frame.h, foodFx, foodFy, foodFrame.fw, foodFrame.fh);
     }
   }
 
