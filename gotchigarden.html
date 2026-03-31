@@ -3056,12 +3056,11 @@ function purchaseVariant(pet, student, entry) {
     toast(`✨ Switched to ${entry.displayName}!`);
     cellAnnounce(cell, `✨ ${entry.displayName}!`, 6000);
 
-    // Refresh roster portrait + actions panel, then re-open the shop
+    // Refresh roster portrait + actions panel
     if (cell) {
       buildPetRoster(cell);
       buildPetActions(cell);
     }
-    await openVariantShop(pet);
   };
   confirmBtn.addEventListener('click', handler);
   closeOverlay('overlay-variant-shop');
@@ -3088,6 +3087,19 @@ async function triggerVariantAnim(cell, pet, newCharId) {
     ctx.save();
     if (pet.facingRight) { ctx.translate(px + dw / 2, 0); ctx.scale(-1, 1); ctx.translate(-(px + dw / 2), 0); }
     ctx.drawImage(pet.off, bs.x, bs.y, bs.w, bs.h, px, py, dw, dh);
+    // Draw face overlay if this is an adult with a face band
+    if (!pet.isBaby) {
+      const faceLabel = bodyLabel === 'happy' ? 'happy' : 'normal';
+      const fs  = pet._face[faceLabel] || pet._face['normal'] || null;
+      const an  = pet._anch[bodyLabel] || { offsetX: 0, offsetY: 0, useFace: true };
+      if (fs && an.useFace) {
+        const fw  = Math.round(fs.w * SPRITE_SCALE);
+        const fh  = Math.round(fs.h * SPRITE_SCALE);
+        const fox = Math.round(an.offsetX * SPRITE_SCALE);
+        const foy = Math.round(an.offsetY * SPRITE_SCALE);
+        ctx.drawImage(pet.off, fs.x, fs.y, fs.w, fs.h, px + fox, py + foy, fw, fh);
+      }
+    }
     ctx.restore();
   }
 
