@@ -1870,9 +1870,7 @@ class Pet {
     const fd  = def.frames[this.frameIdx % def.frames.length];
     const bs  = this._body[fd.body]; if (!bs) return;
     const fs  = (!this.isBaby&&fd.face) ? this._face[fd.face]||null : null;
-    // Always use the 'stand' anchor for the face position — using fd.body's anchor
-    // causes the face to jump vertically as animation cycles through different body frames.
-    const an  = (!this.isBaby&&fd.face) ? this._anch['stand']||this._anch[fd.body]||{offsetX:0,offsetY:0,useFace:true} : {offsetX:0,offsetY:0,useFace:false};
+    const an  = (!this.isBaby&&fd.face) ? this._anch[fd.body]||{offsetX:0,offsetY:0,useFace:true} : {offsetX:0,offsetY:0,useFace:false};
     const px  = Math.round(this.x), py = Math.round(this.y);
     const dw  = Math.round(bs.w * SPRITE_SCALE);
     const dh  = Math.round(bs.h * SPRITE_SCALE);
