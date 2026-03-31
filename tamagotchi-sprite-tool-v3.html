@@ -548,6 +548,30 @@ header h1 {
   cursor:pointer;transform:translate(-50%,-50%);white-space:nowrap;z-index:10;
 }
 .gc-conn-label:hover { border-color:var(--yellow); }
+
+/* ── Food Editor ── */
+.food-sheet-scroll{flex:1;overflow:auto;position:relative;background:#111;cursor:crosshair;}
+.food-sheet-scroll::-webkit-scrollbar{width:6px;height:6px;}
+.food-sheet-scroll::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px;}
+#food-sheet-container{position:relative;display:inline-block;}
+#food-sheet-img{display:block;image-rendering:pixelated;image-rendering:crisp-edges;}
+.food-divider-line{stroke:var(--cyan);stroke-width:1;opacity:0.85;pointer-events:all;cursor:ns-resize;}
+.food-divider-line:hover{stroke:var(--yellow);stroke-width:2;}
+.food-row-item{background:var(--surface);border:1px solid var(--border);border-radius:6px;margin-bottom:8px;padding:8px 10px;display:flex;align-items:center;gap:10px;transition:border-color 0.12s;}
+.food-row-item:hover{border-color:var(--border2);}
+.food-row-item.disabled{opacity:0.4;}
+.food-row-num{font-size:10px;color:var(--muted);width:22px;flex-shrink:0;text-align:right;}
+.food-frames{display:flex;gap:6px;align-items:center;flex-shrink:0;}
+.food-frame-canvas{image-rendering:pixelated;image-rendering:crisp-edges;border:1px solid var(--border);border-radius:3px;background:#000;display:block;}
+.food-frame-label{font-size:9px;color:var(--muted);text-align:center;margin-top:2px;}
+.food-frame-wrap{display:flex;flex-direction:column;align-items:center;}
+.food-name-input{flex:1;background:var(--raised);border:1px solid var(--border);color:var(--text);font-family:'DM Mono',monospace;font-size:11px;padding:5px 8px;border-radius:4px;outline:none;min-width:0;}
+.food-name-input:focus{border-color:var(--cyan);}
+.food-toggle-btn{background:none;border:1px solid var(--border2);border-radius:4px;width:28px;height:28px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;transition:all 0.12s;}
+.food-toggle-btn.on{border-color:var(--green);}
+.food-toggle-btn.off{border-color:var(--red);opacity:0.6;}
+.food-del-btn{background:none;border:1px solid var(--border);border-radius:4px;width:24px;height:24px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--muted);flex-shrink:0;transition:all 0.12s;}
+.food-del-btn:hover{border-color:var(--red);color:var(--red);}
 </style>
 </head>
 <body>
@@ -560,6 +584,7 @@ header h1 {
   <button class="btn" id="btn-import-jsons" disabled style="border-color:var(--cyan);color:var(--cyan);">↺ Import JSON Set</button>
   <button class="btn btn-commit-all" id="btn-commit-all" disabled>↓ Commit All</button>
   <button class="btn" id="btn-export-dex" disabled style="border-color:var(--purple);color:var(--purple);">★ Export TamaDex</button>
+  <button class="btn" id="btn-food-mode" style="border-color:var(--pink);color:var(--pink);">🍙 Food Editor</button>
   <button class="btn" id="btn-eggs-mode" style="border-color:var(--orange);color:var(--orange);">🥚 Egg Editor</button>
   <button class="btn" id="btn-growth-mode" style="border-color:var(--yellow);color:var(--yellow);">📈 Growth Chart</button>
   <button class="btn" id="btn-manifest-mode" style="border-color:var(--cyan);color:var(--cyan);">📋 Manifest</button>
@@ -1035,6 +1060,55 @@ header h1 {
   </div><!-- /editor-area -->
 
 </div><!-- /workspace -->
+
+  <!-- ── Food Editor ── -->
+  <div id="food-editor" style="display:none;flex:1;flex-direction:row;overflow:hidden;">
+
+    <!-- Left: sheet viewer -->
+    <div style="width:320px;flex-shrink:0;background:var(--surface);border-right:1px solid var(--border2);display:flex;flex-direction:column;overflow:hidden;">
+      <div style="padding:8px 10px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;flex-shrink:0;background:var(--surface);">
+        <span style="font-family:'Pixelify Sans',monospace;font-size:1rem;color:var(--pink);">🍙 Food Editor</span>
+        <div style="flex:1;"></div>
+        <button class="btn" id="btn-food-load" style="font-size:10px;">↑ Load Sheet</button>
+        <input type="file" id="food-sheet-input" accept="image/*" style="display:none;">
+        <button class="btn" id="btn-food-clear" style="font-size:10px;">✕ Dividers</button>
+        <button class="btn" id="btn-food-close" style="font-size:10px;">✕ Close</button>
+      </div>
+      <div style="padding:6px 10px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;flex-shrink:0;">
+        <span style="font-size:10px;color:var(--muted);">Zoom</span>
+        <input type="range" id="food-zoom-range" min="1" max="8" step="0.5" value="3" style="width:70px;accent-color:var(--cyan);">
+        <span id="food-zoom-label" style="font-size:10px;color:var(--cyan);width:24px;">3×</span>
+        <span style="font-size:9px;color:var(--muted);flex:1;">Click=add · Drag=move · Right-click=delete</span>
+      </div>
+      <div class="food-sheet-scroll" id="food-sheet-scroll">
+        <div id="food-sheet-container">
+          <img id="food-sheet-img" src="" alt="" style="display:none;">
+          <svg id="food-divider-svg" width="0" height="0" style="position:absolute;top:0;left:0;pointer-events:none;"></svg>
+        </div>
+        <div id="food-no-sheet" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:11px;pointer-events:none;">Load a food sprite sheet to begin</div>
+      </div>
+    </div>
+
+    <!-- Right: food list -->
+    <div style="flex:1;display:flex;flex-direction:column;overflow:hidden;">
+      <div style="padding:8px 12px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;flex-shrink:0;background:var(--surface);">
+        <span style="font-size:10px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;">Food Items</span>
+        <span id="food-row-count" style="font-size:10px;color:var(--yellow);"></span>
+        <div style="flex:1;"></div>
+        <button class="btn" id="btn-food-enable-all" style="font-size:10px;padding:3px 8px;">✓ All</button>
+        <button class="btn" id="btn-food-disable-all" style="font-size:10px;padding:3px 8px;">✕ All</button>
+        <button class="btn" id="btn-food-export" style="border-color:var(--yellow);color:var(--yellow);font-size:10px;">↓ Export fooddex.json</button>
+      </div>
+      <div style="flex:1;overflow-y:auto;padding:10px;" id="food-list-scroll">
+        <div id="food-empty-hint" style="color:var(--muted);font-size:11px;text-align:center;padding:40px 20px;line-height:2;">
+          Load a sprite sheet and click on it to add row dividers.<br>
+          Each divider marks where one food row ends and the next begins.<br>
+          The tool will auto-detect the 3 bite frames within each row.
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /food-editor -->
 
 <div id="toast"></div>
 <div id="loading"><div id="loading-msg">Loading...</div><div id="loading-sub"></div></div>
@@ -3720,8 +3794,371 @@ function gcShowConnInspector(conn, chart) {
   });
 }
 
-// ── Export ───────────────────────────────────────────────────────────────────
-document.getElementById('gc-btn-export').addEventListener('click',()=>{
+// ═══════════════════════════════════════════════════════════════════════════
+// FOOD EDITOR
+// ═══════════════════════════════════════════════════════════════════════════
+
+const FOOD = {
+  img:      null,
+  w: 0, h:  0,
+  zoom:     3,
+  dividers: [],   // sorted raw-pixel Y values
+  rows:     [],   // { id, name, enabled, frames:[{x,y,w,h}] }
+  nextId:   1,
+  dragging: null, // { idx, startClientY, startRawY }
+  offCtx:   null,
+  offCanvas:null,
+};
+
+// ── Open / close ──────────────────────────────────────────────────────────────
+function openFoodEditor() {
+  document.getElementById('food-editor').style.display   = 'flex';
+  document.getElementById('editor-area').style.display   = 'none';
+  document.getElementById('char-list').style.display     = 'none';
+}
+function closeFoodEditor() {
+  document.getElementById('food-editor').style.display   = 'none';
+  document.getElementById('editor-area').style.display   = 'flex';
+  document.getElementById('char-list').style.display     = 'flex';
+}
+document.getElementById('btn-food-mode').addEventListener('click', openFoodEditor);
+document.getElementById('btn-food-close').addEventListener('click', closeFoodEditor);
+
+// ── Load sheet ────────────────────────────────────────────────────────────────
+document.getElementById('btn-food-load').addEventListener('click', () => {
+  document.getElementById('food-sheet-input').click();
+});
+
+document.getElementById('food-sheet-input').addEventListener('change', e => {
+  const file = e.target.files[0]; if (!file) return;
+  const url  = URL.createObjectURL(file);
+  const img  = new Image();
+  img.onload = () => {
+    FOOD.img  = img;
+    FOOD.w    = img.naturalWidth;
+    FOOD.h    = img.naturalHeight;
+    FOOD.offCanvas = null; // invalidate pixel cache
+    const el  = document.getElementById('food-sheet-img');
+    el.src    = url;
+    el.style.display = 'block';
+    document.getElementById('food-no-sheet').style.display = 'none';
+    FOOD.dividers = []; FOOD.rows = []; FOOD.nextId = 1;
+    foodApplyZoom();
+    foodRenderDividers();
+    foodRenderList();
+  };
+  img.src = url;
+  e.target.value = '';
+});
+
+// ── Zoom ──────────────────────────────────────────────────────────────────────
+document.getElementById('food-zoom-range').addEventListener('input', e => {
+  FOOD.zoom = parseFloat(e.target.value);
+  document.getElementById('food-zoom-label').textContent = FOOD.zoom + '×';
+  foodApplyZoom();
+  foodRenderDividers();
+});
+
+function foodApplyZoom() {
+  if (!FOOD.img) return;
+  const z = FOOD.zoom;
+  const el = document.getElementById('food-sheet-img');
+  const container = document.getElementById('food-sheet-container');
+  const svg = document.getElementById('food-divider-svg');
+  el.style.width  = (FOOD.w * z) + 'px';
+  el.style.height = (FOOD.h * z) + 'px';
+  container.style.width  = (FOOD.w * z) + 'px';
+  container.style.height = (FOOD.h * z) + 'px';
+  svg.setAttribute('width',  FOOD.w * z);
+  svg.setAttribute('height', FOOD.h * z);
+}
+
+// ── Click on sheet = add divider ──────────────────────────────────────────────
+document.getElementById('food-sheet-scroll').addEventListener('click', e => {
+  if (!FOOD.img || FOOD.dragging) return;
+  const container = document.getElementById('food-sheet-container');
+  const scroll    = document.getElementById('food-sheet-scroll');
+  const rect      = container.getBoundingClientRect();
+  const rawY      = Math.round((e.clientY - rect.top + scroll.scrollTop) / FOOD.zoom);
+  if (rawY < 0 || rawY > FOOD.h) return;
+  FOOD.dividers.push(rawY);
+  FOOD.dividers.sort((a,b) => a-b);
+  foodRebuildRows();
+  foodRenderDividers();
+  foodRenderList();
+});
+
+document.getElementById('food-sheet-scroll').addEventListener('contextmenu', e => e.preventDefault());
+
+// ── Drag dividers ─────────────────────────────────────────────────────────────
+window.addEventListener('mousemove', e => {
+  if (!FOOD.dragging) return;
+  const dy = e.clientY - FOOD.dragging.startClientY;
+  const newY = Math.max(0, Math.min(FOOD.h, Math.round(FOOD.dragging.startRawY + dy / FOOD.zoom)));
+  FOOD.dividers[FOOD.dragging.idx] = newY;
+  FOOD.dividers.sort((a,b) => a-b);
+  FOOD.dragging.idx = FOOD.dividers.indexOf(newY);
+  foodRenderDividers();
+});
+window.addEventListener('mouseup', e => {
+  if (!FOOD.dragging) return;
+  FOOD.dragging = null;
+  foodRebuildRows();
+  foodRenderDividers();
+  foodRenderList();
+});
+
+// ── Render dividers + sprite boxes ───────────────────────────────────────────
+function foodRenderDividers() {
+  const svg = document.getElementById('food-divider-svg');
+  svg.innerHTML = '';
+  if (!FOOD.img) return;
+  const z = FOOD.zoom;
+
+  // Sprite boxes per row
+  foodGetRowBounds().forEach(({y0, y1}) => {
+    foodDetectSprites(y0, y1).forEach(fr => {
+      const rect = document.createElementNS('http://www.w3.org/2000/svg','rect');
+      rect.setAttribute('x',      fr.x * z);
+      rect.setAttribute('y',      fr.y * z);
+      rect.setAttribute('width',  fr.w * z);
+      rect.setAttribute('height', fr.h * z);
+      rect.setAttribute('fill',   'none');
+      rect.setAttribute('stroke', 'rgba(255,224,102,0.35)');
+      rect.setAttribute('stroke-width', '1');
+      svg.appendChild(rect);
+    });
+  });
+
+  // Divider lines
+  FOOD.dividers.forEach((rawY, idx) => {
+    const sy = rawY * z;
+    const line = document.createElementNS('http://www.w3.org/2000/svg','line');
+    line.setAttribute('class', 'food-divider-line');
+    line.setAttribute('x1', 0); line.setAttribute('x2', FOOD.w * z);
+    line.setAttribute('y1', sy); line.setAttribute('y2', sy);
+    line.style.pointerEvents = 'all';
+
+    line.addEventListener('mousedown', e => {
+      if (e.button === 2) return;
+      e.stopPropagation();
+      FOOD.dragging = { idx, startClientY: e.clientY, startRawY: rawY };
+    });
+    line.addEventListener('contextmenu', e => {
+      e.preventDefault(); e.stopPropagation();
+      FOOD.dividers.splice(idx, 1);
+      foodRebuildRows(); foodRenderDividers(); foodRenderList();
+    });
+    svg.appendChild(line);
+
+    const text = document.createElementNS('http://www.w3.org/2000/svg','text');
+    text.setAttribute('x', 2); text.setAttribute('y', sy - 2);
+    text.setAttribute('fill', 'var(--cyan)'); text.setAttribute('font-size', '8');
+    text.setAttribute('font-family', 'DM Mono, monospace');
+    text.textContent = `y=${rawY}`;
+    svg.appendChild(text);
+  });
+}
+
+// ── Row bounds ────────────────────────────────────────────────────────────────
+function foodGetRowBounds() {
+  const edges = [0, ...FOOD.dividers, FOOD.h];
+  const rows = [];
+  for (let i = 0; i < edges.length - 1; i++)
+    rows.push({ y0: edges[i], y1: edges[i+1] - 1 });
+  return rows;
+}
+
+// ── Sprite detection ──────────────────────────────────────────────────────────
+function foodGetSheetCtx() {
+  if (FOOD.offCanvas && FOOD.offCanvas.width === FOOD.w) return FOOD.offCtx;
+  FOOD.offCanvas = document.createElement('canvas');
+  FOOD.offCanvas.width = FOOD.w; FOOD.offCanvas.height = FOOD.h;
+  FOOD.offCtx = FOOD.offCanvas.getContext('2d', { willReadFrequently: true });
+  FOOD.offCtx.drawImage(FOOD.img, 0, 0);
+  return FOOD.offCtx;
+}
+
+function foodDetectSprites(y0, y1) {
+  if (!FOOD.img || y1 <= y0) return [];
+  const ctx  = foodGetSheetCtx();
+  const h    = y1 - y0 + 1;
+  const data = ctx.getImageData(0, y0, FOOD.w, h).data;
+  const T    = 10;
+
+  const colHas = new Array(FOOD.w).fill(false);
+  for (let x = 0; x < FOOD.w; x++)
+    for (let y = 0; y < h; y++) {
+      const i = (y * FOOD.w + x) * 4;
+      if (data[i] > T || data[i+1] > T || data[i+2] > T) { colHas[x] = true; break; }
+    }
+
+  const clusters = [];
+  let inC = false, cx0 = 0;
+  for (let x = 0; x < FOOD.w; x++) {
+    if (colHas[x] && !inC) { inC = true; cx0 = x; }
+    else if (!colHas[x] && inC) { inC = false; clusters.push([cx0, x-1]); }
+  }
+  if (inC) clusters.push([cx0, FOOD.w-1]);
+
+  // Merge clusters with ≤2px gap (noise)
+  const merged = [];
+  for (const c of clusters) {
+    if (merged.length && c[0] - merged[merged.length-1][1] <= 2)
+      merged[merged.length-1][1] = c[1];
+    else merged.push([...c]);
+  }
+
+  return merged.map(([cx0, cx1]) => {
+    let ry0 = h, ry1 = -1;
+    for (let y = 0; y < h; y++)
+      for (let x = cx0; x <= cx1; x++) {
+        const i = (y * FOOD.w + x) * 4;
+        if (data[i] > T || data[i+1] > T || data[i+2] > T) {
+          ry0 = Math.min(ry0, y); ry1 = Math.max(ry1, y);
+        }
+      }
+    return { x: cx0, y: y0 + ry0, w: cx1 - cx0 + 1, h: ry1 - ry0 + 1 };
+  });
+}
+
+// ── Rebuild rows ──────────────────────────────────────────────────────────────
+function foodRebuildRows() {
+  if (!FOOD.img) return;
+  const newRows = [];
+  foodGetRowBounds().forEach((band, i) => {
+    const sprites = foodDetectSprites(band.y0, band.y1);
+    if (!sprites.length) return;
+    const existing = FOOD.rows[i];
+    newRows.push({
+      id:      existing?.id      ?? FOOD.nextId++,
+      name:    existing?.name    ?? '',
+      enabled: existing?.enabled ?? true,
+      frames:  sprites,
+    });
+  });
+  FOOD.rows = newRows;
+  document.getElementById('food-row-count').textContent = `(${FOOD.rows.length} items)`;
+}
+
+// ── Render list ───────────────────────────────────────────────────────────────
+function foodRenderList() {
+  const list = document.getElementById('food-list-scroll');
+  list.innerHTML = '';
+  if (!FOOD.rows.length) {
+    list.appendChild(document.getElementById('food-empty-hint'));
+    return;
+  }
+  const PREVIEW_H  = 40;
+  const BITE_LABELS = ['bite 0', 'bite 1', 'bite 2'];
+
+  FOOD.rows.forEach((row, idx) => {
+    const div = document.createElement('div');
+    div.className = 'food-row-item' + (row.enabled ? '' : ' disabled');
+
+    const num = document.createElement('div');
+    num.className = 'food-row-num';
+    num.textContent = String(idx+1).padStart(2,'0');
+    div.appendChild(num);
+
+    const framesDiv = document.createElement('div');
+    framesDiv.className = 'food-frames';
+
+    for (let fi = 0; fi < 3; fi++) {
+      const fr   = row.frames[fi];
+      const wrap = document.createElement('div');
+      wrap.className = 'food-frame-wrap';
+
+      const cnv = document.createElement('canvas');
+      cnv.className = 'food-frame-canvas';
+      if (fr && fr.w > 0 && fr.h > 0) {
+        const scale = PREVIEW_H / fr.h;
+        cnv.width  = Math.round(fr.w * scale);
+        cnv.height = PREVIEW_H;
+        const ctx = cnv.getContext('2d');
+        ctx.imageSmoothingEnabled = false;
+        ctx.drawImage(FOOD.img, fr.x, fr.y, fr.w, fr.h, 0, 0, cnv.width, cnv.height);
+      } else {
+        cnv.width = 30; cnv.height = PREVIEW_H;
+        const ctx = cnv.getContext('2d');
+        ctx.fillStyle = '#1a1a2e'; ctx.fillRect(0,0,30,PREVIEW_H);
+        ctx.fillStyle = '#3a3a5e'; ctx.font='9px monospace';
+        ctx.textAlign='center'; ctx.fillText('?',15,PREVIEW_H/2+4);
+      }
+
+      const lbl = document.createElement('div');
+      lbl.className = 'food-frame-label';
+      lbl.textContent = BITE_LABELS[fi];
+      wrap.appendChild(cnv); wrap.appendChild(lbl);
+      framesDiv.appendChild(wrap);
+    }
+    div.appendChild(framesDiv);
+
+    const nameInput = document.createElement('input');
+    nameInput.className = 'food-name-input';
+    nameInput.type = 'text';
+    nameInput.placeholder = `Food ${idx+1}...`;
+    nameInput.value = row.name;
+    nameInput.addEventListener('input', () => row.name = nameInput.value);
+    div.appendChild(nameInput);
+
+    const toggle = document.createElement('button');
+    toggle.className = 'food-toggle-btn ' + (row.enabled ? 'on' : 'off');
+    toggle.title = row.enabled ? 'Enabled' : 'Disabled';
+    toggle.textContent = row.enabled ? '✓' : '✕';
+    toggle.addEventListener('click', () => { row.enabled = !row.enabled; foodRenderList(); });
+    div.appendChild(toggle);
+
+    const delBtn = document.createElement('button');
+    delBtn.className = 'food-del-btn';
+    delBtn.title = 'Remove this food row';
+    delBtn.textContent = '🗑';
+    delBtn.addEventListener('click', () => {
+      const bounds = foodGetRowBounds();
+      if (bounds[idx] && bounds[idx].y0 > 0) {
+        const di = FOOD.dividers.indexOf(bounds[idx].y0);
+        if (di !== -1) FOOD.dividers.splice(di, 1);
+      }
+      foodRebuildRows(); foodRenderDividers(); foodRenderList();
+    });
+    div.appendChild(delBtn);
+
+    list.appendChild(div);
+  });
+}
+
+// ── Enable / disable all ──────────────────────────────────────────────────────
+document.getElementById('btn-food-enable-all').addEventListener('click', () => {
+  FOOD.rows.forEach(r => r.enabled = true); foodRenderList();
+});
+document.getElementById('btn-food-disable-all').addEventListener('click', () => {
+  FOOD.rows.forEach(r => r.enabled = false); foodRenderList();
+});
+
+// ── Clear dividers ────────────────────────────────────────────────────────────
+document.getElementById('btn-food-clear').addEventListener('click', () => {
+  FOOD.dividers = []; FOOD.rows = []; FOOD.nextId = 1;
+  foodRenderDividers(); foodRenderList();
+  document.getElementById('food-row-count').textContent = '';
+});
+
+// ── Export JSON ───────────────────────────────────────────────────────────────
+document.getElementById('btn-food-export').addEventListener('click', () => {
+  if (!FOOD.rows.length) { toast('No food rows defined'); return; }
+  const out = FOOD.rows.map((row, idx) => ({
+    id:      `food_${String(idx+1).padStart(3,'0')}`,
+    name:    row.name || `Food ${idx+1}`,
+    enabled: row.enabled,
+    frames:  row.frames.slice(0,3).map(fr => ({ x:fr.x, y:fr.y, w:fr.w, h:fr.h })),
+  }));
+  const blob = new Blob([JSON.stringify({ foods: out }, null, 2)], { type:'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'fooddex.json';
+  a.click();
+  URL.revokeObjectURL(a.href);
+  toast(`✓ Exported fooddex.json (${out.length} items)`);
+});
   const chart = gcActiveChart();
   if (!chart) { toast('No chart selected'); return; }
   const out = {
