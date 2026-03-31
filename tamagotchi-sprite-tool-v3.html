@@ -1081,7 +1081,7 @@ header h1 {
       <div class="food-sheet-scroll" id="food-sheet-scroll">
         <div id="food-sheet-container">
           <img id="food-sheet-img" src="" alt="" style="display:none;">
-          <svg id="food-divider-svg" width="0" height="0" style="position:absolute;top:0;left:0;pointer-events:none;"></svg>
+          <svg id="food-divider-svg" width="0" height="0" style="position:absolute;top:0;left:0;"></svg>
         </div>
         <div id="food-no-sheet" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:11px;pointer-events:none;">Load a food sprite sheet to begin</div>
       </div>
@@ -3926,6 +3926,7 @@ function foodRenderDividers() {
       rect.setAttribute('fill',   'none');
       rect.setAttribute('stroke', 'rgba(255,224,102,0.35)');
       rect.setAttribute('stroke-width', '1');
+      rect.setAttribute('pointer-events', 'none');
       svg.appendChild(rect);
     });
   });
@@ -3937,7 +3938,14 @@ function foodRenderDividers() {
     line.setAttribute('class', 'food-divider-line');
     line.setAttribute('x1', 0); line.setAttribute('x2', FOOD.w * z);
     line.setAttribute('y1', sy); line.setAttribute('y2', sy);
-    line.style.pointerEvents = 'all';
+
+    // Invisible wide hit target so the line is easy to grab
+    const hitLine = document.createElementNS('http://www.w3.org/2000/svg','line');
+    hitLine.setAttribute('x1', 0); hitLine.setAttribute('x2', FOOD.w * z);
+    hitLine.setAttribute('y1', sy); hitLine.setAttribute('y2', sy);
+    hitLine.setAttribute('stroke', 'transparent');
+    hitLine.setAttribute('stroke-width', '10');
+    hitLine.style.cursor = 'ns-resize';
 
     line.addEventListener('mousedown', e => {
       if (e.button === 2) return;
@@ -3949,7 +3957,20 @@ function foodRenderDividers() {
       FOOD.dividers.splice(idx, 1);
       foodRebuildRows(); foodRenderDividers(); foodRenderList();
     });
+
+    hitLine.addEventListener('mousedown', e => {
+      if (e.button === 2) return;
+      e.stopPropagation();
+      FOOD.dragging = { idx, startClientY: e.clientY, startRawY: rawY };
+    });
+    hitLine.addEventListener('contextmenu', e => {
+      e.preventDefault(); e.stopPropagation();
+      FOOD.dividers.splice(idx, 1);
+      foodRebuildRows(); foodRenderDividers(); foodRenderList();
+    });
+
     svg.appendChild(line);
+    svg.appendChild(hitLine);
 
     const text = document.createElementNS('http://www.w3.org/2000/svg','text');
     text.setAttribute('x', 2); text.setAttribute('y', sy - 2);
@@ -4046,7 +4067,11 @@ function foodRenderList() {
   const list = document.getElementById('food-list-scroll');
   list.innerHTML = '';
   if (!FOOD.rows.length) {
-    list.appendChild(document.getElementById('food-empty-hint'));
+    list.innerHTML = `<div style="color:var(--muted);font-size:11px;text-align:center;padding:40px 20px;line-height:2;">
+      Load a sprite sheet and click on it to add row dividers.<br>
+      Each divider marks where one food row ends and the next begins.<br>
+      The tool will auto-detect the 3 bite frames within each row.
+    </div>`;
     return;
   }
   const PREVIEW_H  = 40;
