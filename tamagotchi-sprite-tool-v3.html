@@ -2601,12 +2601,12 @@ const BAND_COLORS = {
 function openPreviewMode() {
   document.getElementById('json-preview-editor').style.display = 'flex';
   document.getElementById('editor-area').style.display          = 'none';
-  document.getElementById('char-list').style.display            = 'none';
+  document.querySelector('.char-list').style.display            = 'none';
 }
 function closePreviewMode() {
   document.getElementById('json-preview-editor').style.display = 'none';
   document.getElementById('editor-area').style.display          = 'flex';
-  document.getElementById('char-list').style.display            = 'flex';
+  document.querySelector('.char-list').style.display            = 'flex';
 }
 document.getElementById('btn-preview-close').addEventListener('click', closePreviewMode);
 
@@ -2829,13 +2829,13 @@ const MANIFEST = {
 function openManifestEditor() {
   document.getElementById('manifest-editor').style.display = 'flex';
   document.getElementById('editor-area').style.display     = 'none';
-  document.getElementById('char-list').style.display       = 'none';
+  document.querySelector('.char-list').style.display       = 'none';
 }
 
 function closeManifestEditor() {
   document.getElementById('manifest-editor').style.display = 'none';
   document.getElementById('editor-area').style.display     = 'flex';
-  document.getElementById('char-list').style.display       = 'flex';
+  document.querySelector('.char-list').style.display       = 'flex';
   // Revoke object URLs to free memory
   MANIFEST.entries.forEach(e => { if (e.url) URL.revokeObjectURL(e.url); });
   MANIFEST.entries = [];
@@ -2982,13 +2982,13 @@ const EGG = {
 function openEggEditor() {
   document.getElementById('egg-editor').style.display    = 'flex';
   document.getElementById('editor-area').style.display   = 'none';
-  document.getElementById('char-list').style.display     = 'none';
+  document.querySelector('.char-list').style.display     = 'none';
 }
 
 function closeEggEditor() {
   document.getElementById('egg-editor').style.display    = 'none';
   document.getElementById('editor-area').style.display   = 'flex';
-  document.getElementById('char-list').style.display     = 'flex';
+  document.querySelector('.char-list').style.display     = 'flex';
   eggStopPreview();
 }
 
@@ -3297,7 +3297,7 @@ function gcActiveChart() {
 function openGrowthEditor() {
   document.getElementById('growth-editor').style.display  = 'flex';
   document.getElementById('editor-area').style.display    = 'none';
-  document.getElementById('char-list').style.display      = 'none';
+  document.querySelector('.char-list').style.display      = 'none';
   gcBuildRoster();
   gcRefreshChartSelect();
   gcRender();
@@ -3306,7 +3306,7 @@ function openGrowthEditor() {
 function closeGrowthEditor() {
   document.getElementById('growth-editor').style.display  = 'none';
   document.getElementById('editor-area').style.display    = 'flex';
-  document.getElementById('char-list').style.display      = 'flex';
+  document.querySelector('.char-list').style.display      = 'flex';
   gcConnecting = null;
 }
 
@@ -3812,14 +3812,14 @@ const FOOD = {
 
 // ── Open / close ──────────────────────────────────────────────────────────────
 function openFoodEditor() {
-  document.getElementById('food-editor').style.display   = 'flex';
-  document.getElementById('editor-area').style.display   = 'none';
-  document.getElementById('char-list').style.display     = 'none';
+  document.getElementById('food-editor').style.display          = 'flex';
+  document.getElementById('editor-area').style.display          = 'none';
+  document.querySelector('.char-list').style.display            = 'none';
 }
 function closeFoodEditor() {
-  document.getElementById('food-editor').style.display   = 'none';
-  document.getElementById('editor-area').style.display   = 'flex';
-  document.getElementById('char-list').style.display     = 'flex';
+  document.getElementById('food-editor').style.display          = 'none';
+  document.getElementById('editor-area').style.display          = 'flex';
+  document.querySelector('.char-list').style.display            = 'flex';
 }
 document.getElementById('btn-food-mode').addEventListener('click', openFoodEditor);
 document.getElementById('btn-food-close').addEventListener('click', closeFoodEditor);
