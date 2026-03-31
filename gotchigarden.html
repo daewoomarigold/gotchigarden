@@ -3087,11 +3087,13 @@ async function triggerVariantAnim(cell, pet, newCharId) {
     ctx.save();
     if (pet.facingRight) { ctx.translate(px + dw / 2, 0); ctx.scale(-1, 1); ctx.translate(-(px + dw / 2), 0); }
     ctx.drawImage(pet.off, bs.x, bs.y, bs.w, bs.h, px, py, dw, dh);
-    // Draw face overlay if this is an adult with a face band
+    // Draw face overlay if this is an adult with a face band.
+    // Always use the 'stand' anchor so the face doesn't jump vertically
+    // as the body cycles between stand/happy frames.
     if (!pet.isBaby) {
       const faceLabel = bodyLabel === 'happy' ? 'happy' : 'normal';
       const fs  = pet._face[faceLabel] || pet._face['normal'] || null;
-      const an  = pet._anch[bodyLabel] || { offsetX: 0, offsetY: 0, useFace: true };
+      const an  = pet._anch['stand'] || pet._anch[bodyLabel] || { offsetX: 0, offsetY: 0, useFace: true };
       if (fs && an.useFace) {
         const fw  = Math.round(fs.w * SPRITE_SCALE);
         const fh  = Math.round(fs.h * SPRITE_SCALE);
