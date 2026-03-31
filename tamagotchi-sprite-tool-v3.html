@@ -4159,6 +4159,9 @@ document.getElementById('btn-food-export').addEventListener('click', () => {
   URL.revokeObjectURL(a.href);
   toast(`✓ Exported fooddex.json (${out.length} items)`);
 });
+
+// ── Export ───────────────────────────────────────────────────────────────────
+document.getElementById('gc-btn-export').addEventListener('click',()=>{
   const chart = gcActiveChart();
   if (!chart) { toast('No chart selected'); return; }
   const out = {
