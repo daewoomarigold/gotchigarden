@@ -2838,8 +2838,6 @@ function purchaseBackground(bg, price) {
   const handler = async () => {
     confirmBtn.removeEventListener('click', handler);
     closeOverlay('overlay-buy-confirm');
-
-    // Deduct and unlock
     student.gotchiPoints -= price;
     student.unlockedBgs.push(bg.id);
 
@@ -2862,6 +2860,7 @@ function purchaseBackground(bg, price) {
     await applyBackground(bg);
   };
   confirmBtn.addEventListener('click', handler);
+  closeOverlay('overlay-bg-picker');
   openOverlay('overlay-buy-confirm');
 }
 
@@ -2955,10 +2954,10 @@ async function openVariantShop(pet) {
 
       fetchJSON(entry.id).then(async varJSON => {
         const sheetImg = await fetchImage(TAMA_PATH, varJSON.sheet);
-        // Row 1, col 1 of the sheet = body_anim band, first sprite (stand)
-        const bodyBand = varJSON.bands?.find(b => b.role === 'body_anim');
+        // Band 1 = 'base' (assembled) — first sprite is the canonical preview frame
         const baseBand = varJSON.bands?.find(b => b.role === 'base');
-        const sp = bodyBand?.sprites?.[0] || baseBand?.sprites?.[0];
+        const bodyBand = varJSON.bands?.find(b => b.role === 'body_anim');
+        const sp = baseBand?.sprites?.[0] || bodyBand?.sprites?.[0];
         if (!sp) return;
 
         cnv.width  = sp.w;
@@ -3043,16 +3042,21 @@ function purchaseVariant(pet, student, entry) {
     updateHeader();
     dbUpdateStudent(student.id, { gotchi_pts: student.gotchiPoints });
 
-    // Hot-swap the pet's sprite in place
-    await applyVariant(pet, entry.id);
+    // Run evolution-style animation, swap sprite mid-flash, then wave
+    const cell = cells.find(c => c.student.id === selected);
+    if (cell) {
+      await triggerVariantAnim(cell, pet, entry.id);
+    } else {
+      await applyVariant(pet, entry.id);
+    }
 
     // Persist new char_id to DB
     if (pet.dbId) dbUpsertPet({ id: pet.dbId, char_id: entry.id });
 
     toast(`✨ Switched to ${entry.displayName}!`);
+    cellAnnounce(cell, `✨ ${entry.displayName}!`, 6000);
 
     // Refresh roster portrait + actions panel, then re-open the shop
-    const cell = cells.find(c => c.student.id === selected);
     if (cell) {
       buildPetRoster(cell);
       buildPetActions(cell);
@@ -3060,7 +3064,78 @@ function purchaseVariant(pet, student, entry) {
     await openVariantShop(pet);
   };
   confirmBtn.addEventListener('click', handler);
+  closeOverlay('overlay-variant-shop');
   openOverlay('overlay-buy-confirm');
+}
+
+async function triggerVariantAnim(cell, pet, newCharId) {
+  cell._hatching = true;
+
+  // Helper: draw cell with evolving pet at a specific body label
+  function renderPetFrame(bodyLabel, offsetX = 0) {
+    const ctx = cell.ctx; ctx.imageSmoothingEnabled = false;
+    if (cell.bgCanvas) ctx.drawImage(cell.bgCanvas, 0, 0, CW, CH);
+    else { ctx.fillStyle = '#87CEEB'; ctx.fillRect(0, 0, CW, CH); }
+    cell.pets.forEach(p => {
+      if (p === pet) return;
+      if (p.stage === 'egg') p.drawEgg(ctx); else p.drawTama(ctx);
+    });
+    const bs = pet._body[bodyLabel] || Object.values(pet._body)[0];
+    if (!bs) return;
+    const px = Math.round(pet.x + offsetX), py = Math.round(pet.y);
+    const dw = Math.round(bs.w * SPRITE_SCALE);
+    const dh = Math.round(bs.h * SPRITE_SCALE);
+    ctx.save();
+    if (pet.facingRight) { ctx.translate(px + dw / 2, 0); ctx.scale(-1, 1); ctx.translate(-(px + dw / 2), 0); }
+    ctx.drawImage(pet.off, bs.x, bs.y, bs.w, bs.h, px, py, dw, dh);
+    ctx.restore();
+  }
+
+  // ── Quick happy cycle ─────────────────────────────────────────────────
+  for (const label of ['stand','happy','stand','happy','stand','happy']) {
+    renderPetFrame(label); await sleep(200);
+  }
+
+  // ── Shake ─────────────────────────────────────────────────────────────
+  await new Promise(resolve => {
+    const start = performance.now();
+    function frame(ts) {
+      const elapsed = ts - start;
+      if (elapsed >= 1200) { renderPetFrame('stand', 0); resolve(); return; }
+      const offsetX = Math.sin(elapsed / 60 * Math.PI * 2) * 4;
+      renderPetFrame('stand', offsetX);
+      requestAnimationFrame(frame);
+    }
+    requestAnimationFrame(frame);
+  });
+
+  await sleep(150);
+
+  // ── White flash — swap sprite mid-flash ───────────────────────────────
+  await new Promise(resolve => {
+    const start = performance.now();
+    function frame(ts) {
+      const t = Math.min((ts - start) / 350, 1);
+      const ctx = cell.ctx;
+      ctx.globalAlpha = t; ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, CW, CH); ctx.globalAlpha = 1;
+      if (t < 1) requestAnimationFrame(frame); else resolve();
+    }
+    requestAnimationFrame(frame);
+  });
+
+  // Apply sprite swap at peak of flash (invisible moment)
+  await applyVariant(pet, newCharId);
+
+  // ── Fade in ───────────────────────────────────────────────────────────
+  cell._hatching = false;
+  cell.canvas.style.opacity    = '0';
+  cell.canvas.style.transition = 'opacity 0.45s';
+  await sleep(30);
+  cell.canvas.style.opacity = '1';
+
+  // ── Wave ──────────────────────────────────────────────────────────────
+  pet.forceAnimation('wave');
+  setTimeout(() => pet.forceAnimation(null), 2500);
 }
 
 async function applyVariant(pet, newCharId) {
