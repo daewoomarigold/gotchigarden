@@ -1070,21 +1070,35 @@ const FOODS = [
 ];
 
 const EVOLVE_WAIT_DAYS = 6; // babies must wait this many days after feeding to evolve
+const HATCH_WAIT_DAYS  = 6; // eggs must wait this many days after creation to hatch
 
 function daysSinceFed(pet) {
   if (!pet.fedAt) return 0;
   return (Date.now() - new Date(pet.fedAt).getTime()) / (1000 * 60 * 60 * 24);
 }
 
+function daysSinceLaid(pet) {
+  if (!pet.createdAt) return HATCH_WAIT_DAYS; // no timestamp → assume ready (legacy eggs)
+  return (Date.now() - new Date(pet.createdAt).getTime()) / (1000 * 60 * 60 * 24);
+}
+
 function isEvolveReady(pet) {
-  if (pet.stage !== 'baby') return true; // adults can always evolve (to variant, later)
-  if (!pet.fedWith) return false;        // must be fed first
+  if (pet.stage !== 'baby') return true;
+  if (!pet.fedWith) return false;
   return daysSinceFed(pet) >= EVOLVE_WAIT_DAYS;
 }
 
 function daysUntilReady(pet) {
   if (!pet.fedAt) return EVOLVE_WAIT_DAYS;
   return Math.max(0, Math.ceil(EVOLVE_WAIT_DAYS - daysSinceFed(pet)));
+}
+
+function isHatchReady(pet) {
+  return daysSinceLaid(pet) >= HATCH_WAIT_DAYS;
+}
+
+function daysUntilHatch(pet) {
+  return Math.max(0, Math.ceil(HATCH_WAIT_DAYS - daysSinceLaid(pet)));
 }
 
 // A tama is variant-capable if a sibling with same family# but slot > 000 exists
@@ -1165,12 +1179,19 @@ async function pickEvolution(currentStage, petFedWith = null) {
   return pool[Math.floor(Math.random() * pool.length)];
 }
 
-async function triggerHatch(studentId, petIdx = 0) {
+async function triggerHatch(studentId, petIdx = 0, force = false) {
   const cell = cells.find(c => c.student.id === studentId);
   if (!cell) return;
   if (petIdx === undefined) petIdx = cell.pets.findIndex(p => p.stage === 'egg');
   if (petIdx === -1 || !cell.pets[petIdx] || cell.pets[petIdx].stage !== 'egg') return;
   const pet = cell.pets[petIdx];
+
+  // Egg must have waited HATCH_WAIT_DAYS since creation
+  if (!force && !isHatchReady(pet)) {
+    const daysLeft = daysUntilHatch(pet);
+    toast(`⏳ ${daysLeft} day${daysLeft !== 1 ? 's' : ''} until this egg is ready to hatch`);
+    return;
+  }
 
   // Step 1a: pick baby from growth chart
   const tamaEntry = await pickEvolution('egg');
@@ -1972,7 +1993,7 @@ class GotchiCell {
       } else {
         for (const dbPet of dbPets) {
           if (dbPet.stage === 'egg') {
-            await this._addEgg(dbPet.egg_variant, dbPet.id);
+            await this._addEgg(dbPet.egg_variant, dbPet.id, dbPet.created_at || null);
           } else {
             const pet = await this.addTama(dbPet.char_id, dbPet.id);
             if (pet) pet.fedWith = dbPet.fed_with || null;
@@ -1990,7 +2011,7 @@ class GotchiCell {
     }
   }
 
-  async _addEgg(eggVariant, dbId = null) {
+  async _addEgg(eggVariant, dbId = null, createdAt = null) {
     // eggVariant may be an integer index (from DB) or a full variant object (in-memory)
     // Resolve to the actual variant object from eggJSON
     let variant = eggVariant;
@@ -2010,7 +2031,8 @@ class GotchiCell {
     for (let i=0;i<d.length;i+=4) if(d[i]<15&&d[i+1]<15&&d[i+2]<15) d[i+3]=0;
     oc.putImageData(imgData, 0, 0);
     const pet = new Pet('egg', { eggVariant: variant, off });
-    pet.dbId = dbId;
+    pet.dbId      = dbId;
+    pet.createdAt = createdAt || new Date().toISOString();
     this.pets.push(pet);
     // Reposition ALL eggs in this cell so they spread evenly across the ground zone
     repositionEggs(this.pets);
@@ -2333,12 +2355,26 @@ function buildPetActions(cell) {
   const name = pet.stage === 'egg' ? '???' : (pet.charJSON?.displayName || pet.stage);
   head.textContent = name;
 
-  // ── Egg: hatch button ────────────────────────────────────────────────
+  // ── Egg: hatch button (time-gated) ───────────────────────────────────
   if (pet.stage === 'egg') {
+    const ready    = isHatchReady(pet);
+    const daysLeft = daysUntilHatch(pet);
+
     const btn = document.createElement('button');
-    btn.className = 'btn btn-full auth-gated' + (currentUser ? '' : ' locked');
-    btn.style.cssText = 'border-color:var(--yellow);color:var(--yellow);';
-    btn.textContent = '🥚 Hatch Egg';
+    let label, color, locked;
+    if (!ready) {
+      label  = `⏳ Hatches in ${daysLeft} day${daysLeft !== 1 ? 's' : ''}`;
+      color  = 'var(--muted)';
+      locked = true;
+    } else {
+      label  = '🥚 Hatch Egg';
+      color  = 'var(--yellow)';
+      locked = false;
+    }
+
+    btn.className = 'btn btn-full auth-gated' + (!currentUser || locked ? ' locked' : '');
+    btn.style.cssText = `border-color:${color};color:${color};`;
+    btn.textContent = label;
     btn.addEventListener('click', () => triggerHatch(selected, selectedPetIdx));
     body.appendChild(btn);
 
@@ -2512,7 +2548,7 @@ document.getElementById('btn-add-egg').addEventListener('click', () => {
     const slot       = cell.pets.length;
     const dbPet      = await dbCreatePet(student.id, slot, 'egg', variantIdx);
     const variant    = eggJSON.variants[variantIdx];
-    await cell._addEgg(variant, dbPet?.id || null);
+    await cell._addEgg(variant, dbPet?.id || null, dbPet?.created_at || null);
     selectedPetIdx   = cell.pets.length - 1;
     refreshStudentPanel();
     toast('🥚 New egg added!');
@@ -2620,7 +2656,7 @@ document.getElementById('btn-debug-evolve').addEventListener('click', () => {
   getEvolutionHistory(selected).push(snapshotPets(cell));
   const pet = cell.pets[selectedPetIdx];
   if (!pet) return;
-  if (pet.stage === 'egg') triggerHatch(selected, selectedPetIdx);
+  if (pet.stage === 'egg') triggerHatch(selected, selectedPetIdx, true);
   else triggerEvolve(selected, selectedPetIdx, true); // true = bypass time gate
 });
 
