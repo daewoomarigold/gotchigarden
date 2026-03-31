@@ -1529,7 +1529,7 @@ async function loadFooddex() {
 
 async function loadFoodSheet() {
   if (_foodSheetOff) return _foodSheetOff;
-  const img = await fetchImage(FOOD_PATH, 'LCD_Handhelds_-_Tamagotchi_Smart_-_Food_-_Base.png');
+  const img = await fetchImage(FOOD_PATH, 'LCD Handhelds - Tamagotchi Smart - Food - Base.png');
   _foodSheet = img;
   // Apply black→transparent (same as egg/tama sheets)
   const off = document.createElement('canvas');
