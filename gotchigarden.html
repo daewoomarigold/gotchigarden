@@ -1018,6 +1018,11 @@ async function ensureEggs() {
 
 // ─── DB WRITE-BACK HELPERS ────────────────────────────────────────────────
 async function dbUpdateStudent(studentId, fields) {
+  // Track the pts value we're writing so the realtime echo-back can be identified
+  if ('gotchi_pts' in fields) {
+    const student = STUDENTS.find(s => s.id === studentId);
+    if (student) student._lastWrittenPts = fields.gotchi_pts;
+  }
   const { error } = await db.from('students').update(fields).eq('id', studentId);
   if (error) console.error('DB update student failed:', error);
 }
@@ -2259,20 +2264,27 @@ function startRealtimeListeners() {
       if (!student) return;
 
       // Points changed externally (e.g. teacher dashboard awarded pts)
+      // Guard: ignore echo-backs from our own writes by comparing against
+      // the last value we wrote locally. Only react if the value differs
+      // from what we set — meaning it came from another client.
       if (updated.gotchi_pts !== student.gotchiPoints) {
         const delta = updated.gotchi_pts - student.gotchiPoints;
+
+        // If this matches the last value we intentionally wrote, it's our
+        // own Supabase echo — skip sounds/animations but still sync the value.
+        const isOwnEcho = (updated.gotchi_pts === student._lastWrittenPts);
+
         student.gotchiPoints = updated.gotchi_pts;
 
         // Update grid cell label
         const el = document.getElementById('pts-' + student.id);
         if (el) el.textContent = student.gotchiPoints + ' pts';
 
-        // Flash the dot and trigger a reaction if points were awarded
+        // Flash the dot and trigger a reaction only for external point awards
         const dot = document.getElementById('dot-' + student.id);
         if (dot) { dot.classList.add('flash'); setTimeout(() => dot.classList.remove('flash'), 600); }
 
-        // Broadcast wave to that student's pets if they got points
-        if (delta > 0) {
+        if (!isOwnEcho && delta > 0) {
           playAddPoint();
           const cell = cells.find(c => c.student.id === student.id);
           if (cell) cell.forceAnimation('wave');
