@@ -1070,6 +1070,9 @@ async function loadRosterFromDB() {
   // Ensure every student has at least one egg — initialize if missing
   await ensureEggs();
 
+  // Load active seating plan for this class
+  await loadActiveSeatingPlan();
+
   console.log(`Loaded ${STUDENTS.length} students from DB`);
 }
 
@@ -1836,8 +1839,63 @@ window.addEventListener('resize', () => {
 });
 computeCellSize();
 
-// ─── ASSET CACHE ──────────────────────────────────────────────────────────
-// Cache fetched JSONs and images so shared characters don't re-download
+// ─── SEATING PLAN INTEGRATION ──────────────────────────────────────────────
+// Must match teacher.html constants
+const SEAT_SNAP   = 28;
+const SEAT_DESK_W = 56;
+const SEAT_DESK_H = 48;
+const SEAT_FURN_W = 64;
+const SEAT_FURN_H = 44;
+const SEAT_CANVAS_W = 560;
+const SEAT_CANVAS_H = 400;
+
+let activeSeatingPlan = null;
+
+async function loadActiveSeatingPlan() {
+  if (!CLASS_ID) { activeSeatingPlan = null; return; }
+  try {
+    const { data } = await db
+      .from('seating_plans')
+      .select('*')
+      .eq('class_id', CLASS_ID)
+      .eq('active', true)
+      .maybeSingle();
+    activeSeatingPlan = data || null;
+  } catch(e) {
+    console.warn('Could not load seating plan:', e);
+    activeSeatingPlan = null;
+  }
+}
+
+function getSeatBounds(layout, pad = SEAT_SNAP) {
+  const items = [
+    ...(layout.seats     || []).map(s => ({ x:s.x, y:s.y, w:SEAT_DESK_W, h:SEAT_DESK_H })),
+    ...(layout.furniture || []).map(f => ({ x:f.x, y:f.y, w:SEAT_FURN_W, h:SEAT_FURN_H })),
+  ];
+  if (!items.length) return { minX:0, minY:0, maxX:SEAT_CANVAS_W, maxY:SEAT_CANVAS_H };
+  return {
+    minX: Math.max(0,              Math.min(...items.map(i => i.x))        - pad),
+    minY: Math.max(0,              Math.min(...items.map(i => i.y))        - pad),
+    maxX: Math.min(SEAT_CANVAS_W,  Math.max(...items.map(i => i.x + i.w)) + pad),
+    maxY: Math.min(SEAT_CANVAS_H,  Math.max(...items.map(i => i.y + i.h)) + pad),
+  };
+}
+
+function startSeatingListener() {
+  if (!CLASS_ID) return;
+  db.channel('seating-changes')
+    .on('postgres_changes', {
+      event:  '*',
+      schema: 'public',
+      table:  'seating_plans',
+      filter: `class_id=eq.${CLASS_ID}`,
+    }, async () => {
+      // A plan was activated/deactivated/changed — reload and rebuild
+      await loadActiveSeatingPlan();
+      if (cells.length) buildGrid();
+    })
+    .subscribe();
+}
 const jsonCache  = {};  // charId → parsed JSON
 const imageCache = {};  // filename → HTMLImageElement
 
@@ -2464,12 +2522,71 @@ let selected = null;
 function buildGrid() {
   const grid = document.getElementById('classroom-grid');
   grid.innerHTML = '';
+  cells = [];
+
   if (!STUDENTS.length) {
+    grid.removeAttribute('style');
     grid.innerHTML = '<div style="color:var(--muted);font-size:11px;padding:32px;text-align:center;">Select a class to begin</div>';
     return;
   }
-  cells = STUDENTS.map(s => new GotchiCell(grid, s));
+
+  if (activeSeatingPlan?.layout?.seats?.length) {
+    buildGridSeating(grid);
+  } else {
+    buildGridDefault(grid);
+  }
   updateHeader();
+}
+
+function buildGridDefault(grid) {
+  computeCellSize();
+  grid.removeAttribute('style'); // let CSS class handle layout
+  cells = STUDENTS.map(s => new GotchiCell(grid, s));
+}
+
+function buildGridSeating(grid) {
+  const plan    = activeSeatingPlan;
+  const seats   = plan.layout.seats || [];
+  const bounds  = getSeatBounds(plan.layout);
+  const cntW    = bounds.maxX - bounds.minX;
+  const cntH    = bounds.maxY - bounds.minY;
+
+  // Scale to fill available viewport
+  const HDR = 44, PAD = 16;
+  const availW = window.innerWidth  - PAD * 2;
+  const availH = window.innerHeight - HDR - PAD * 2;
+  const seatScale = Math.min(availW / cntW, availH / cntH);
+
+  // Cell canvas size derived from scale — clamped for legibility
+  const cellSize = Math.max(100, Math.min(200, Math.round(SEAT_DESK_W * seatScale)));
+  CW = cellSize; CH = cellSize;
+  document.documentElement.style.setProperty('--cw', CW + 'px');
+  document.documentElement.style.setProperty('--ch', CH + 'px');
+
+  const mapW = Math.round(cntW * seatScale);
+  const mapH = Math.round(cntH * seatScale);
+
+  // Switch classroom-grid to absolute positioning container
+  grid.style.cssText = `position:relative;width:${mapW}px;height:${mapH}px;display:block;`;
+
+  // Build and position each student cell
+  STUDENTS.forEach(student => {
+    const seat = seats.find(s => s.studentId === student.id);
+    const cell = new GotchiCell(grid, student);
+    cells.push(cell);
+
+    if (seat) {
+      const cx = Math.round((seat.x + SEAT_DESK_W/2 - bounds.minX) * seatScale);
+      const cy = Math.round((seat.y + SEAT_DESK_H/2 - bounds.minY) * seatScale);
+      cell.wrap.style.position = 'absolute';
+      cell.wrap.style.left     = (cx - CW/2) + 'px';
+      cell.wrap.style.top      = (cy - CH/2) + 'px';
+      cell.wrap.style.zIndex   = '1';
+    } else {
+      // Not in plan — hide but keep in cells[] for spotlight
+      cell.wrap.style.display = 'none';
+    }
+  });
 }
 
 async function init() {
@@ -2502,6 +2619,7 @@ async function init() {
 
   buildGrid();
   startRealtimeListeners();
+  startSeatingListener();
 }
 // ─── SELECTION ────────────────────────────────────────────────────────────
 function selectStudent(id) {
