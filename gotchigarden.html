@@ -94,8 +94,9 @@ header {
   pointer-events:none;
 }
 .cell-name {
-  font-family:'Press Start 2P',monospace; font-size:1.25rem;
-  color:#fff; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+  font-family:'Press Start 2P',monospace; font-size:0.7rem;
+  color:#fff; white-space:normal; overflow:hidden; line-height:1.5;
+  word-break:break-word;
   text-shadow: 0 1px 0 rgba(0,0,0,0.9), 1px 0 0 rgba(0,0,0,0.9),
                -1px 0 0 rgba(0,0,0,0.9), 0 -1px 0 rgba(0,0,0,0.9),
                2px 2px 4px rgba(0,0,0,0.7);
@@ -2178,7 +2179,7 @@ class GotchiCell {
     const overlay = document.createElement('div');
     overlay.className = 'cell-overlay';
     overlay.innerHTML = `
-      <div class="cell-name">${this.student.name}</div>
+      <div class="cell-name">${this.student.name.split(' ').join('<br>')}</div>
       <div class="cell-pts" id="pts-${this.student.id}">${this.student.gotchiPoints} pts</div>`;
     vp.appendChild(overlay);
 
