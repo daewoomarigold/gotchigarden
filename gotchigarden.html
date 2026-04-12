@@ -737,12 +737,12 @@ header {
         <button class="shop-btn auth-gated locked" id="btn-add-egg">
           <span class="shop-icon">🥚</span>
           <span class="shop-label">Egg</span>
-          <span class="shop-cost" style="color:var(--yellow);font-size:15px;">5 pts</span>
+          <span class="shop-cost" id="shop-cost-egg" style="color:var(--yellow);font-size:15px;">5 pts</span>
         </button>
         <button class="shop-btn auth-gated locked" id="btn-gacha" style="grid-column:1/-1;">
           <span class="shop-icon">🎰</span>
           <span class="shop-label">Gacha</span>
-          <span class="shop-cost" style="color:var(--pink);font-size:15px;">5 pts · Physical</span>
+          <span class="shop-cost" id="shop-cost-prize" style="color:var(--pink);font-size:15px;">5 pts · Physical</span>
         </button>
       </div>
 
@@ -944,6 +944,16 @@ function applySettings(rows) {
     }
   });
   console.log('Settings loaded — PRICES:', PRICES, 'FOODS:', FOODS.map(f => `${f.id}:${f.cost}`));
+  refreshShopUI();
+}
+
+function refreshShopUI() {
+  const egg   = document.getElementById('shop-cost-egg');
+  const prize = document.getElementById('shop-cost-prize');
+  if (egg)   egg.textContent   = `${PRICES.egg} pts`;
+  if (prize) prize.textContent = `${PRICES.prize} pts · Physical`;
+  // Also refresh any open food buttons (they're dynamically built, so they'll
+  // pick up the new cost next time buildPetActions is called)
 }
 
 function startSettingsListener() {
