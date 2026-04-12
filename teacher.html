@@ -137,7 +137,25 @@ td.muted{color:var(--muted);}
 .price-input{background:var(--raised);border:1px solid var(--border);color:var(--yellow);font-family:'Press Start 2P',monospace;font-size:0.65rem;width:72px;text-align:center;padding:5px 6px;border-radius:3px;outline:none;}
 .price-input:focus{border-color:var(--yellow);}
 
-/* ── Seating Tool ── */
+/* ── Student seating cards ── */
+.student-content-map{position:relative;background:#0a0a14;border:1px solid var(--border);border-radius:6px;margin:16px auto;overflow:hidden;flex-shrink:0;}
+.seat-card{position:absolute;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;padding:5px 4px;background:var(--raised);border:1px solid var(--border2);border-radius:5px;box-sizing:border-box;}
+.seat-card:hover{border-color:var(--border2);}
+.seat-card-name{font-size:7.5px;color:var(--text);text-align:center;line-height:1.3;word-break:break-word;max-width:100%;font-weight:500;}
+.seat-card-pts{font-family:'Press Start 2P',monospace;font-size:0.5rem;color:var(--yellow);}
+.seat-card-pts-row{display:flex;align-items:center;gap:2px;}
+.seat-card-pets-btn{background:none;border:none;font-size:8px;color:var(--muted);cursor:pointer;padding:0;transition:color 0.1s;}
+.seat-card-pets-btn:hover{color:var(--cyan);}
+.seat-card-empty{font-size:9px;color:var(--muted);}
+/* Card grid fallback (no seating plan) */
+.student-card-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;padding:16px;}
+.student-card-grid-item{background:var(--raised);border:1px solid var(--border);border-radius:6px;padding:10px;display:flex;flex-direction:column;gap:6px;}
+.student-card-grid-name{font-size:10px;color:var(--text);font-weight:500;line-height:1.4;}
+.student-card-grid-remove{background:none;border:1px solid var(--border);color:var(--muted);font-family:'DM Mono',monospace;font-size:9px;padding:3px 6px;border-radius:3px;cursor:pointer;align-self:flex-start;transition:all 0.1s;}
+.student-card-grid-remove:hover{border-color:var(--red);color:var(--red);}
+/* Pets popover */
+.pets-popover{position:fixed;z-index:600;background:var(--surface);border:1px solid var(--border2);border-radius:8px;padding:10px 12px;display:flex;gap:5px;flex-wrap:wrap;max-width:220px;box-shadow:0 8px 32px rgba(0,0,0,0.7);}
+.pets-popover-name{font-size:9px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;width:100%;margin-bottom:2px;}
 .seating-toolbar{padding:8px 12px;background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;flex-wrap:wrap;flex-shrink:0;}
 .seating-main{display:flex;flex:1;overflow:hidden;}
 .seating-roster{width:150px;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0;padding:10px;overflow-y:auto;}
@@ -225,12 +243,7 @@ td.muted{color:var(--muted);}
           <button class="btn green" id="btn-add-student">+ Add Student</button>
           <button class="btn yellow" id="btn-award-all-open">★ Award All</button>
         </div>
-        <div class="table-wrap">
-          <table>
-            <thead><tr><th>Name</th><th>GotchiPts</th><th>Pets</th><th>Actions</th></tr></thead>
-            <tbody id="student-tbody"></tbody>
-          </table>
-        </div>
+        <div id="student-content" style="flex:1;overflow:auto;"></div>
         <div class="award-banner" id="award-banner" style="display:none;">
           <label>Award all students:</label>
           <input type="number" id="award-all-amount" value="1" min="1" max="9999">
@@ -704,11 +717,16 @@ async function importCSVClasses() {
   selectClass(cls);
 }
 
+let activeSeatingPlan = null;
+
 async function loadStudents() {
   if (!currentClassId) return;
   const { data, error } = await db.from('students').select('*, pets(*)').eq('class_id', currentClassId).order('name');
   if (error) { toast('⚠ Could not load students'); return; }
   students = data || [];
+  // Also load active seating plan for this class
+  const { data: planData } = await db.from('seating_plans').select('*').eq('class_id', currentClassId).eq('active', true).maybeSingle();
+  activeSeatingPlan = planData || null;
   renderStudents();
   updateStats();
 }
@@ -717,95 +735,261 @@ async function loadStudents() {
 let _realtimeChannel = null;
 
 function startRealtimeListener() {
-  // Tear down any existing channel first
-  if (_realtimeChannel) {
-    db.removeChannel(_realtimeChannel);
-    _realtimeChannel = null;
-  }
+  if (_realtimeChannel) { db.removeChannel(_realtimeChannel); _realtimeChannel = null; }
   if (!currentClassId) return;
-
   _realtimeChannel = db
     .channel(`teacher-class-${currentClassId}`)
-    .on('postgres_changes', {
-      event:  'UPDATE',
-      schema: 'public',
-      table:  'students',
-      filter: `class_id=eq.${currentClassId}`,
-    }, payload => {
+    .on('postgres_changes', { event:'UPDATE', schema:'public', table:'students', filter:`class_id=eq.${currentClassId}` }, payload => {
       const updated = payload.new;
-      // Patch local students array
       const s = students.find(x => x.id === updated.id);
       if (!s) return;
       s.gotchi_pts = updated.gotchi_pts;
-
-      // Update the pts input for this row — skip if teacher is actively editing it
-      const input = document.querySelector(`.pts-input[data-id="${updated.id}"]`);
-      if (input && document.activeElement !== input) {
-        input.value = updated.gotchi_pts;
+      // In seating view, re-render. In list view, update input only.
+      if (activeSeatingPlan) {
+        renderStudents(document.getElementById('search-input').value);
+      } else {
+        const input = document.querySelector(`.pts-input[data-id="${updated.id}"]`);
+        if (input && document.activeElement !== input) input.value = updated.gotchi_pts;
       }
-
       updateStats();
     })
     .subscribe();
 }
 
+// ─── RENDER STUDENTS ──────────────────────────────────────────────────────
 function renderStudents(filter='') {
-  const tbody = document.getElementById('student-tbody');
-  tbody.innerHTML = '';
-  const filtered = students.filter(s =>
-    s.name.toLowerCase().includes(filter.toLowerCase())
-  );
+  if (activeSeatingPlan?.layout) renderStudentsSeating(filter);
+  else renderStudentsList(filter);
+}
+
+// ── Seating map view ──────────────────────────────────────────────────────
+const SEAT_SCALE  = 0.88;
+const SEAT_CARD_W = 88;
+const SEAT_CARD_H = 74;
+
+function seatFacingStyle(rot) {
+  const c = 'var(--accent)', w = '2px';
+  return ({ 0:`border-top:${w} solid ${c}`, 90:`border-right:${w} solid ${c}`, 180:`border-bottom:${w} solid ${c}`, 270:`border-left:${w} solid ${c}` })[rot||0] || `border-top:${w} solid ${c}`;
+}
+
+function renderStudentsSeating(filter='') {
+  const content = document.getElementById('student-content');
+  content.innerHTML = '';
+  content.style.cssText = 'flex:1;overflow:auto;padding:0;display:flex;flex-direction:column;';
+
+  const plan   = activeSeatingPlan;
+  const seats  = plan.layout.seats || [];
+  const furn   = plan.layout.furniture || [];
+  const mapW   = Math.round(CANVAS_W * SEAT_SCALE);
+  const mapH   = Math.round(CANVAS_H * SEAT_SCALE);
+  const assignedIds = new Set(seats.map(s => s.studentId).filter(Boolean));
+
+  // Map container
+  const mapWrap = document.createElement('div');
+  mapWrap.style.cssText = 'flex:1;overflow:auto;padding:12px;display:flex;align-items:flex-start;justify-content:center;';
+
+  const map = document.createElement('div');
+  map.className = 'student-content-map';
+  map.style.width  = mapW + 'px';
+  map.style.height = mapH + 'px';
+  // Grid lines
+  const gs = Math.round(27 * SEAT_SCALE);
+  map.style.backgroundImage = `repeating-linear-gradient(0deg,transparent,transparent ${gs-1}px,rgba(107,63,160,0.1) ${gs-1}px,rgba(107,63,160,0.1) ${gs}px),repeating-linear-gradient(90deg,transparent,transparent ${gs-1}px,rgba(107,63,160,0.1) ${gs-1}px,rgba(107,63,160,0.1) ${gs}px)`;
+
+  // Furniture
+  const FMETA = { screen:{icon:'📺',color:'var(--purple)',label:'Screen'}, door:{icon:'🚪',color:'var(--green)',label:'Door'} };
+  furn.forEach(f => {
+    const m = FMETA[f.type]; if (!m) return;
+    const el = document.createElement('div');
+    el.style.cssText = `position:absolute;left:${Math.round(f.x*SEAT_SCALE)}px;top:${Math.round(f.y*SEAT_SCALE)}px;width:${Math.round(FURN_W*SEAT_SCALE)}px;height:${Math.round(FURN_H*SEAT_SCALE)}px;display:flex;flex-direction:column;align-items:center;justify-content:center;border:1px solid ${m.color};border-radius:3px;background:rgba(20,20,40,0.9);gap:1px;`;
+    el.innerHTML = `<span style="font-size:${Math.round(13*SEAT_SCALE)}px;">${m.icon}</span><span style="font-size:${Math.round(6*SEAT_SCALE)}px;color:${m.color};text-transform:uppercase;">${m.label}</span>`;
+    map.appendChild(el);
+  });
+
+  // Student cards at seat positions
+  seats.forEach(seat => {
+    const student = students.find(s => s.id === seat.studentId);
+    const matches = !filter || (student?.name||'').toLowerCase().includes(filter.toLowerCase());
+
+    const cx = Math.round((seat.x + DESK_W/2) * SEAT_SCALE);
+    const cy = Math.round((seat.y + DESK_H/2) * SEAT_SCALE);
+
+    const card = document.createElement('div');
+    card.className = 'seat-card';
+    card.style.cssText = `left:${cx - SEAT_CARD_W/2}px;top:${cy - SEAT_CARD_H/2}px;width:${SEAT_CARD_W}px;min-height:${SEAT_CARD_H}px;opacity:${matches?1:0.2};${seatFacingStyle(seat.rotation)};`;
+
+    if (student) {
+      const nameEl = document.createElement('div');
+      nameEl.className = 'seat-card-name';
+      nameEl.textContent = student.name;
+
+      const ptsRow = document.createElement('div');
+      ptsRow.className = 'seat-card-pts-row';
+      ptsRow.innerHTML = `
+        <button class="pts-btn minus" data-id="${student.id}" data-amt="10" style="width:16px;height:16px;font-size:9px;">−</button>
+        <button class="pts-btn minus" data-id="${student.id}" data-amt="1"  style="width:16px;height:16px;font-size:8px;">-1</button>
+        <span class="seat-card-pts">${student.gotchi_pts||0}</span>
+        <button class="pts-btn plus"  data-id="${student.id}" data-amt="1"  style="width:16px;height:16px;font-size:8px;border-color:var(--green);color:var(--green);">+1</button>
+        <button class="pts-btn plus"  data-id="${student.id}" data-amt="10" style="width:16px;height:16px;font-size:9px;">+</button>`;
+
+      const petsBtn = document.createElement('button');
+      petsBtn.className = 'seat-card-pets-btn';
+      const petCount = (student.pets||[]).length;
+      petsBtn.textContent = `👁 ${petCount} pet${petCount!==1?'s':''}`;
+      petsBtn.addEventListener('click', e => { e.stopPropagation(); showPetsPopover(student, petsBtn); });
+
+      card.appendChild(nameEl);
+      card.appendChild(ptsRow);
+      card.appendChild(petsBtn);
+    } else {
+      const emEl = document.createElement('div');
+      emEl.className = 'seat-card-empty';
+      emEl.textContent = '— empty —';
+      card.appendChild(emEl);
+    }
+
+    map.appendChild(card);
+  });
+
+  mapWrap.appendChild(map);
+  content.appendChild(mapWrap);
+  wirePtsBtns(content);
+
+  // Unassigned strip
+  const unassigned = students.filter(s => !assignedIds.has(s.id));
+  if (unassigned.length) {
+    const strip = document.createElement('div');
+    strip.style.cssText = 'padding:8px 16px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;border-top:1px solid var(--border);background:var(--surface);flex-shrink:0;';
+    const lbl = document.createElement('span');
+    lbl.style.cssText = 'font-size:9px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;flex-shrink:0;';
+    lbl.textContent = 'No seat:';
+    strip.appendChild(lbl);
+    unassigned.forEach(s => {
+      const chip = document.createElement('span');
+      chip.style.cssText = 'font-size:9px;padding:2px 8px;border:1px solid var(--border2);border-radius:10px;color:var(--muted);';
+      chip.textContent = s.name;
+      strip.appendChild(chip);
+    });
+    content.appendChild(strip);
+  }
+}
+
+// ── Card grid fallback (no seating plan) ─────────────────────────────────
+function renderStudentsList(filter='') {
+  const content = document.getElementById('student-content');
+  content.innerHTML = '';
+  content.style.cssText = 'flex:1;overflow-y:auto;';
+
+  const filtered = students.filter(s => !filter || s.name.toLowerCase().includes(filter.toLowerCase()));
   if (!filtered.length) {
-    tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;color:var(--muted);padding:24px;">${filter?'No students match your search':'No students yet — add one to get started'}</td></tr>`;
+    content.innerHTML = `<div style="color:var(--muted);font-size:10px;padding:32px;text-align:center;">${filter?'No students match your search':'No students yet — add one to get started'}</div>`;
     return;
   }
+
+  const grid = document.createElement('div');
+  grid.className = 'student-card-grid';
+
   filtered.forEach(s => {
-    const tr = document.createElement('tr');
-    const pets = s.pets || [];
-    const petHTML = pets.length ? pets.map(p=>`<span class="pet-chip ${p.stage}">${p.stage}</span>`).join('') : `<span style="color:var(--muted);font-size:10px;">none</span>`;
-    tr.innerHTML = `
-      <td><strong>${s.name}</strong></td>
-      <td><div class="pts-controls">
-        <button class="pts-btn minus" data-id="${s.id}" data-amt="10">−</button>
-        <button class="pts-btn minus" data-id="${s.id}" data-amt="1" style="font-size:8px;">-1</button>
-        <input class="pts-input" type="number" value="${s.gotchi_pts}" data-id="${s.id}" min="0">
-        <button class="pts-btn plus" data-id="${s.id}" data-amt="1" style="font-size:8px;border-color:var(--green);color:var(--green);">+1</button>
-        <button class="pts-btn plus" data-id="${s.id}" data-amt="10">+</button>
-      </div></td>
-      <td><div class="pet-chips">${petHTML}</div></td>
-      <td><div class="action-btns"><button class="row-btn danger" data-id="${s.id}">✕ Remove</button></div></td>`;
-    tbody.appendChild(tr);
+    const card = document.createElement('div');
+    card.className = 'student-card-grid-item';
+
+    const nameEl = document.createElement('div');
+    nameEl.className = 'student-card-grid-name';
+    nameEl.textContent = s.name;
+
+    const ptsRow = document.createElement('div');
+    ptsRow.className = 'pts-controls';
+    ptsRow.innerHTML = `
+      <button class="pts-btn minus" data-id="${s.id}" data-amt="10">−</button>
+      <button class="pts-btn minus" data-id="${s.id}" data-amt="1" style="font-size:8px;">-1</button>
+      <input class="pts-input" type="number" value="${s.gotchi_pts||0}" data-id="${s.id}" min="0">
+      <button class="pts-btn plus"  data-id="${s.id}" data-amt="1" style="font-size:8px;border-color:var(--green);color:var(--green);">+1</button>
+      <button class="pts-btn plus"  data-id="${s.id}" data-amt="10">+</button>`;
+
+    const petsBtn = document.createElement('button');
+    petsBtn.className = 'seat-card-pets-btn';
+    const petCount = (s.pets||[]).length;
+    petsBtn.textContent = `👁 ${petCount} pet${petCount!==1?'s':''}`;
+    petsBtn.addEventListener('click', e => { e.stopPropagation(); showPetsPopover(s, petsBtn); });
+
+    const removeBtn = document.createElement('button');
+    removeBtn.className = 'student-card-grid-remove';
+    removeBtn.textContent = '✕ Remove';
+    removeBtn.addEventListener('click', async () => {
+      if (!confirm('Remove this student? This cannot be undone.')) return;
+      const { error } = await db.from('students').delete().eq('id', s.id);
+      if (error) { toast('⚠ '+error.message); return; }
+      toast('Student removed'); await loadStudents();
+    });
+
+    card.appendChild(nameEl);
+    card.appendChild(ptsRow);
+    card.appendChild(petsBtn);
+    card.appendChild(removeBtn);
+    grid.appendChild(card);
   });
-  tbody.querySelectorAll('.pts-input').forEach(input => {
+
+  content.appendChild(grid);
+  wirePtsBtns(content);
+  // Wire pts input for list view
+  content.querySelectorAll('.pts-input').forEach(input => {
     input.addEventListener('change', async () => {
       const val = Math.max(0, parseInt(input.value)||0);
       input.value = val;
       await updatePts(input.dataset.id, val);
     });
   });
-  tbody.querySelectorAll('.pts-btn.plus').forEach(btn => {
+}
+
+// ── Shared pts button wiring ──────────────────────────────────────────────
+function wirePtsBtns(container) {
+  container.querySelectorAll('.pts-btn.plus').forEach(btn => {
     btn.addEventListener('click', async () => {
-      const s   = students.find(x=>x.id===btn.dataset.id);
-      const amt = parseInt(btn.dataset.amt) || 10;
-      await updatePts(btn.dataset.id, (s.gotchi_pts||0) + amt);
+      const s = students.find(x => x.id === btn.dataset.id);
+      if (!s) return;
+      await updatePts(btn.dataset.id, (s.gotchi_pts||0) + (parseInt(btn.dataset.amt)||10));
+      renderStudents(document.getElementById('search-input').value);
     });
   });
-  tbody.querySelectorAll('.pts-btn.minus').forEach(btn => {
+  container.querySelectorAll('.pts-btn.minus').forEach(btn => {
     btn.addEventListener('click', async () => {
-      const s   = students.find(x=>x.id===btn.dataset.id);
-      const amt = parseInt(btn.dataset.amt) || 10;
-      await updatePts(btn.dataset.id, Math.max(0,(s.gotchi_pts||0) - amt));
+      const s = students.find(x => x.id === btn.dataset.id);
+      if (!s) return;
+      await updatePts(btn.dataset.id, Math.max(0, (s.gotchi_pts||0) - (parseInt(btn.dataset.amt)||10)));
+      renderStudents(document.getElementById('search-input').value);
     });
   });
-  tbody.querySelectorAll('.row-btn.danger').forEach(btn => {
-    btn.addEventListener('click', async () => {
-      if (!confirm('Remove this student? This cannot be undone.')) return;
-      const { error } = await db.from('students').delete().eq('id', btn.dataset.id);
-      if (error) { toast('⚠ '+error.message); return; }
-      toast('Student removed');
-      await loadStudents();
+}
+
+// ── Pets popover ──────────────────────────────────────────────────────────
+function showPetsPopover(student, anchor) {
+  document.querySelector('.pets-popover')?.remove();
+  const pets = student.pets || [];
+  const pop = document.createElement('div');
+  pop.className = 'pets-popover';
+  const rect = anchor.getBoundingClientRect();
+  // Position below anchor, flip up if near bottom
+  const top = rect.bottom + 8;
+  pop.style.cssText = `left:${rect.left}px;top:${Math.min(top, window.innerHeight - 120)}px;`;
+  const nameDiv = document.createElement('div');
+  nameDiv.className = 'pets-popover-name';
+  nameDiv.textContent = student.name;
+  pop.appendChild(nameDiv);
+  if (!pets.length) {
+    const none = document.createElement('span');
+    none.style.cssText = 'font-size:10px;color:var(--muted);';
+    none.textContent = 'No pets yet';
+    pop.appendChild(none);
+  } else {
+    pets.forEach(p => {
+      const chip = document.createElement('span');
+      chip.className = `pet-chip ${p.stage}`;
+      chip.textContent = p.stage;
+      pop.appendChild(chip);
     });
-  });
+  }
+  document.body.appendChild(pop);
+  setTimeout(() => document.addEventListener('click', () => document.querySelector('.pets-popover')?.remove(), { once:true }), 10);
 }
 
 async function updatePts(studentId, newPts) {
@@ -813,19 +997,15 @@ async function updatePts(studentId, newPts) {
   if (error) {
     console.error('updatePts error:', error);
     toast('⚠ '+error.message);
-    // If auth error, try refreshing session then retry
     if (error.status === 401 || error.status === 403 || error.code === 'PGRST301') {
       await db.auth.refreshSession();
       const { error: e2 } = await db.from('students').update({ gotchi_pts: newPts }).eq('id', studentId);
       if (e2) { toast('⚠ Still failing — try reloading'); return; }
     } else { return; }
   }
-  const s = students.find(x=>x.id===studentId);
+  const s = students.find(x => x.id === studentId);
   if (s) s.gotchi_pts = newPts;
-  const input = document.querySelector(`.pts-input[data-id="${studentId}"]`);
-  if (input) input.value = newPts;
   updateStats();
-  toast('✓ Points updated');
 }
 
 function updateStats() {
@@ -1078,6 +1258,7 @@ async function toggleActivateSeatPlan() {
   await db.from('seating_plans').update({ active: false }).eq('class_id', currentClassId);
   if (newActive) await db.from('seating_plans').update({ active: true }).eq('id', seatCurrentPlan.id);
   seatCurrentPlan.active = newActive;
+  activeSeatingPlan = newActive ? { ...seatCurrentPlan } : null;
   toast(newActive ? '★ Plan activated' : 'Plan deactivated');
   await loadSeatPlans();
 }
