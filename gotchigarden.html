@@ -2552,18 +2552,18 @@ function buildGridDefault(grid) {
 function buildGridSeating(grid) {
   const plan    = activeSeatingPlan;
   const seats   = plan.layout.seats || [];
-  const bounds  = getSeatBounds(plan.layout, Math.round(SEAT_SNAP * 0.25)); // tighter crop
+  const bounds  = getSeatBounds(plan.layout, Math.round(SEAT_SNAP * 0.5));
   const cntW    = bounds.maxX - bounds.minX;
   const cntH    = bounds.maxY - bounds.minY;
 
   // Scale to fill available viewport
-  const HDR = 44, PAD = 4;
+  const HDR = 44, PAD = 8;
   const availW = window.innerWidth  - PAD * 2;
   const availH = window.innerHeight - HDR - PAD * 2;
   const seatScale = Math.min(availW / cntW, availH / cntH);
 
   // Cell canvas size derived from scale — clamped for legibility
-  const displaySize = Math.max(80, Math.round(SEAT_DESK_W * seatScale * 2));
+  const displaySize = Math.max(100, Math.min(280, Math.round(SEAT_DESK_W * seatScale * 1.2)));
   const ZOOM_OUT = 0.7; // render 30% more canvas area for a zoomed-out look
   CW = Math.round(displaySize / ZOOM_OUT);
   CH = Math.round(displaySize / ZOOM_OUT);
