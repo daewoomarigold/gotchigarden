@@ -1095,6 +1095,10 @@ function switchContentTab(tab) {
   emptyState.style.display   = tab === 'students' && !currentClassId ? 'flex' : 'none';
   if (tab === 'prices')  loadPricesIntoForm();
   if (tab === 'seating') loadSeatPlans();
+  // Re-render students after paint so clientWidth/clientHeight are accurate
+  if (tab === 'students' && currentClassId) {
+    requestAnimationFrame(() => renderStudents(document.getElementById('search-input').value));
+  }
 }
 
 // ─── PRICES ───────────────────────────────────────────────────────────────
