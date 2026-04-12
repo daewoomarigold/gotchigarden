@@ -2533,7 +2533,21 @@ function buildPetActions(cell) {
   if (!pet) { head.textContent = 'Actions'; return; }
 
   const name = pet.stage === 'egg' ? '???' : (pet.charJSON?.displayName || pet.stage);
-  head.textContent = name;
+
+  // For unfed babies, show days since hatch as flavor text under the name
+  if (pet.stage === 'baby' && !pet.fedWith) {
+    const anchor = pet.hatchedAt || null;
+    let daysSince = 0;
+    if (anchor) {
+      daysSince = Math.floor((Date.now() - new Date(anchor).getTime()) / (1000 * 60 * 60 * 24));
+    } else if (pet.createdAt) {
+      daysSince = Math.max(0, Math.floor((Date.now() - new Date(pet.createdAt).getTime()) / (1000 * 60 * 60 * 24)) - HATCH_WAIT_DAYS);
+    }
+    const dayColor = isBabySick(pet) ? 'var(--red)' : daysSince >= 14 ? 'var(--orange)' : 'var(--muted)';
+    head.innerHTML = `${name}<br><span style="font-size:9px;color:${dayColor};letter-spacing:1px;font-family:'DM Mono',monospace;">Days without food: ${daysSince}</span>`;
+  } else {
+    head.textContent = name;
+  }
 
   // ── Egg: hatch button (time-gated) ───────────────────────────────────
   if (pet.stage === 'egg') {
