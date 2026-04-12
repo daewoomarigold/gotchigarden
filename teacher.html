@@ -542,8 +542,8 @@ async function selectClass(cls) {
   document.getElementById('sidebar-stats').style.display = 'flex';
   // Clear immediately so stale data doesn't linger
   students = [];
-  document.getElementById('student-tbody').innerHTML =
-    `<tr><td colspan="5" style="text-align:center;color:var(--muted);padding:24px;">Loading ${cls.name}...</td></tr>`;
+  const sc = document.getElementById('student-content');
+  if (sc) sc.innerHTML = `<div style="color:var(--muted);font-size:10px;padding:24px;text-align:center;">Loading ${cls.name}...</div>`;
   document.getElementById('search-input').value = '';
   renderClassList();
   await loadStudents();
