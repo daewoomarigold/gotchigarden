@@ -763,7 +763,6 @@ function renderStudents(filter='') {
 }
 
 // ── Seating map view ──────────────────────────────────────────────────────
-const SEAT_SCALE  = 2.2;
 const SEAT_CARD_W = 110;
 const SEAT_CARD_H = 88;
 
@@ -775,18 +774,25 @@ function seatFacingStyle(rot) {
 function renderStudentsSeating(filter='') {
   const content = document.getElementById('student-content');
   content.innerHTML = '';
-  content.style.cssText = 'flex:1;overflow:auto;padding:0;display:flex;flex-direction:column;';
+  content.style.cssText = 'flex:1;overflow:hidden;padding:0;display:flex;flex-direction:column;';
 
   const plan   = activeSeatingPlan;
   const seats  = plan.layout.seats || [];
   const furn   = plan.layout.furniture || [];
-  const mapW   = Math.round(CANVAS_W * SEAT_SCALE);
-  const mapH   = Math.round(CANVAS_H * SEAT_SCALE);
+
+  // Calculate scale to fill available space without scrollbars
+  const PADDING     = 24;
+  const STRIP_H     = seats.some(s => !s.studentId || !students.find(x => x.id === s.studentId)) ? 44 : 0;
+  const availW      = content.clientWidth  - PADDING * 2;
+  const availH      = content.clientHeight - PADDING * 2 - STRIP_H;
+  const SEAT_SCALE  = Math.min(availW / CANVAS_W, availH / CANVAS_H);
   const assignedIds = new Set(seats.map(s => s.studentId).filter(Boolean));
+  const mapW        = Math.round(CANVAS_W * SEAT_SCALE);
+  const mapH        = Math.round(CANVAS_H * SEAT_SCALE);
 
   // Map container
   const mapWrap = document.createElement('div');
-  mapWrap.style.cssText = 'flex:1;overflow:auto;padding:12px;display:flex;align-items:flex-start;justify-content:center;';
+  mapWrap.style.cssText = `flex:1;display:flex;align-items:center;justify-content:center;padding:${PADDING}px;`;
 
   const map = document.createElement('div');
   map.className = 'student-content-map';
