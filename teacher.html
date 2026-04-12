@@ -780,15 +780,21 @@ function renderStudentsSeating(filter='') {
   const seats  = plan.layout.seats || [];
   const furn   = plan.layout.furniture || [];
 
-  // Calculate scale to fill available space without scrollbars
-  const PADDING     = 24;
-  const STRIP_H     = seats.some(s => !s.studentId || !students.find(x => x.id === s.studentId)) ? 44 : 0;
-  const availW      = content.clientWidth  - PADDING * 2;
-  const availH      = content.clientHeight - PADDING * 2 - STRIP_H;
-  const SEAT_SCALE  = Math.min(availW / CANVAS_W, availH / CANVAS_H);
+  // Crop to just the content bounding box
+  const CROP_PAD  = SNAP; // one snap unit of breathing room
+  const bounds    = getLayoutBounds(plan.layout, CROP_PAD);
+  const contentW  = bounds.maxX - bounds.minX;
+  const contentH  = bounds.maxY - bounds.minY;
+
+  // Scale cropped content to fill available area without scrollbars
+  const PADDING  = 16;
+  const availW   = content.clientWidth  - PADDING * 2;
+  const availH   = content.clientHeight - PADDING * 2;
+  const SEAT_SCALE = Math.min(availW / contentW, availH / contentH);
+
+  const mapW = Math.round(contentW * SEAT_SCALE);
+  const mapH = Math.round(contentH * SEAT_SCALE);
   const assignedIds = new Set(seats.map(s => s.studentId).filter(Boolean));
-  const mapW        = Math.round(CANVAS_W * SEAT_SCALE);
-  const mapH        = Math.round(CANVAS_H * SEAT_SCALE);
 
   // Map container
   const mapWrap = document.createElement('div');
@@ -807,7 +813,9 @@ function renderStudentsSeating(filter='') {
   furn.forEach(f => {
     const m = FMETA[f.type]; if (!m) return;
     const el = document.createElement('div');
-    el.style.cssText = `position:absolute;left:${Math.round(f.x*SEAT_SCALE)}px;top:${Math.round(f.y*SEAT_SCALE)}px;width:${Math.round(FURN_W*SEAT_SCALE)}px;height:${Math.round(FURN_H*SEAT_SCALE)}px;display:flex;flex-direction:column;align-items:center;justify-content:center;border:1px solid ${m.color};border-radius:3px;background:rgba(20,20,40,0.9);gap:1px;`;
+    const fx = Math.round((f.x - bounds.minX) * SEAT_SCALE);
+    const fy = Math.round((f.y - bounds.minY) * SEAT_SCALE);
+    el.style.cssText = `position:absolute;left:${fx}px;top:${fy}px;width:${Math.round(FURN_W*SEAT_SCALE)}px;height:${Math.round(FURN_H*SEAT_SCALE)}px;display:flex;flex-direction:column;align-items:center;justify-content:center;border:1px solid ${m.color};border-radius:3px;background:rgba(20,20,40,0.9);gap:1px;`;
     el.innerHTML = `<span style="font-size:${Math.round(13*SEAT_SCALE)}px;">${m.icon}</span><span style="font-size:${Math.round(6*SEAT_SCALE)}px;color:${m.color};text-transform:uppercase;">${m.label}</span>`;
     map.appendChild(el);
   });
@@ -817,8 +825,8 @@ function renderStudentsSeating(filter='') {
     const student = students.find(s => s.id === seat.studentId);
     const matches = !filter || (student?.name||'').toLowerCase().includes(filter.toLowerCase());
 
-    const cx = Math.round((seat.x + DESK_W/2) * SEAT_SCALE);
-    const cy = Math.round((seat.y + DESK_H/2) * SEAT_SCALE);
+    const cx = Math.round((seat.x + DESK_W/2 - bounds.minX) * SEAT_SCALE);
+    const cy = Math.round((seat.y + DESK_H/2 - bounds.minY) * SEAT_SCALE);
 
     const card = document.createElement('div');
     card.className = 'seat-card';
@@ -1292,16 +1300,38 @@ function updateActivateSeatBtn() {
 }
 
 // ── Canvas rendering ──────────────────────────────────────────────────────────
+// Returns the bounding box of all seats and furniture in a layout
+function getLayoutBounds(layout, pad = SNAP) {
+  const items = [
+    ...(layout.seats     || []).map(s => ({ x:s.x, y:s.y, w:DESK_W, h:DESK_H })),
+    ...(layout.furniture || []).map(f => ({ x:f.x, y:f.y, w:FURN_W, h:FURN_H })),
+  ];
+  if (!items.length) return { minX:0, minY:0, maxX:CANVAS_W, maxY:CANVAS_H };
+  return {
+    minX: Math.max(0, Math.min(...items.map(i => i.x)) - pad),
+    minY: Math.max(0, Math.min(...items.map(i => i.y)) - pad),
+    maxX: Math.min(CANVAS_W, Math.max(...items.map(i => i.x + i.w)) + pad),
+    maxY: Math.min(CANVAS_H, Math.max(...items.map(i => i.y + i.h)) + pad),
+  };
+}
+
 function renderSeatingCanvas() {
   const canvas = document.getElementById('seating-canvas');
   if (!canvas) return;
-  // Remove all desk/furniture elements but keep the empty msg
   [...canvas.querySelectorAll('.desk-el')].forEach(el => el.remove());
   if (!seatCurrentPlan) return;
 
   const { seats = [], furniture = [] } = seatCurrentPlan.layout;
   seats.forEach(seat => canvas.appendChild(makeDeskEl(seat)));
   furniture.forEach(furn => canvas.appendChild(makeFurnEl(furn)));
+
+  // Auto-scroll the canvas wrap to show just the content region
+  const wrap = canvas.parentElement;
+  if (seats.length || furniture.length) {
+    const b = getLayoutBounds(seatCurrentPlan.layout, SNAP);
+    wrap.scrollLeft = Math.max(0, b.minX - SNAP);
+    wrap.scrollTop  = Math.max(0, b.minY - SNAP);
+  }
 }
 
 function rotBorder(rot) {
