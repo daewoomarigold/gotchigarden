@@ -2647,10 +2647,20 @@ function toast(msg) {
 }
 
 
+const MAX_EGGS = 5; // maximum eggs a student can hold at once
+
 document.getElementById('btn-add-egg').addEventListener('click', () => {
   if (!selected) return;
   const student = STUDENTS.find(s => s.id === selected);
   if (!student) return;
+
+  // Count current eggs — cap applies only to new purchases, not existing eggs
+  const cell     = cells.find(c => c.student.id === selected);
+  const eggCount = cell ? cell.pets.filter(p => p.stage === 'egg').length : 0;
+  if (eggCount >= MAX_EGGS) {
+    toast(`🥚 Max ${MAX_EGGS} eggs at a time!`);
+    return;
+  }
 
   if (student.gotchiPoints < PRICES.egg) {
     toast(`⚠ Not enough GotchiPts (need ${PRICES.egg})`);
