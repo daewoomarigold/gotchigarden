@@ -2563,7 +2563,8 @@ function buildGridSeating(grid) {
   const seatScale = Math.min(availW / cntW, availH / cntH);
 
   // Cell canvas size derived from scale — clamped for legibility
-  const cellSize = Math.max(120, Math.min(280, Math.round(SEAT_DESK_W * seatScale * 1.8)));
+  // Cell size must not exceed the snap spacing, or adjacent desks will overlap
+  const cellSize = Math.max(60, Math.min(180, Math.round(SEAT_SNAP * seatScale * 0.9)));
   CW = cellSize; CH = cellSize;
   document.documentElement.style.setProperty('--cw', CW + 'px');
   document.documentElement.style.setProperty('--ch', CH + 'px');
