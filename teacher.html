@@ -812,10 +812,11 @@ function renderStudentsSeating(filter='') {
   const FMETA = { screen:{icon:'📺',color:'var(--purple)',label:'Screen'}, door:{icon:'🚪',color:'var(--green)',label:'Door'} };
   furn.forEach(f => {
     const m = FMETA[f.type]; if (!m) return;
+    const d = FURN_DIMS[f.type] || { w:FURN_W, h:FURN_H };
     const el = document.createElement('div');
     const fx = Math.round((f.x - bounds.minX) * SEAT_SCALE);
     const fy = Math.round((f.y - bounds.minY) * SEAT_SCALE);
-    el.style.cssText = `position:absolute;left:${fx}px;top:${fy}px;width:${Math.round(FURN_W*SEAT_SCALE)}px;height:${Math.round(FURN_H*SEAT_SCALE)}px;display:flex;flex-direction:column;align-items:center;justify-content:center;border:1px solid ${m.color};border-radius:3px;background:rgba(20,20,40,0.9);gap:1px;`;
+    el.style.cssText = `position:absolute;left:${fx}px;top:${fy}px;width:${Math.round(d.w*SEAT_SCALE)}px;height:${Math.round(d.h*SEAT_SCALE)}px;display:flex;flex-direction:column;align-items:center;justify-content:center;border:1px solid ${m.color};border-radius:3px;background:rgba(20,20,40,0.9);gap:1px;`;
     el.innerHTML = `<span style="font-size:${Math.round(13*SEAT_SCALE)}px;">${m.icon}</span><span style="font-size:${Math.round(6*SEAT_SCALE)}px;color:${m.color};text-transform:uppercase;">${m.label}</span>`;
     map.appendChild(el);
   });
@@ -1185,8 +1186,12 @@ const CANVAS_W  = 560;
 const CANVAS_H  = 400;
 const DESK_W    = 56;
 const DESK_H    = 48;
-const FURN_W    = 64;
+const FURN_W    = 64;   // default fallback
 const FURN_H    = 44;
+const FURN_DIMS = {
+  screen: { w: 168, h: 36 },  // wide horizontal bar
+  door:   { w: 36,  h: 84 },  // tall narrow rectangle
+};
 
 let seatPlans       = [];
 let seatCurrentPlan = null;   // { id, name, active, layout:{seats,furniture} }
@@ -1306,7 +1311,7 @@ function updateActivateSeatBtn() {
 function getLayoutBounds(layout, pad = SNAP) {
   const items = [
     ...(layout.seats     || []).map(s => ({ x:s.x, y:s.y, w:DESK_W, h:DESK_H })),
-    ...(layout.furniture || []).map(f => ({ x:f.x, y:f.y, w:FURN_W, h:FURN_H })),
+    ...(layout.furniture || []).map(f => { const d = FURN_DIMS[f.type]||{w:FURN_W,h:FURN_H}; return { x:f.x, y:f.y, w:d.w, h:d.h }; }),
   ];
   if (!items.length) return { minX:0, minY:0, maxX:CANVAS_W, maxY:CANVAS_H };
   return {
@@ -1366,10 +1371,11 @@ function makeDeskEl(seat) {
 function makeFurnEl(furn) {
   const META = { screen:{ icon:'📺', label:'Screen', color:'var(--purple)' }, door:{ icon:'🚪', label:'Door', color:'var(--green)' } };
   const m = META[furn.type] || META.screen;
+  const d = FURN_DIMS[furn.type] || { w:FURN_W, h:FURN_H };
   const el = document.createElement('div');
   el.className = 'desk-el' + (seatSelected === furn.id ? ' selected' : '');
   el.dataset.id = furn.id;
-  el.style.cssText = `left:${furn.x}px;top:${furn.y}px;width:${FURN_W}px;height:${FURN_H}px;background:rgba(20,20,40,0.9);border:2px solid ${m.color};`;
+  el.style.cssText = `left:${furn.x}px;top:${furn.y}px;width:${d.w}px;height:${d.h}px;background:rgba(20,20,40,0.9);border:2px solid ${m.color};`;
 
   const iconEl = document.createElement('div'); iconEl.style.cssText='font-size:18px;'; iconEl.textContent=m.icon;
   const lblEl  = document.createElement('div'); lblEl.style.cssText=`font-size:7px;color:${m.color};letter-spacing:0.5px;text-transform:uppercase;`; lblEl.textContent=m.label;
