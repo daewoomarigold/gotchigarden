@@ -109,6 +109,17 @@ header {
 }
 .cell-dot  { display:none; } /* dot removed from overlay, not needed visually */
 
+/* ── Sick badge — shown over cell when baby is unfed too long ── */
+.cell-sick-badge {
+  position: absolute;
+  bottom: 6px;
+  right: 6px;
+  font-size: 1.2rem;
+  pointer-events: none;
+  display: none;
+  filter: drop-shadow(1px 1px 0 rgba(0,0,0,0.8));
+}
+
 /* ── Pet roster ── */
 .pet-card {
   display: flex;
@@ -677,6 +688,8 @@ header {
               style="border-color:var(--cyan);color:var(--cyan);">↑ Force Evolve</button>
             <button class="btn btn-full" id="btn-debug-undo"
               style="border-color:var(--muted);color:var(--muted);">↩ Undo Evolution</button>
+            <button class="btn btn-full" id="btn-debug-sick"
+              style="border-color:var(--orange);color:var(--orange);">🤒 Force Sick</button>
             <button class="btn btn-full" id="btn-debug-reset"
               style="border-color:var(--red);color:var(--red);">🥚 Reset to Egg</button>
           </div>
@@ -1092,6 +1105,7 @@ const FOODS = [
 
 const EVOLVE_WAIT_DAYS = 6; // babies must wait this many days after feeding to evolve
 const HATCH_WAIT_DAYS  = 6; // eggs must wait this many days after creation to hatch
+const SICK_DAYS        = 21; // days after hatching before an unfed baby becomes sick
 
 function daysSinceFed(pet) {
   if (!pet.fedAt) return 0;
@@ -1120,6 +1134,23 @@ function isHatchReady(pet) {
 
 function daysUntilHatch(pet) {
   return Math.max(0, Math.ceil(HATCH_WAIT_DAYS - daysSinceLaid(pet)));
+}
+
+// A baby is sick if it hasn't been fed within SICK_DAYS days of hatching.
+// Uses hatchedAt if available (new pets), falls back to createdAt+HATCH_WAIT_DAYS
+// approximation for legacy pets that predate the hatched_at column.
+function isBabySick(pet) {
+  if (pet.stage !== 'baby') return false;
+  if (pet.fedWith) return false; // fed babies never get sick
+  const anchor = pet.hatchedAt || null;
+  if (anchor) {
+    const daysSinceHatch = (Date.now() - new Date(anchor).getTime()) / (1000 * 60 * 60 * 24);
+    return daysSinceHatch >= SICK_DAYS;
+  }
+  // Legacy fallback: use createdAt + HATCH_WAIT_DAYS as proxy for hatch time
+  if (!pet.createdAt) return false;
+  const daysSinceCreated = (Date.now() - new Date(pet.createdAt).getTime()) / (1000 * 60 * 60 * 24);
+  return daysSinceCreated >= HATCH_WAIT_DAYS + SICK_DAYS;
 }
 
 // A tama is variant-capable if a sibling with same family# but slot > 000 exists
@@ -1303,8 +1334,10 @@ async function triggerHatch(studentId, petIdx = 0, force = false) {
     setTimeout(() => newPet.forceAnimation(null), 2500);
     // Persist hatch to DB — update the existing pet row
     if (eggDbId) {
-      newPet.dbId = eggDbId;
-      dbUpsertPet({ id: eggDbId, stage: 'baby', char_id: tamaEntry.id, egg_variant: null });
+      const hatchedAt = new Date().toISOString();
+      newPet.dbId      = eggDbId;
+      newPet.hatchedAt = hatchedAt;
+      dbUpsertPet({ id: eggDbId, stage: 'baby', char_id: tamaEntry.id, egg_variant: null, hatched_at: hatchedAt });
     }
   }
 
@@ -1854,9 +1887,10 @@ class Pet {
       this._lastTick  = 0;
       this._forced    = null;
       // Feed/evolution tracking (populated from DB after construction)
-      this.fedWith = null;
-      this.fedAt   = null;
-      this._eating = null; // { entry, biteIdx, off } while eating animation runs
+      this.fedWith   = null;
+      this.fedAt     = null;
+      this.hatchedAt = null; // set when egg hatches; sick timer runs from here
+      this._eating   = null; // { entry, biteIdx, off } while eating animation runs
     }
   }
 
@@ -1888,6 +1922,8 @@ class Pet {
   _animDef(key) { return ANIMATION_DEFS[key]?.[this.gen] || null; }
   _animKey() {
     if (this._forced) return this._forced;
+    // Sick unfed babies always cry — overrides normal state machine
+    if (this.isBaby && isBabySick(this)) return 'crying_stand';
     switch (this.state) {
       case 'walk':  return 'walk';
       case 'stand': return 'idle';
@@ -1899,6 +1935,7 @@ class Pet {
 
   moveStep(dt) {
     if (this.stage !== 'adult' && this.stage !== 'baby') return;
+    if (this.isBaby && isBabySick(this)) { this.vx = 0; this.vy = 0; return; } // sick babies freeze
     if (this.state !== 'walk' || this._forced) return;
     this.steerTimer -= dt * 60;
     if (this.steerTimer <= 0) {
@@ -2093,6 +2130,12 @@ class GotchiCell {
       <div class="cell-pts" id="pts-${this.student.id}">${this.student.gotchiPoints} pts</div>`;
     vp.appendChild(overlay);
 
+    // Sick badge — shown when any baby is unfed for too long
+    this.sickBadge = document.createElement('div');
+    this.sickBadge.className = 'cell-sick-badge';
+    this.sickBadge.textContent = '🤒';
+    vp.appendChild(this.sickBadge);
+
     // Keep an invisible plate for any code that still queries cell-dot
     const plate = document.createElement('div');
     plate.className = 'cell-plate';
@@ -2121,8 +2164,9 @@ class GotchiCell {
             await this._addEgg(dbPet.egg_variant, dbPet.id, dbPet.created_at || null);
           } else {
             const pet = await this.addTama(dbPet.char_id, dbPet.id);
-            if (pet) pet.fedWith = dbPet.fed_with || null;
-            if (pet) pet.fedAt   = dbPet.fed_at   || null;
+            if (pet) pet.fedWith   = dbPet.fed_with   || null;
+            if (pet) pet.fedAt     = dbPet.fed_at      || null;
+            if (pet) pet.hatchedAt = dbPet.hatched_at  || null;
           }
         }
       }
@@ -2212,6 +2256,10 @@ class GotchiCell {
         else { p.moveStep(dt); p.updateFrame(ts); }
       });
       this._render();
+
+      // Update sick badge — any unfed baby over the threshold shows it
+      const hasSickBaby = this.pets.some(p => p.stage === 'baby' && isBabySick(p));
+      this.sickBadge.style.display = hasSickBaby ? 'block' : 'none';
     }
     requestAnimationFrame(t => this._loop(t));
   }
@@ -2512,6 +2560,14 @@ function buildPetActions(cell) {
 
   // ── Baby: food shop + conditional evolve ─────────────────────────────
   } else if (pet.stage === 'baby') {
+
+    // Sick warning — shown prominently if baby is overdue for food
+    if (isBabySick(pet)) {
+      const sickDiv = document.createElement('div');
+      sickDiv.style.cssText = 'font-size:12px;color:var(--red);padding:6px 8px;background:rgba(255,107,107,0.1);border:1px solid var(--red);border-radius:4px;line-height:1.6;margin-bottom:4px;';
+      sickDiv.innerHTML = `🤒 <strong>Sick!</strong> This tama hasn't been fed in over ${SICK_DAYS} days. Feed them to nurse them back to health!`;
+      body.appendChild(sickDiv);
+    }
 
     // Food shop — only if not yet fed
     if (!pet.fedWith) {
@@ -2852,6 +2908,22 @@ document.getElementById('btn-debug-reset').addEventListener('click', async () =>
   selectedPetIdx = 0;
   refreshStudentPanel();
   toast('🥚 Reset to egg');
+});
+
+document.getElementById('btn-debug-sick').addEventListener('click', () => {
+  debugDropdown.style.display = 'none';
+  if (!selected) return;
+  const cell = cells.find(c => c.student.id === selected);
+  if (!cell) return;
+  const pet = cell.pets[selectedPetIdx];
+  if (!pet || pet.stage !== 'baby') { toast('⚠ Select a baby tama first'); return; }
+  if (pet.fedWith) { toast('⚠ Already fed — sick state only applies to unfed babies'); return; }
+
+  // Backdate hatchedAt far enough to satisfy isBabySick
+  const sickDate = new Date(Date.now() - (SICK_DAYS + 1) * 24 * 60 * 60 * 1000);
+  pet.hatchedAt = sickDate.toISOString();
+  refreshStudentPanel();
+  toast('🤒 Forced sick state');
 });
 
 document.getElementById('btn-do-award-all').addEventListener('click', () => {
