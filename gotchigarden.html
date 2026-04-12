@@ -100,7 +100,13 @@ header {
   text-shadow: 0 1px 0 rgba(0,0,0,0.9), 1px 0 0 rgba(0,0,0,0.9),
                -1px 0 0 rgba(0,0,0,0.9), 0 -1px 0 rgba(0,0,0,0.9),
                2px 2px 4px rgba(0,0,0,0.7);
+  /* Hidden by default — only shown to authenticated teachers */
+  visibility: hidden;
 }
+body.authenticated .cell-name { visibility: visible; }
+
+/* Also hide student name in the spotlight panel when not authenticated */
+body:not(.authenticated) #sel-name { visibility: hidden; }
 .cell-pts {
   font-family:'Press Start 2P',monospace; font-size:1.6rem;
   color:var(--yellow); white-space:nowrap; flex-shrink:0;
@@ -1711,6 +1717,9 @@ let currentUser = null; // null = logged out
 function setAuthState(user) {
   currentUser = user;
   const authed = !!user;
+
+  // Toggle body class — used by CSS to show/hide student names
+  document.body.classList.toggle('authenticated', authed);
 
   // Lock/unlock all gated elements
   document.querySelectorAll('.auth-gated').forEach(el => {
