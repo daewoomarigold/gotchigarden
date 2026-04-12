@@ -311,6 +311,8 @@ td.muted{color:var(--muted);}
           <button class="btn" id="btn-activate-seat">Activate</button>
           <button class="btn red" id="btn-delete-seat-plan">✕</button>
           <div class="tool-sep"></div>
+          <button class="btn" id="btn-export-seating" style="border-color:var(--cyan);color:var(--cyan);">📸 Export Image</button>
+          <div class="tool-sep"></div>
           <span style="font-size:9px;color:var(--muted);letter-spacing:1px;">PLACE:</span>
           <button class="tool-btn active" id="seat-tool-desk"   onclick="setSeatToolMode('desk')">🪑 Desk</button>
           <button class="tool-btn"        id="seat-tool-screen" onclick="setSeatToolMode('screen')">📺 Screen</button>
@@ -1549,6 +1551,149 @@ document.getElementById('seat-plan-select').addEventListener('change', e => {
   if (plan) loadSeatPlan(plan);
 });
 document.getElementById('seating-canvas').addEventListener('click', seatCanvasClick);
+
+// ─── SEATING IMAGE EXPORT ─────────────────────────────────────────────────
+document.getElementById('btn-export-seating').addEventListener('click', exportSeatingImage);
+
+async function exportSeatingImage() {
+  if (!seatCurrentPlan) { toast('⚠ No plan to export'); return; }
+  const layout = seatCurrentPlan.layout;
+  const seats  = layout.seats     || [];
+  const furn   = layout.furniture || [];
+  if (!seats.length && !furn.length) { toast('⚠ Nothing to export'); return; }
+
+  // Bounding box with generous padding
+  const PAD    = SNAP * 2;
+  const bounds = getLayoutBounds(layout, PAD);
+  const cW     = bounds.maxX - bounds.minX;
+  const cH     = bounds.maxY - bounds.minY;
+
+  // Target 1920×1080 slide resolution, centred
+  const IMG_W = 1920, IMG_H = 1080, MARGIN = 80;
+  const scale  = Math.min((IMG_W - MARGIN*2) / cW, (IMG_H - MARGIN*2) / cH);
+  const drawW  = Math.round(cW * scale);
+  const drawH  = Math.round(cH * scale);
+  const offX   = Math.round((IMG_W - drawW) / 2);
+  const offY   = Math.round((IMG_H - drawH) / 2);
+
+  const canvas = document.createElement('canvas');
+  canvas.width = IMG_W; canvas.height = IMG_H;
+  const ctx = canvas.getContext('2d');
+
+  // ── Background ──────────────────────────────────────────────────────────
+  ctx.fillStyle = '#0e0e1a';
+  ctx.fillRect(0, 0, IMG_W, IMG_H);
+
+  // ── Subtle grid ─────────────────────────────────────────────────────────
+  const gs = Math.round(SNAP * scale);
+  ctx.strokeStyle = 'rgba(107,63,160,0.12)';
+  ctx.lineWidth = 1;
+  for (let x = offX % gs; x < IMG_W; x += gs) { ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,IMG_H); ctx.stroke(); }
+  for (let y = offY % gs; y < IMG_H; y += gs) { ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(IMG_W,y); ctx.stroke(); }
+
+  await document.fonts.ready;
+
+  // ── Furniture ───────────────────────────────────────────────────────────
+  const FCOLORS = { screen:'#a78bfa', door:'#6bffb8' };
+  const FLABELS = { screen:'SCREEN', door:'DOOR' };
+  furn.forEach(f => {
+    const d  = FURN_DIMS[f.type] || { w:FURN_W, h:FURN_H };
+    const fx = offX + Math.round((f.x - bounds.minX) * scale);
+    const fy = offY + Math.round((f.y - bounds.minY) * scale);
+    const fw = Math.round(d.w * scale);
+    const fh = Math.round(d.h * scale);
+    const col = FCOLORS[f.type] || '#a78bfa';
+    ctx.fillStyle = 'rgba(20,20,50,0.95)';
+    ctx.strokeStyle = col;
+    ctx.lineWidth = 3;
+    drawRoundRect(ctx, fx, fy, fw, fh, 8); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = col;
+    ctx.font = `bold ${Math.round(Math.min(fw,fh)*0.28)}px DM Mono, monospace`;
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText(FLABELS[f.type]||f.type.toUpperCase(), fx+fw/2, fy+fh/2);
+  });
+
+  // ── Desk cards ──────────────────────────────────────────────────────────
+  const dw = Math.round(DESK_W * scale);
+  const dh = Math.round(DESK_H * scale);
+
+  seats.forEach(seat => {
+    const student = students.find(s => s.id === seat.studentId);
+    const sx = offX + Math.round((seat.x - bounds.minX) * scale);
+    const sy = offY + Math.round((seat.y - bounds.minY) * scale);
+
+    // Card background
+    ctx.fillStyle = student ? '#1e1e3a' : '#131320';
+    ctx.strokeStyle = student ? '#3a3a5e' : '#222235';
+    ctx.lineWidth = 2;
+    drawRoundRect(ctx, sx, sy, dw, dh, 8); ctx.fill(); ctx.stroke();
+
+    // Facing direction — pink edge
+    ctx.strokeStyle = '#ff6eb4';
+    ctx.lineWidth   = Math.max(3, Math.round(scale * 0.1));
+    const inset = ctx.lineWidth / 2;
+    ctx.beginPath();
+    switch (seat.rotation || 0) {
+      case 0:   ctx.moveTo(sx+8,sy+inset);    ctx.lineTo(sx+dw-8,sy+inset);    break;
+      case 90:  ctx.moveTo(sx+dw-inset,sy+8); ctx.lineTo(sx+dw-inset,sy+dh-8); break;
+      case 180: ctx.moveTo(sx+8,sy+dh-inset); ctx.lineTo(sx+dw-8,sy+dh-inset); break;
+      case 270: ctx.moveTo(sx+inset,sy+8);    ctx.lineTo(sx+inset,sy+dh-8);    break;
+    }
+    ctx.stroke();
+
+    if (student) {
+      // Name — large, wrapping
+      const fontSize = Math.max(14, Math.round(dh * 0.22));
+      ctx.fillStyle = '#e0e0f0';
+      ctx.font      = `600 ${fontSize}px DM Mono, monospace`;
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      drawWrappedText(ctx, student.name, sx + dw/2, sy + dh/2, dw - 16, fontSize * 1.25);
+    } else {
+      ctx.fillStyle = '#3a3a5e';
+      ctx.font      = `${Math.round(dh*0.18)}px DM Mono, monospace`;
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText('—', sx + dw/2, sy + dh/2);
+    }
+  });
+
+  // ── Plan name watermark ──────────────────────────────────────────────────
+  ctx.fillStyle = 'rgba(112,112,160,0.5)';
+  ctx.font = '22px DM Mono, monospace';
+  ctx.textAlign = 'right'; ctx.textBaseline = 'bottom';
+  ctx.fillText(seatCurrentPlan.name, IMG_W - 24, IMG_H - 20);
+
+  // ── Download ─────────────────────────────────────────────────────────────
+  const a = document.createElement('a');
+  a.download = `seating-${seatCurrentPlan.name.replace(/[^a-z0-9]/gi,'_')}.png`;
+  a.href = canvas.toDataURL('image/png');
+  a.click();
+  toast('📸 Exported!');
+}
+
+function drawRoundRect(ctx, x, y, w, h, r) {
+  r = Math.min(r, w/2, h/2);
+  ctx.beginPath();
+  ctx.moveTo(x+r, y);
+  ctx.lineTo(x+w-r, y); ctx.quadraticCurveTo(x+w, y, x+w, y+r);
+  ctx.lineTo(x+w, y+h-r); ctx.quadraticCurveTo(x+w, y+h, x+w-r, y+h);
+  ctx.lineTo(x+r, y+h); ctx.quadraticCurveTo(x, y+h, x, y+h-r);
+  ctx.lineTo(x, y+r); ctx.quadraticCurveTo(x, y, x+r, y);
+  ctx.closePath();
+}
+
+function drawWrappedText(ctx, text, cx, cy, maxW, lineH) {
+  const words = text.split(' ');
+  const lines = [];
+  let line = '';
+  words.forEach(word => {
+    const test = line ? line + ' ' + word : word;
+    if (ctx.measureText(test).width > maxW && line) { lines.push(line); line = word; }
+    else line = test;
+  });
+  if (line) lines.push(line);
+  const startY = cy - ((lines.length - 1) * lineH) / 2;
+  lines.forEach((l, i) => ctx.fillText(l, cx, startY + i * lineH));
+}
 
 init();
 </script>
