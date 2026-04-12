@@ -840,11 +840,9 @@ function renderStudentsSeating(filter='') {
       const ptsRow = document.createElement('div');
       ptsRow.className = 'seat-card-pts-row';
       ptsRow.innerHTML = `
-        <button class="pts-btn minus" data-id="${student.id}" data-amt="10" style="width:36px;height:44px;font-size:16px;">−</button>
-        <button class="pts-btn minus" data-id="${student.id}" data-amt="1"  style="width:36px;height:44px;font-size:12px;">-1</button>
+        <button class="pts-btn minus" data-id="${student.id}" data-amt="1" style="width:52px;height:48px;font-size:16px;">−1</button>
         <span class="seat-card-pts">${student.gotchi_pts||0}</span>
-        <button class="pts-btn plus"  data-id="${student.id}" data-amt="1"  style="width:36px;height:44px;font-size:12px;border-color:var(--green);color:var(--green);">+1</button>
-        <button class="pts-btn plus"  data-id="${student.id}" data-amt="10" style="width:36px;height:44px;font-size:16px;">+</button>`;
+        <button class="pts-btn plus"  data-id="${student.id}" data-amt="1" style="width:52px;height:48px;font-size:16px;border-color:var(--green);color:var(--green);">+1</button>`;
 
       const petsBtn = document.createElement('button');
       petsBtn.className = 'seat-card-pets-btn';
