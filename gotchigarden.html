@@ -918,6 +918,48 @@ const db = supabase.createClient(SUPABASE_URL, SUPABASE_ANON, {
 // ── Active class — set by selector, persisted to localStorage ────────────
 let CLASS_ID = localStorage.getItem('gotchi_class_id') || null;
 
+// ─── SETTINGS (prices loaded from Supabase) ───────────────────────────────
+async function loadSettings() {
+  try {
+    const { data, error } = await db.from('settings').select('key, value');
+    if (error) throw error;
+    applySettings(data || []);
+  } catch(e) {
+    console.warn('Could not load settings — using defaults:', e.message);
+  }
+}
+
+function applySettings(rows) {
+  rows.forEach(row => {
+    if (row.key === 'prices') {
+      // Merge so any keys not in DB keep their defaults
+      PRICES = { ...PRICES, ...row.value };
+    }
+    if (row.key === 'foods') {
+      // Update costs on existing FOODS entries by id
+      row.value.forEach(dbFood => {
+        const food = FOODS.find(f => f.id === dbFood.id);
+        if (food && dbFood.cost !== undefined) food.cost = dbFood.cost;
+      });
+    }
+  });
+  console.log('Settings loaded — PRICES:', PRICES, 'FOODS:', FOODS.map(f => `${f.id}:${f.cost}`));
+}
+
+function startSettingsListener() {
+  db.channel('settings-changes')
+    .on('postgres_changes', {
+      event:  '*',
+      schema: 'public',
+      table:  'settings',
+    }, payload => {
+      const row = payload.new;
+      if (row) applySettings([row]);
+      console.log('Settings updated live:', row?.key);
+    })
+    .subscribe();
+}
+
 async function loadClassList() {
   const { data, error } = await db.from('classes').select('id, name').order('name');
   if (error) { console.error('Could not load classes:', error); return; }
@@ -1098,7 +1140,7 @@ async function loadTamaDex() {
 // Future: assign weights per character for routing paths.
 
 // ─── FOOD SYSTEM ──────────────────────────────────────────────────────────
-const FOODS = [
+let FOODS = [
   { id: 'food_basic',   name: 'Basic Food',   tier: 'basic',   cost: 20, icon: '🍙', desc: 'Standard evolution path',          fooddexId: 'food_002' },
   { id: 'food_premium', name: 'Premium Food', tier: 'premium', cost: 35, icon: '🍱', desc: 'Variant-capable evolution path',    fooddexId: 'food_021' },
 ];
@@ -1422,8 +1464,8 @@ async function triggerEvolve(studentId, petIdx = 0, force = false) {
   }
 
   // Check cost
-  if (student.gotchiPoints < EVOLVE_COST) {
-    toast(`⚠ Need ${EVOLVE_COST} GotchiPt to evolve`); return;
+  if (student.gotchiPoints < PRICES.evolve) {
+    toast(`⚠ Need ${PRICES.evolve} GotchiPt to evolve`); return;
   }
 
   // Pick next stage — pass food for baby→adult branching
@@ -1431,7 +1473,7 @@ async function triggerEvolve(studentId, petIdx = 0, force = false) {
   if (!tamaEntry) { toast(`⚠ No ${getNextStage(pet.stage)} tamas available`); return; }
 
   // Deduct cost
-  student.gotchiPoints -= EVOLVE_COST;
+  student.gotchiPoints -= PRICES.evolve;
   const ptEl = document.getElementById('pts-' + student.id);
   if (ptEl) ptEl.textContent = student.gotchiPoints + ' pts';
   document.getElementById('sel-pts').textContent = student.gotchiPoints;
@@ -2414,6 +2456,10 @@ async function init() {
   // Start auth — sets locked state immediately, then resolves async
   initAuth();
 
+  // Load prices from DB — falls back to hardcoded defaults if unavailable
+  await loadSettings();
+  startSettingsListener();
+
   try {
     await loadEggAssets();
   } catch(e) {
@@ -2628,7 +2674,7 @@ function buildPetActions(cell) {
         color  = 'var(--muted)';
         locked = true;
       } else {
-        label  = `✨ Evolve (${EVOLVE_COST} pt)`;
+        label  = `✨ Evolve (${PRICES.evolve} pt)`;
         color  = 'var(--cyan)';
         locked = false;
       }
@@ -2821,7 +2867,7 @@ document.addEventListener('click', e => {
 
 // ─── DEBUG TOOLS ──────────────────────────────────────────────────────────
 // ─── ECONOMY ──────────────────────────────────────────────────────────────
-const PRICES = {
+let PRICES = {
   evolve:     3,   // baby → adult
   egg:        5,   // new egg from shop
   bg_basic:   5,   // standard background
@@ -2830,7 +2876,6 @@ const PRICES = {
   variant:    50,  // switch to a variant form
 };
 // Food prices live in FOODS array above
-const EVOLVE_COST = PRICES.evolve; // alias used throughout
 // Toggle debug dropdown
 const debugDropdown = document.getElementById('debug-dropdown');
 document.getElementById('btn-debug-toggle').addEventListener('click', e => {
