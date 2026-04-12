@@ -2563,7 +2563,7 @@ function buildGridSeating(grid) {
   const seatScale = Math.min(availW / cntW, availH / cntH);
 
   // Cell canvas size derived from scale — clamped for legibility
-  const displaySize = Math.max(100, Math.min(200, Math.round(SEAT_DESK_W * seatScale)));
+  const displaySize = Math.max(80, Math.round(SEAT_DESK_W * seatScale * 2));
   const ZOOM_OUT = 0.7; // render 30% more canvas area for a zoomed-out look
   CW = Math.round(displaySize / ZOOM_OUT);
   CH = Math.round(displaySize / ZOOM_OUT);
