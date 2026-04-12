@@ -332,7 +332,7 @@ td.muted{color:var(--muted);}
 
           <!-- Canvas -->
           <div class="seating-canvas-wrap">
-            <div id="seating-canvas" style="width:784px;height:560px;">
+            <div id="seating-canvas" style="width:560px;height:400px;">
               <div id="seat-empty-msg" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:10px;pointer-events:none;text-align:center;line-height:2;">
                 Create a plan and click the canvas to place desks
               </div>
@@ -763,7 +763,7 @@ function renderStudents(filter='') {
 }
 
 // ── Seating map view ──────────────────────────────────────────────────────
-const SEAT_SCALE  = 1.8;
+const SEAT_SCALE  = 2.2;
 const SEAT_CARD_W = 110;
 const SEAT_CARD_H = 88;
 
@@ -1165,8 +1165,8 @@ document.getElementById('btn-reset-prices').addEventListener('click', () => {
 
 // ─── SEATING TOOL ─────────────────────────────────────────────────────────
 const SNAP      = 28;   // snap increment px
-const CANVAS_W  = 784;
-const CANVAS_H  = 560;
+const CANVAS_W  = 560;
+const CANVAS_H  = 400;
 const DESK_W    = 56;
 const DESK_H    = 48;
 const FURN_W    = 64;
