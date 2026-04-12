@@ -94,7 +94,7 @@ header {
   pointer-events:none;
 }
 .cell-name {
-  font-family:'Press Start 2P',monospace; font-size:0.7rem;
+  font-family:'Press Start 2P',monospace; font-size:0.5rem;
   color:#fff; white-space:normal; overflow:hidden; line-height:1.5;
   word-break:break-word;
   text-shadow: 0 1px 0 rgba(0,0,0,0.9), 1px 0 0 rgba(0,0,0,0.9),
@@ -2563,10 +2563,13 @@ function buildGridSeating(grid) {
   const seatScale = Math.min(availW / cntW, availH / cntH);
 
   // Cell canvas size derived from scale — clamped for legibility
-  const cellSize = Math.max(100, Math.min(200, Math.round(SEAT_DESK_W * seatScale)));
-  CW = cellSize; CH = cellSize;
-  document.documentElement.style.setProperty('--cw', CW + 'px');
-  document.documentElement.style.setProperty('--ch', CH + 'px');
+  const displaySize = Math.max(100, Math.min(200, Math.round(SEAT_DESK_W * seatScale)));
+  const ZOOM_OUT = 0.7; // render 30% more canvas area for a zoomed-out look
+  CW = Math.round(displaySize / ZOOM_OUT);
+  CH = Math.round(displaySize / ZOOM_OUT);
+  // CSS cell size stays at displaySize — browser compresses the larger render into it
+  document.documentElement.style.setProperty('--cw', displaySize + 'px');
+  document.documentElement.style.setProperty('--ch', displaySize + 'px');
 
   const mapW = Math.round(cntW * seatScale);
   const mapH = Math.round(cntH * seatScale);
@@ -2584,8 +2587,8 @@ function buildGridSeating(grid) {
       const cx = Math.round((seat.x + SEAT_DESK_W/2 - bounds.minX) * seatScale);
       const cy = Math.round((seat.y + SEAT_DESK_H/2 - bounds.minY) * seatScale);
       cell.wrap.style.position = 'absolute';
-      cell.wrap.style.left     = (cx - CW/2) + 'px';
-      cell.wrap.style.top      = (cy - CH/2) + 'px';
+      cell.wrap.style.left     = (cx - displaySize/2) + 'px';
+      cell.wrap.style.top      = (cy - displaySize/2) + 'px';
       cell.wrap.style.zIndex   = '1';
     } else {
       // Not in plan — hide but keep in cells[] for spotlight
