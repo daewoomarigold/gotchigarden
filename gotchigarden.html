@@ -108,7 +108,7 @@ body.authenticated .cell-name { visibility: visible; }
 /* Also hide student name in the spotlight panel when not authenticated */
 body:not(.authenticated) #sel-name { visibility: hidden; }
 .cell-pts {
-  font-family:'Press Start 2P',monospace; font-size:1.6rem;
+  font-family:'Press Start 2P',monospace; font-size:1.2rem;
   color:var(--yellow); white-space:nowrap; flex-shrink:0;
   text-shadow: 0 1px 0 rgba(0,0,0,0.9), 1px 0 0 rgba(0,0,0,0.9),
                -1px 0 0 rgba(0,0,0,0.9), 0 -1px 0 rgba(0,0,0,0.9),
@@ -2245,8 +2245,13 @@ class GotchiCell {
     // Overlay label — sits inside the cell at the top
     const overlay = document.createElement('div');
     overlay.className = 'cell-overlay';
+    const nameParts = this.student.name.split(' ');
+    const mid = Math.ceil(nameParts.length / 2);
+    const displayName = nameParts.length > 2
+      ? nameParts.slice(0, mid).join(' ') + '<br>' + nameParts.slice(mid).join(' ')
+      : nameParts.join('<br>');
     overlay.innerHTML = `
-      <div class="cell-name">${this.student.name.split(' ').join('<br>')}</div>
+      <div class="cell-name">${displayName}</div>
       <div class="cell-pts" id="pts-${this.student.id}">${this.student.gotchiPoints} pts</div>`;
     vp.appendChild(overlay);
 
@@ -2558,7 +2563,7 @@ function buildGridSeating(grid) {
   const seatScale = Math.min(availW / cntW, availH / cntH);
 
   // Cell canvas size derived from scale — clamped for legibility
-  const cellSize = Math.max(100, Math.min(200, Math.round(SEAT_DESK_W * seatScale)));
+  const cellSize = Math.max(120, Math.min(280, Math.round(SEAT_DESK_W * seatScale * 1.8)));
   CW = cellSize; CH = cellSize;
   document.documentElement.style.setProperty('--cw', CW + 'px');
   document.documentElement.style.setProperty('--ch', CH + 'px');
