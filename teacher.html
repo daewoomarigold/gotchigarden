@@ -810,6 +810,21 @@ function renderStudentsSeating(filter='') {
 
   const SEAT_SCALE = Math.min(availW / contentW, availH / contentH);
 
+  // Card size derived from snap spacing so adjacent desks never overlap
+  // Capped at 160px max and 100px min
+  const snapPx   = Math.round(SNAP * SEAT_SCALE);
+  const cardSize  = Math.max(100, Math.min(160, Math.round(snapPx * 0.92)));
+  const cardW     = cardSize;
+  const cardH     = Math.round(cardSize * 1.1);
+
+  // Scale button/font sizes proportionally (base is 160px card)
+  const cardRatio = cardW / 160;
+  const btnW      = Math.max(28, Math.round(52 * cardRatio));
+  const btnH      = Math.max(28, Math.round(48 * cardRatio));
+  const btnFont   = Math.max(10, Math.round(16 * cardRatio));
+  const nameFont  = Math.max(7,  Math.round(11 * cardRatio));
+  const ptsFont   = Math.max(8,  Math.round(13 * cardRatio));
+
   const mapW = Math.round(contentW * SEAT_SCALE);
   const mapH = Math.round(contentH * SEAT_SCALE);
   const assignedIds = new Set(seats.map(s => s.studentId).filter(Boolean));
@@ -849,19 +864,24 @@ function renderStudentsSeating(filter='') {
 
     const card = document.createElement('div');
     card.className = 'seat-card';
-    card.style.cssText = `left:${cx - SEAT_CARD_W/2}px;top:${cy - SEAT_CARD_H/2}px;width:${SEAT_CARD_W}px;min-height:${SEAT_CARD_H}px;opacity:${matches?1:0.2};${seatFacingStyle(seat.rotation)};`;
+    card.style.cssText = `left:${cx - cardW/2}px;top:${cy - cardH/2}px;width:${cardW}px;min-height:${cardH}px;opacity:${matches?1:0.2};${seatFacingStyle(seat.rotation)};z-index:1;`;
+    card.addEventListener('pointerdown', () => {
+      document.querySelectorAll('.seat-card').forEach(c => c.style.zIndex = '1');
+      card.style.zIndex = '10';
+    });
 
     if (student) {
       const nameEl = document.createElement('div');
       nameEl.className = 'seat-card-name';
+      nameEl.style.fontSize = nameFont + 'px';
       nameEl.textContent = student.name;
 
       const ptsRow = document.createElement('div');
       ptsRow.className = 'seat-card-pts-row';
       ptsRow.innerHTML = `
-        <button class="pts-btn minus" data-id="${student.id}" data-amt="1" style="width:52px;height:48px;font-size:16px;">−1</button>
-        <span class="seat-card-pts">${student.gotchi_pts||0}</span>
-        <button class="pts-btn plus"  data-id="${student.id}" data-amt="1" style="width:52px;height:48px;font-size:16px;border-color:var(--green);color:var(--green);">+1</button>`;
+        <button class="pts-btn minus" data-id="${student.id}" data-amt="1" style="width:${btnW}px;height:${btnH}px;font-size:${btnFont}px;">−1</button>
+        <span class="seat-card-pts" style="font-size:${ptsFont}px;">${student.gotchi_pts||0}</span>
+        <button class="pts-btn plus"  data-id="${student.id}" data-amt="1" style="width:${btnW}px;height:${btnH}px;font-size:${btnFont}px;border-color:var(--green);color:var(--green);">+1</button>`;
 
       const petsBtn = document.createElement('button');
       petsBtn.className = 'seat-card-pets-btn';
