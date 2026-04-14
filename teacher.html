@@ -783,15 +783,31 @@ function renderStudentsSeating(filter='') {
   const furn   = plan.layout.furniture || [];
 
   // Crop to just the content bounding box
-  const CROP_PAD  = SNAP; // one snap unit of breathing room
+  const CROP_PAD  = SNAP;
   const bounds    = getLayoutBounds(plan.layout, CROP_PAD);
   const contentW  = bounds.maxX - bounds.minX;
   const contentH  = bounds.maxY - bounds.minY;
 
-  // Scale cropped content to fill available area without scrollbars
+  // Use window dimensions as fallback if element hasn't painted yet (common on iPad)
   const PADDING  = 16;
-  const availW   = content.clientWidth  - PADDING * 2;
-  const availH   = content.clientHeight - PADDING * 2;
+  const elW = content.clientWidth  || (window.innerWidth  - 220); // 220 = sidebar width
+  const elH = content.clientHeight || (window.innerHeight - 100); // 100 = header + tabs
+  const availW   = elW - PADDING * 2;
+  const availH   = elH - PADDING * 2;
+
+  // Guard against zero/negative available space
+  if (availW <= 0 || availH <= 0) {
+    // Not painted yet — observe and re-render when ready
+    const ro = new ResizeObserver((entries, observer) => {
+      if (content.clientWidth > 0 && content.clientHeight > 0) {
+        observer.disconnect();
+        renderStudentsSeating(filter);
+      }
+    });
+    ro.observe(content);
+    return;
+  }
+
   const SEAT_SCALE = Math.min(availW / contentW, availH / contentH);
 
   const mapW = Math.round(contentW * SEAT_SCALE);
@@ -1694,6 +1710,17 @@ function drawWrappedText(ctx, text, cx, cy, maxW, lineH) {
   const startY = cy - ((lines.length - 1) * lineH) / 2;
   lines.forEach((l, i) => ctx.fillText(l, cx, startY + i * lineH));
 }
+
+// Re-render students view on resize (handles iPad rotation etc.)
+let _studentRenderTimer = null;
+window.addEventListener('resize', () => {
+  clearTimeout(_studentRenderTimer);
+  _studentRenderTimer = setTimeout(() => {
+    if (document.getElementById('student-panel')?.style.display === 'flex' && currentClassId) {
+      renderStudents(document.getElementById('search-input').value);
+    }
+  }, 200);
+});
 
 init();
 </script>
