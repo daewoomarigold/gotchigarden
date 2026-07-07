@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <title>★ GotchiGarden</title>
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@400;700&family=DM+Mono:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=DM+Mono:wght@400;500&display=swap');
 
 :root {
   --bg:      #1a0a2e;
@@ -37,7 +37,7 @@ header {
   justify-content: space-between;
   padding: 0 20px; flex-shrink: 0; z-index: 10;
 }
-.hdr-title { font-family:'Pixelify Sans',monospace; font-size:1.1rem; color:var(--accent); letter-spacing:2px; }
+.hdr-title { font-family:'Press Start 2P',monospace; font-size:1.1rem; color:var(--accent); letter-spacing:2px; }
 .hdr-sep   { width:1px; height:20px; background:var(--border2); flex-shrink:0; }
 .hdr-meta  { font-size:10px; color:var(--muted); letter-spacing:1px; text-transform:uppercase; }
 .hdr-btns  { display:flex; gap:8px; }
@@ -94,20 +94,38 @@ header {
   pointer-events:none;
 }
 .cell-name {
-  font-family:'Pixelify Sans',monospace; font-size:1.25rem;
-  color:#fff; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+  font-family:'Press Start 2P',monospace; font-size:0.5rem;
+  color:#fff; white-space:normal; overflow:hidden; line-height:1.5;
+  word-break:break-word;
   text-shadow: 0 1px 0 rgba(0,0,0,0.9), 1px 0 0 rgba(0,0,0,0.9),
                -1px 0 0 rgba(0,0,0,0.9), 0 -1px 0 rgba(0,0,0,0.9),
                2px 2px 4px rgba(0,0,0,0.7);
+  /* Hidden by default — only shown to authenticated teachers */
+  visibility: hidden;
 }
+body.authenticated .cell-name { visibility: visible; }
+
+/* Also hide student name in the spotlight panel when not authenticated */
+body:not(.authenticated) #sel-name { visibility: hidden; }
 .cell-pts {
-  font-family:'Pixelify Sans',monospace; font-size:2.5rem;
+  font-family:'Press Start 2P',monospace; font-size:1.2rem;
   color:var(--yellow); white-space:nowrap; flex-shrink:0;
   text-shadow: 0 1px 0 rgba(0,0,0,0.9), 1px 0 0 rgba(0,0,0,0.9),
                -1px 0 0 rgba(0,0,0,0.9), 0 -1px 0 rgba(0,0,0,0.9),
                2px 2px 4px rgba(0,0,0,0.7);
 }
 .cell-dot  { display:none; } /* dot removed from overlay, not needed visually */
+
+/* ── Sick badge — shown over cell when baby is unfed too long ── */
+.cell-sick-badge {
+  position: absolute;
+  bottom: 6px;
+  right: 6px;
+  font-size: 1.2rem;
+  pointer-events: none;
+  display: none;
+  filter: drop-shadow(1px 1px 0 rgba(0,0,0,0.8));
+}
 
 /* ── Pet roster ── */
 .pet-card {
@@ -138,12 +156,14 @@ header {
 /* ── Spotlight header (simplified) ── */
 .spotlight-panel {
   display: flex;
+  flex-direction: row;
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 10px;
   overflow: hidden;
   box-shadow: 0 20px 60px rgba(0,0,0,0.7);
   max-height: 90vh;
+  max-width: 96vw;
 }
 
 .spotlight-left {
@@ -155,7 +175,7 @@ header {
 }
 
 .spotlight-cell-wrap {
-  width: min(600px, 60vw); height: min(600px, 60vw);
+  width: min(480px, 48vw); height: min(480px, 48vw);
   overflow: hidden;
   position: relative;
 }
@@ -164,23 +184,36 @@ header {
   display: block;
   image-rendering: pixelated;
   image-rendering: crisp-edges;
-  width: min(600px, 60vw); height: min(600px, 60vw);
+  width: min(480px, 48vw); height: min(480px, 48vw);
 }
 
+/* ── Middle column: name / stats / pets / actions ── */
+.spotlight-middle {
+  width: 260px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding: 18px 16px;
+  gap: 0;
+  border-left: 1px solid var(--border);
+}
+
+/* ── Right column: shop + cell color ── */
 .spotlight-right {
-  width: 280px;
+  width: 240px;
+  flex-shrink: 0;
   display: flex;
   flex-direction: column;
   overflow-y: auto;
-  padding: 20px;
-  gap: 16px;
-  flex-shrink: 0;
+  padding: 18px 16px;
+  gap: 0;
+  border-left: 1px solid var(--border);
+  background: rgba(0,0,0,0.12);
 }
-
-.spotlight-right::-webkit-scrollbar { width: 4px; }
+.spotlight-right::-webkit-scrollbar { width: 3px; }
 .spotlight-right::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
-
-#pet-roster::-webkit-scrollbar { width: 4px; }
+#pet-roster::-webkit-scrollbar { width: 3px; }
 #pet-roster::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
 
 .spotlight-header {
@@ -199,7 +232,7 @@ header {
 }
 
 .spotlight-name {
-  font-family: 'Pixelify Sans', monospace;
+  font-family: 'Press Start 2P', monospace;
   font-size: 1.4rem;
   color: var(--text);
   line-height: 1.2;
@@ -228,13 +261,13 @@ header {
 .spotlight-section {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  padding-top: 14px;
+  gap: 6px;
+  padding-top: 10px;
   border-top: 1px solid var(--border);
 }
 
 .spotlight-section-head {
-  font-size: 9px;
+  font-size: 16px;
   letter-spacing: 2px;
   text-transform: uppercase;
   color: var(--muted);
@@ -244,18 +277,18 @@ header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  font-size: 11px;
+  font-size: 18px;
 }
 
 .spotlight-stat-label { color: var(--muted); }
-.spotlight-stat-value { font-family: 'Pixelify Sans', monospace; font-size: 1rem; }
+.spotlight-stat-value { font-family: 'Press Start 2P', monospace; font-size: 1.2rem; }
 .spotlight-stat-value.yellow { color: var(--yellow); }
-.spotlight-stat-value.muted  { color: var(--muted); font-size: 10px; font-family: 'DM Mono', monospace; letter-spacing: 1px; }
+.spotlight-stat-value.muted  { color: var(--muted); font-size: 18px; font-family: 'DM Mono', monospace; letter-spacing: 1px; }
 
 .shop-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 8px;
+  gap: 6px;
 }
 
 .shop-btn {
@@ -263,7 +296,7 @@ header {
   flex-direction: column;
   align-items: center;
   gap: 4px;
-  padding: 12px 8px;
+  padding: 10px 6px;
   background: var(--raised);
   border: 1px solid var(--border);
   border-radius: 6px;
@@ -273,11 +306,10 @@ header {
 }
 .shop-btn:not(:disabled) { cursor: pointer; opacity: 1; }
 .shop-btn:not(:disabled):hover { border-color: var(--cyan); background: rgba(78,240,216,.06); }
-.shop-icon  { font-size: 1.4rem; }
-.shop-label { font-family: 'Pixelify Sans', monospace; font-size: 0.65rem; color: var(--text); }
-.shop-cost  { font-size: 9px; letter-spacing: 1px; }
-.shop-cost.muted { color: var(--muted); }
-.overlay { display:none; position:fixed; inset:0; z-index:100; background:rgba(10,4,20,0.82); backdrop-filter:blur(3px); align-items:center; justify-content:center; }
+.shop-icon  { font-size: 1.6rem; }
+.shop-label { font-family: 'Press Start 2P', monospace; font-size: 0.7rem; color: var(--text); white-space: normal; text-align: center; line-height: 1.4; }
+.shop-cost  { font-size: 15px; letter-spacing: 1px; }
+.shop-cost.muted { color: var(--muted); }.overlay { display:none; position:fixed; inset:0; z-index:100; background:rgba(10,4,20,0.82); backdrop-filter:blur(3px); align-items:center; justify-content:center; }
 .overlay.open { display:flex; }
 
 .panel {
@@ -287,24 +319,24 @@ header {
   box-shadow:0 12px 48px rgba(0,0,0,0.6);
   display:flex; flex-direction:column; gap:14px;
 }
-.panel-head   { font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--muted); padding-bottom:8px; border-bottom:1px solid rgba(107,63,160,0.3); }
-.panel-title  { font-family:'Pixelify Sans',monospace; font-size:1.1rem; color:var(--accent); letter-spacing:1px; }
+.panel-head   { font-size:16px; letter-spacing:2px; text-transform:uppercase; color:var(--muted); padding-bottom:8px; border-bottom:1px solid rgba(107,63,160,0.3); }
+.panel-title  { font-family:'Press Start 2P',monospace; font-size:1.2rem; color:var(--accent); letter-spacing:1px; }
 
 .student-info { display:flex; flex-direction:column; gap:10px; align-items:center; }
-.student-name-big { font-family:'Pixelify Sans',monospace; font-size:1.4rem; color:var(--text); }
-.student-pts-big  { font-size:0.8rem; color:var(--yellow); }
+.student-name-big { font-family:'Press Start 2P',monospace; font-size:1.4rem; color:var(--text); }
+.student-pts-big  { font-size:1.4rem; color:var(--yellow); }
 
 .award-row { display:flex; gap:8px; width:100%; }
 .award-input {
   flex:1; background:var(--bg); border:1px solid var(--border);
-  color:var(--text); font-family:'DM Mono',monospace; font-size:13px;
+  color:var(--text); font-family:'DM Mono',monospace; font-size:20px;
   padding:6px 10px; border-radius:3px; outline:none; min-width:0;
 }
 .award-input:focus { border-color:var(--yellow); }
 
 .broadcast-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
 
-.btn { padding:6px 12px; font-family:'DM Mono',monospace; font-size:10px; letter-spacing:1px; text-transform:uppercase; cursor:pointer; border-radius:3px; border:1px solid var(--border); background:transparent; color:var(--muted); transition:all 0.15s; white-space:nowrap; }
+.btn { padding:8px 14px; font-family:'DM Mono',monospace; font-size:18px; letter-spacing:1px; text-transform:uppercase; cursor:pointer; border-radius:3px; border:1px solid var(--border); background:transparent; color:var(--muted); transition:all 0.15s; white-space:nowrap; }
 .btn:hover    { border-color:var(--cyan); color:var(--cyan); background:rgba(78,240,216,.07); }
 .btn:disabled { opacity:0.35; cursor:not-allowed; }
 .btn.yellow   { border-color:var(--yellow); color:var(--yellow); }
@@ -316,7 +348,7 @@ header {
 .btn-row      { display:flex; gap:8px; width:100%; }
 
 .fab-group { position:fixed; bottom:16px; right:16px; display:flex; flex-direction:column; gap:8px; z-index:50; }
-.fab { padding:8px 14px; font-family:'DM Mono',monospace; font-size:10px; letter-spacing:1px; text-transform:uppercase; cursor:pointer; border-radius:4px; border:1px solid var(--border); background:var(--surface); color:var(--muted); transition:all 0.15s; box-shadow:0 4px 12px rgba(0,0,0,0.4); }
+.fab { padding:8px 14px; font-family:'DM Mono',monospace; font-size:18px; letter-spacing:1px; text-transform:uppercase; cursor:pointer; border-radius:4px; border:1px solid var(--border); background:var(--surface); color:var(--muted); transition:all 0.15s; box-shadow:0 4px 12px rgba(0,0,0,0.4); }
 .fab:hover  { border-color:var(--cyan); color:var(--cyan); }
 .fab.yellow { border-color:var(--yellow); color:var(--yellow); }
 .fab.yellow:hover { background:rgba(255,224,102,.1); }
@@ -346,13 +378,13 @@ header {
   gap: 6px;
 }
 .hatch-bubble-title {
-  font-family: 'Pixelify Sans', monospace;
+  font-family: 'Press Start 2P', monospace;
   font-size: 1.4rem;
   color: #333;
   letter-spacing: 1px;
 }
 .hatch-bubble-sub {
-  font-family: 'Pixelify Sans', monospace;
+  font-family: 'Press Start 2P', monospace;
   font-size: 0.75rem;
   color: #888;
   letter-spacing: 1px;
@@ -364,7 +396,7 @@ header {
   border: 2px solid #333;
   border-radius: 8px;
   padding: 4px 10px;
-  font-family: 'Pixelify Sans', monospace;
+  font-family: 'Press Start 2P', monospace;
   font-size: 0.75rem;
   color: #333;
   white-space: nowrap;
@@ -415,7 +447,7 @@ header {
   border: 2px solid #333;
   border-radius: 8px;
   padding: 4px 10px;
-  font-family: 'Pixelify Sans', monospace;
+  font-family: 'Press Start 2P', monospace;
   font-size: 11px;
   color: #333;
   white-space: nowrap;
@@ -440,7 +472,7 @@ header {
   border: 3px solid #333;
   border-radius: 10px;
   padding: 8px 20px;
-  font-family: 'Pixelify Sans', monospace;
+  font-family: 'Press Start 2P', monospace;
   font-size: 18px;
   color: #333;
   white-space: nowrap;
@@ -487,7 +519,7 @@ header {
 .pet-card:hover   { border-color: var(--cyan); }
 .pet-card.selected { border-color: var(--yellow); background: rgba(255,224,102,0.08); }
 .pet-card-label {
-  font-size: 8px;
+  font-size: 13px;
   color: var(--muted);
   letter-spacing: 0.5px;
   text-transform: uppercase;
@@ -517,7 +549,7 @@ header {
   display: block;
 }
 .bg-card-label {
-  font-size: 9px;
+  font-size: 13px;
   color: var(--muted);
   letter-spacing: 1px;
   text-transform: uppercase;
@@ -525,6 +557,47 @@ header {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+/* ── Variant shop cards ── */
+.variant-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  cursor: pointer;
+  border: 2px solid var(--border);
+  border-radius: 5px;
+  overflow: hidden;
+  transition: border-color 0.12s;
+  background: var(--raised);
+}
+.variant-card:hover  { border-color: var(--cyan); }
+.variant-card.active { border-color: var(--yellow); cursor: default; }
+.variant-card-preview {
+  width: 100%;
+  aspect-ratio: 1;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+  display: block;
+  object-fit: contain;
+  background: rgba(0,0,0,0.2);
+}
+.variant-card-label {
+  font-size: 13px;
+  color: var(--muted);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  padding: 5px 6px 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.variant-card-active-tag {
+  font-size: 12px;
+  color: var(--yellow);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  padding: 0 6px 6px;
+  text-align: center;
 }
 /* ── Auth gate — locked buttons ── */
 .auth-gated {
@@ -605,8 +678,8 @@ header {
       </div>
     </div>
 
-    <!-- Right: info + shop -->
-    <div class="spotlight-right">
+    <!-- Middle: name / stats / pets / actions -->
+    <div class="spotlight-middle">
 
       <!-- Student header -->
       <div class="spotlight-header">
@@ -621,11 +694,13 @@ header {
             padding:8px;display:none;flex-direction:column;gap:6px;
             min-width:180px;z-index:50;box-shadow:0 4px 16px rgba(0,0,0,0.5);
           ">
-            <div style="font-size:9px;color:var(--red);letter-spacing:2px;text-transform:uppercase;padding-bottom:4px;border-bottom:1px solid var(--border);">⚙ Debug</div>
+            <div style="font-size:13px;color:var(--red);letter-spacing:2px;text-transform:uppercase;padding-bottom:4px;border-bottom:1px solid var(--border);">⚙ Debug</div>
             <button class="btn btn-full" id="btn-debug-evolve"
               style="border-color:var(--cyan);color:var(--cyan);">↑ Force Evolve</button>
             <button class="btn btn-full" id="btn-debug-undo"
               style="border-color:var(--muted);color:var(--muted);">↩ Undo Evolution</button>
+            <button class="btn btn-full" id="btn-debug-sick"
+              style="border-color:var(--orange);color:var(--orange);">🤒 Force Sick</button>
             <button class="btn btn-full" id="btn-debug-reset"
               style="border-color:var(--red);color:var(--red);">🥚 Reset to Egg</button>
           </div>
@@ -633,7 +708,7 @@ header {
       </div>
 
       <!-- Stats -->
-      <div class="spotlight-section">
+      <div class="spotlight-section" style="margin-top:10px;">
         <div class="spotlight-section-head">Stats</div>
         <div class="spotlight-stat-row">
           <span class="spotlight-stat-label">GotchiPts</span>
@@ -644,46 +719,53 @@ header {
       <!-- Pet roster -->
       <div class="spotlight-section">
         <div class="spotlight-section-head">Pets</div>
-        <div id="pet-roster" style="display:flex;flex-wrap:wrap;gap:6px;align-items:flex-end;margin-top:4px;max-height:260px;overflow-y:auto;padding-right:4px;">
+        <div id="pet-roster" style="display:flex;flex-wrap:wrap;gap:5px;align-items:flex-end;margin-top:2px;max-height:260px;overflow-y:auto;padding-right:4px;">
           <!-- populated by JS -->
         </div>
       </div>
 
-      <!-- Per-pet actions — updates based on selected pet -->
-      <div class="spotlight-section" id="pet-actions">
+      <!-- Per-pet actions -->
+      <div class="spotlight-section" id="pet-actions" style="flex:1;">
         <div class="spotlight-section-head" id="pet-actions-head">Actions</div>
-        <div id="pet-actions-body" style="display:flex;flex-direction:column;gap:6px;">
+        <div id="pet-actions-body" style="display:flex;flex-direction:column;gap:5px;margin-top:2px;">
           <!-- populated by JS -->
         </div>
       </div>
+
+    </div>
+
+    <!-- Right: shop + cell color -->
+    <div class="spotlight-right">
 
       <!-- Shop -->
-      <div class="spotlight-section">
-        <div class="spotlight-section-head">Tama Shop</div>
-        <div class="shop-grid">
-          <button class="shop-btn auth-gated locked" id="btn-open-bg-picker" onclick="openBgPicker()">
-            <span class="shop-icon">🖼</span>
-            <span class="shop-label">Background</span>
-            <span class="shop-cost" style="color:var(--cyan);font-size:9px;">Pick one</span>
-          </button>
-          <button class="shop-btn auth-gated locked" id="btn-add-egg">
-            <span class="shop-icon">🥚</span>
-            <span class="shop-label">New Egg</span>
-            <span class="shop-cost" style="color:var(--yellow);font-size:9px;">5 pts</span>
-          </button>
-        </div>
+      <div class="spotlight-section-head" style="font-size:16px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);padding-bottom:8px;">Tama Shop</div>
+      <div class="shop-grid">
+        <button class="shop-btn auth-gated locked" id="btn-open-bg-picker" onclick="openBgPicker()">
+          <span class="shop-icon">🌅</span>
+          <span class="shop-label">Background</span>
+          <span class="shop-cost" style="color:var(--cyan);font-size:15px;">Pick one</span>
+        </button>
+        <button class="shop-btn auth-gated locked" id="btn-add-egg">
+          <span class="shop-icon">🥚</span>
+          <span class="shop-label">Egg</span>
+          <span class="shop-cost" id="shop-cost-egg" style="color:var(--yellow);font-size:15px;">5 pts</span>
+        </button>
+        <button class="shop-btn auth-gated locked" id="btn-gacha" style="grid-column:1/-1;">
+          <span class="shop-icon">🎰</span>
+          <span class="shop-label">Gacha</span>
+          <span class="shop-cost" id="shop-cost-prize" style="color:var(--pink);font-size:15px;">5 pts · Physical</span>
+        </button>
       </div>
 
       <!-- Cell color -->
-      <div class="spotlight-section auth-gated locked" id="cell-color-section">
+      <div class="spotlight-section auth-gated locked" id="cell-color-section" style="margin-top:10px;">
         <div class="spotlight-section-head">Cell Color</div>
-        <div style="display:flex;align-items:center;gap:10px;margin-top:2px;">
+        <div style="display:flex;align-items:center;gap:8px;margin-top:4px;flex-wrap:wrap;">
           <input type="color" id="cell-color-picker" value="#87CEEB"
-            style="width:40px;height:32px;border:2px solid var(--border);border-radius:4px;
+            style="width:36px;height:28px;border:2px solid var(--border);border-radius:4px;
                    background:none;cursor:pointer;padding:2px;">
-          <div style="flex:1;">
-            <div style="font-size:10px;color:var(--muted);">Background fill color</div>
-            <div id="cell-color-hex" style="font-size:9px;color:var(--cyan);letter-spacing:1px;">#87CEEB</div>
+          <div style="flex:1;min-width:0;">
+            <div id="cell-color-hex" style="font-size:13px;color:var(--cyan);letter-spacing:1px;">#87CEEB</div>
           </div>
           <button class="btn" id="btn-cell-color-reset" style="font-size:9px;padding:3px 8px;">↺</button>
         </div>
@@ -697,9 +779,9 @@ header {
 <div class="overlay" id="overlay-buy-confirm" onclick="closeOnBackdrop(event,'overlay-buy-confirm')" style="z-index:300;">
   <div class="panel" style="width:320px;text-align:center;gap:16px;">
     <div class="panel-title">Confirm Purchase</div>
-    <div id="buy-confirm-text" style="font-size:12px;color:var(--muted);line-height:1.6;"></div>
+    <div id="buy-confirm-text" style="font-size:14px;color:var(--muted);line-height:1.7;"></div>
     <div class="btn-row">
-      <button class="btn yellow full" id="btn-buy-confirm-yes">✓ Buy</button>
+      <button class="btn yellow full" id="btn-buy-confirm-yes" onclick="playYes()">✓ Buy</button>
       <button class="btn full" onclick="closeOverlay('overlay-buy-confirm')">✕ Cancel</button>
     </div>
   </div>
@@ -721,6 +803,26 @@ header {
       <!-- populated by JS -->
     </div>
     <button class="btn full" onclick="closeOverlay('overlay-bg-picker')">Close</button>
+  </div>
+</div>
+
+<!-- Variant shop overlay -->
+<div class="overlay" id="overlay-variant-shop" onclick="closeOnBackdrop(event,'overlay-variant-shop')">
+  <div class="panel" style="width:540px;max-width:95vw;">
+    <div class="panel-title">✨ Variant Shop</div>
+    <div id="variant-shop-subhead" style="font-size:13px;color:var(--muted);letter-spacing:1px;margin-top:-6px;"></div>
+    <div id="variant-shop-grid" style="
+      display:grid;
+      grid-template-columns:repeat(auto-fill,minmax(120px,1fr));
+      gap:10px;
+      max-height:58vh;
+      overflow-y:auto;
+      margin:10px 0;
+      padding-right:4px;
+    ">
+      <!-- populated by JS -->
+    </div>
+    <button class="btn full" onclick="closeOverlay('overlay-variant-shop')">Close</button>
   </div>
 </div>
 
@@ -773,8 +875,33 @@ const GITHUB_REPO   = 'gotchigarden';
 // GitHub Pages base URL — assets served from here allow cross-origin requests
 const PAGES_BASE = `https://${GITHUB_USER}.github.io/${GITHUB_REPO}`;
 
+// ─── AUDIO ────────────────────────────────────────────────────────────────
+const _sfxAddPoint = new Audio(`${PAGES_BASE}/addpoint.mp3`);
+const _sfxTap      = new Audio(`${PAGES_BASE}/tap.mp3`);
+const _sfxYes      = new Audio(`${PAGES_BASE}/yes.mp3`);
+[_sfxAddPoint, _sfxTap, _sfxYes].forEach(a => a.preload = 'auto');
+
+function playAddPoint() {
+  const s = _sfxAddPoint.cloneNode(); s.volume = 0.6; s.play().catch(() => {});
+}
+function playTap() {
+  const s = _sfxTap.cloneNode(); s.volume = 0.5; s.play().catch(() => {});
+}
+function playYes() {
+  const s = _sfxYes.cloneNode(); s.volume = 0.6; s.play().catch(() => {});
+}
+
+// Global button tap sound — fires for every button/a click except confirm-yes (handled separately)
+document.addEventListener('click', e => {
+  const btn = e.target.closest('button, a[role="button"]');
+  if (!btn) return;
+  if (btn.id === 'btn-buy-confirm-yes') return; // yes.mp3 handled on confirm
+  playTap();
+}, { capture: true });
+
 const TAMA_PATH = 'sprites/tamas';
 const BG_PATH   = 'sprites/background';
+const FOOD_PATH = 'sprites/food';
 
 const DEFAULT_BG       = 'LCD Handhelds - Tamagotchi Smart - Backgrounds - Base_tile_52.png';
 const DEFAULT_BG_ID    = 'bg_052';
@@ -801,6 +928,58 @@ const db = supabase.createClient(SUPABASE_URL, SUPABASE_ANON, {
 
 // ── Active class — set by selector, persisted to localStorage ────────────
 let CLASS_ID = localStorage.getItem('gotchi_class_id') || null;
+
+// ─── SETTINGS (prices loaded from Supabase) ───────────────────────────────
+async function loadSettings() {
+  try {
+    const { data, error } = await db.from('settings').select('key, value');
+    if (error) throw error;
+    applySettings(data || []);
+  } catch(e) {
+    console.warn('Could not load settings — using defaults:', e.message);
+  }
+}
+
+function applySettings(rows) {
+  rows.forEach(row => {
+    if (row.key === 'prices') {
+      // Merge so any keys not in DB keep their defaults
+      PRICES = { ...PRICES, ...row.value };
+    }
+    if (row.key === 'foods') {
+      // Update costs on existing FOODS entries by id
+      row.value.forEach(dbFood => {
+        const food = FOODS.find(f => f.id === dbFood.id);
+        if (food && dbFood.cost !== undefined) food.cost = dbFood.cost;
+      });
+    }
+  });
+  console.log('Settings loaded — PRICES:', PRICES, 'FOODS:', FOODS.map(f => `${f.id}:${f.cost}`));
+  refreshShopUI();
+}
+
+function refreshShopUI() {
+  const egg   = document.getElementById('shop-cost-egg');
+  const prize = document.getElementById('shop-cost-prize');
+  if (egg)   egg.textContent   = `${PRICES.egg} pts`;
+  if (prize) prize.textContent = `${PRICES.prize} pts · Physical`;
+  // Also refresh any open food buttons (they're dynamically built, so they'll
+  // pick up the new cost next time buildPetActions is called)
+}
+
+function startSettingsListener() {
+  db.channel('settings-changes')
+    .on('postgres_changes', {
+      event:  '*',
+      schema: 'public',
+      table:  'settings',
+    }, payload => {
+      const row = payload.new;
+      if (row) applySettings([row]);
+      console.log('Settings updated live:', row?.key);
+    })
+    .subscribe();
+}
 
 async function loadClassList() {
   const { data, error } = await db.from('classes').select('id, name').order('name');
@@ -895,6 +1074,9 @@ async function loadRosterFromDB() {
   // Ensure every student has at least one egg — initialize if missing
   await ensureEggs();
 
+  // Load active seating plan for this class
+  await loadActiveSeatingPlan();
+
   console.log(`Loaded ${STUDENTS.length} students from DB`);
 }
 
@@ -915,6 +1097,11 @@ async function ensureEggs() {
 
 // ─── DB WRITE-BACK HELPERS ────────────────────────────────────────────────
 async function dbUpdateStudent(studentId, fields) {
+  // Track the pts value we're writing so the realtime echo-back can be identified
+  if ('gotchi_pts' in fields) {
+    const student = STUDENTS.find(s => s.id === studentId);
+    if (student) student._lastWrittenPts = fields.gotchi_pts;
+  }
   const { error } = await db.from('students').update(fields).eq('id', studentId);
   if (error) console.error('DB update student failed:', error);
 }
@@ -977,27 +1164,59 @@ async function loadTamaDex() {
 // Future: assign weights per character for routing paths.
 
 // ─── FOOD SYSTEM ──────────────────────────────────────────────────────────
-const FOODS = [
-  { id: 'food_basic',   name: 'Basic Food',   tier: 'basic',   cost: 2,  icon: '🍙', desc: 'Standard evolution path' },
-  { id: 'food_premium', name: 'Premium Food', tier: 'premium', cost: 8,  icon: '🍱', desc: 'Variant-capable evolution path' },
+let FOODS = [
+  { id: 'food_basic',   name: 'Basic Food',   tier: 'basic',   cost: 20, icon: '🍙', desc: 'Standard evolution path',          fooddexId: 'food_002' },
+  { id: 'food_premium', name: 'Premium Food', tier: 'premium', cost: 35, icon: '🍱', desc: 'Variant-capable evolution path',    fooddexId: 'food_021' },
 ];
 
 const EVOLVE_WAIT_DAYS = 6; // babies must wait this many days after feeding to evolve
+const HATCH_WAIT_DAYS  = 6; // eggs must wait this many days after creation to hatch
+const SICK_DAYS        = 21; // days after hatching before an unfed baby becomes sick
 
 function daysSinceFed(pet) {
   if (!pet.fedAt) return 0;
   return (Date.now() - new Date(pet.fedAt).getTime()) / (1000 * 60 * 60 * 24);
 }
 
+function daysSinceLaid(pet) {
+  if (!pet.createdAt) return HATCH_WAIT_DAYS; // no timestamp → assume ready (legacy eggs)
+  return (Date.now() - new Date(pet.createdAt).getTime()) / (1000 * 60 * 60 * 24);
+}
+
 function isEvolveReady(pet) {
-  if (pet.stage !== 'baby') return true; // adults can always evolve (to variant, later)
-  if (!pet.fedWith) return false;        // must be fed first
+  if (pet.stage !== 'baby') return true;
+  if (!pet.fedWith) return false;
   return daysSinceFed(pet) >= EVOLVE_WAIT_DAYS;
 }
 
 function daysUntilReady(pet) {
   if (!pet.fedAt) return EVOLVE_WAIT_DAYS;
   return Math.max(0, Math.ceil(EVOLVE_WAIT_DAYS - daysSinceFed(pet)));
+}
+
+function isHatchReady(pet) {
+  return daysSinceLaid(pet) >= HATCH_WAIT_DAYS;
+}
+
+function daysUntilHatch(pet) {
+  return Math.max(0, Math.ceil(HATCH_WAIT_DAYS - daysSinceLaid(pet)));
+}
+
+// A baby is sick if it hasn't been fed within SICK_DAYS days of hatching.
+// Uses hatchedAt if available (new pets), falls back to createdAt+HATCH_WAIT_DAYS
+// approximation for legacy pets that predate the hatched_at column.
+function isBabySick(pet) {
+  if (pet.stage !== 'baby') return false;
+  if (pet.fedWith) return false; // fed babies never get sick
+  const anchor = pet.hatchedAt || null;
+  if (anchor) {
+    const daysSinceHatch = (Date.now() - new Date(anchor).getTime()) / (1000 * 60 * 60 * 24);
+    return daysSinceHatch >= SICK_DAYS;
+  }
+  // Legacy fallback: use createdAt + HATCH_WAIT_DAYS as proxy for hatch time
+  if (!pet.createdAt) return false;
+  const daysSinceCreated = (Date.now() - new Date(pet.createdAt).getTime()) / (1000 * 60 * 60 * 24);
+  return daysSinceCreated >= HATCH_WAIT_DAYS + SICK_DAYS;
 }
 
 // A tama is variant-capable if a sibling with same family# but slot > 000 exists
@@ -1010,6 +1229,17 @@ function isVariantCapable(charId, dex) {
   return dex.characters.some(c => {
     const cp = c.id.split('-');
     return cp[1] === '002' && cp[2] === family && cp[3] !== '000';
+  });
+}
+
+// True for any adult (base or variant) that has at least one enabled variant sibling
+function hasVariants(charId, dex) {
+  const parts = charId.split('-');
+  if (parts.length < 4 || parts[1] !== '002') return false;
+  const family = parts[2];
+  return dex.characters.some(c => {
+    const cp = c.id.split('-');
+    return c.enabled && cp[1] === '002' && cp[2] === family && cp[3] !== '000';
   });
 }
 
@@ -1067,12 +1297,19 @@ async function pickEvolution(currentStage, petFedWith = null) {
   return pool[Math.floor(Math.random() * pool.length)];
 }
 
-async function triggerHatch(studentId, petIdx = 0) {
+async function triggerHatch(studentId, petIdx = 0, force = false) {
   const cell = cells.find(c => c.student.id === studentId);
   if (!cell) return;
   if (petIdx === undefined) petIdx = cell.pets.findIndex(p => p.stage === 'egg');
   if (petIdx === -1 || !cell.pets[petIdx] || cell.pets[petIdx].stage !== 'egg') return;
   const pet = cell.pets[petIdx];
+
+  // Egg must have waited HATCH_WAIT_DAYS since creation
+  if (!force && !isHatchReady(pet)) {
+    const daysLeft = daysUntilHatch(pet);
+    toast(`⏳ ${daysLeft} day${daysLeft !== 1 ? 's' : ''} until this egg is ready to hatch`);
+    return;
+  }
 
   // Step 1a: pick baby from growth chart
   const tamaEntry = await pickEvolution('egg');
@@ -1163,8 +1400,10 @@ async function triggerHatch(studentId, petIdx = 0) {
     setTimeout(() => newPet.forceAnimation(null), 2500);
     // Persist hatch to DB — update the existing pet row
     if (eggDbId) {
-      newPet.dbId = eggDbId;
-      dbUpsertPet({ id: eggDbId, stage: 'baby', char_id: tamaEntry.id, egg_variant: null });
+      const hatchedAt = new Date().toISOString();
+      newPet.dbId      = eggDbId;
+      newPet.hatchedAt = hatchedAt;
+      dbUpsertPet({ id: eggDbId, stage: 'baby', char_id: tamaEntry.id, egg_variant: null, hatched_at: hatchedAt });
     }
   }
 
@@ -1249,8 +1488,8 @@ async function triggerEvolve(studentId, petIdx = 0, force = false) {
   }
 
   // Check cost
-  if (student.gotchiPoints < EVOLVE_COST) {
-    toast(`⚠ Need ${EVOLVE_COST} GotchiPt to evolve`); return;
+  if (student.gotchiPoints < PRICES.evolve) {
+    toast(`⚠ Need ${PRICES.evolve} GotchiPt to evolve`); return;
   }
 
   // Pick next stage — pass food for baby→adult branching
@@ -1258,7 +1497,7 @@ async function triggerEvolve(studentId, petIdx = 0, force = false) {
   if (!tamaEntry) { toast(`⚠ No ${getNextStage(pet.stage)} tamas available`); return; }
 
   // Deduct cost
-  student.gotchiPoints -= EVOLVE_COST;
+  student.gotchiPoints -= PRICES.evolve;
   const ptEl = document.getElementById('pts-' + student.id);
   if (ptEl) ptEl.textContent = student.gotchiPoints + ' pts';
   document.getElementById('sel-pts').textContent = student.gotchiPoints;
@@ -1332,6 +1571,7 @@ async function triggerEvolve(studentId, petIdx = 0, force = false) {
   const oldDbId = pet.dbId || null;
   const spawnX  = pet.x, spawnY = pet.y;
   cell.pets.splice(evolvePetIdx, 1);
+  repositionEggs(cell.pets);
   await cell.addTama(tamaEntry.id);
   const newPet  = cell.pets[cell.pets.length-1];
   if (newPet) {
@@ -1378,6 +1618,53 @@ function buildBgCanvas(bgImg, color = '#87CEEB') {
 
 function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 
+// ─── FOODDEX ──────────────────────────────────────────────────────────────────
+let _fooddex     = null;  // cached fooddex.json
+let _foodSheet   = null;  // cached food sprite sheet HTMLImageElement
+let _foodSheetOff = null; // offscreen canvas with transparency applied
+
+async function loadFooddex() {
+  if (_fooddex) return _fooddex;
+  const resp = await fetch(`${PAGES_BASE}/${FOOD_PATH}/fooddex.json?v=${Date.now()}`);
+  if (!resp.ok) throw new Error(`Could not load fooddex.json (${resp.status})`);
+  _fooddex = await resp.json();
+  return _fooddex;
+}
+
+async function loadFoodSheet() {
+  if (_foodSheetOff) return _foodSheetOff;
+  const img = await fetchImage(FOOD_PATH, 'LCD Handhelds - Tamagotchi Smart - Food - Base.png');
+  _foodSheet = img;
+  // Apply black→transparent (same as egg/tama sheets)
+  const off = document.createElement('canvas');
+  off.width  = img.naturalWidth  || img.width;
+  off.height = img.naturalHeight || img.height;
+  const oc   = off.getContext('2d');
+  oc.imageSmoothingEnabled = false;
+  oc.drawImage(img, 0, 0);
+  const id = oc.getImageData(0, 0, off.width, off.height);
+  const d  = id.data;
+  for (let i = 0; i < d.length; i += 4)
+    if (d[i] < 15 && d[i+1] < 15 && d[i+2] < 15) d[i+3] = 0;
+  oc.putImageData(id, 0, 0);
+  _foodSheetOff = off;
+  return off;
+}
+
+// Start eating animation on a pet after food is confirmed
+async function triggerEating(pet, food) {
+  try {
+    const [dex, sheet] = await Promise.all([loadFooddex(), loadFoodSheet()]);
+    const entry = dex.foods.find(f => f.id === food.fooddexId);
+    if (!entry) return; // fooddex entry missing — fail silently
+
+    pet._eating = { entry, biteIdx: 0, off: sheet };
+    pet.forceAnimation('eating');
+  } catch(e) {
+    console.warn('triggerEating failed:', e);
+  }
+}
+
 // ─── EGG ASSETS ───────────────────────────────────────────────────────────
 let eggJSON  = null;  // loaded from TAM-000-001.json
 let eggSheet = null;  // loaded Eggs.png as HTMLImageElement
@@ -1417,6 +1704,17 @@ const ANIMATION_DEFS = {
     adult:{fps:1,loop:true,frames:[{body:'sit',face:'normal',hold:1}]},
     baby: {fps:1,loop:true,frames:[{body:'normal',hold:1}]},
   },
+  // eating: cycles eyes_open_happy → eyes_closed_happy; each "closed" frame = one bite
+  eating: {
+    adult:{fps:4,loop:true,frames:[
+      {body:'stand',face:'eyes_open_happy',  hold:3},
+      {body:'stand',face:'eyes_closed_happy',hold:2},
+    ]},
+    baby: {fps:4,loop:true,frames:[
+      {body:'normal',hold:3},
+      {body:'happy', hold:2},
+    ]},
+  },
 };
 
 // ─── AUTH ─────────────────────────────────────────────────────────────────
@@ -1426,6 +1724,9 @@ let currentUser = null; // null = logged out
 function setAuthState(user) {
   currentUser = user;
   const authed = !!user;
+
+  // Toggle body class — used by CSS to show/hide student names
+  document.body.classList.toggle('authenticated', authed);
 
   // Lock/unlock all gated elements
   document.querySelectorAll('.auth-gated').forEach(el => {
@@ -1542,8 +1843,63 @@ window.addEventListener('resize', () => {
 });
 computeCellSize();
 
-// ─── ASSET CACHE ──────────────────────────────────────────────────────────
-// Cache fetched JSONs and images so shared characters don't re-download
+// ─── SEATING PLAN INTEGRATION ──────────────────────────────────────────────
+// Must match teacher.html constants
+const SEAT_SNAP   = 28;
+const SEAT_DESK_W = 56;
+const SEAT_DESK_H = 48;
+const SEAT_FURN_W = 64;
+const SEAT_FURN_H = 44;
+const SEAT_CANVAS_W = 560;
+const SEAT_CANVAS_H = 400;
+
+let activeSeatingPlan = null;
+
+async function loadActiveSeatingPlan() {
+  if (!CLASS_ID) { activeSeatingPlan = null; return; }
+  try {
+    const { data } = await db
+      .from('seating_plans')
+      .select('*')
+      .eq('class_id', CLASS_ID)
+      .eq('active', true)
+      .maybeSingle();
+    activeSeatingPlan = data || null;
+  } catch(e) {
+    console.warn('Could not load seating plan:', e);
+    activeSeatingPlan = null;
+  }
+}
+
+function getSeatBounds(layout, pad = SEAT_SNAP) {
+  const items = [
+    ...(layout.seats     || []).map(s => ({ x:s.x, y:s.y, w:SEAT_DESK_W, h:SEAT_DESK_H })),
+    ...(layout.furniture || []).map(f => ({ x:f.x, y:f.y, w:SEAT_FURN_W, h:SEAT_FURN_H })),
+  ];
+  if (!items.length) return { minX:0, minY:0, maxX:SEAT_CANVAS_W, maxY:SEAT_CANVAS_H };
+  return {
+    minX: Math.max(0,              Math.min(...items.map(i => i.x))        - pad),
+    minY: Math.max(0,              Math.min(...items.map(i => i.y))        - pad),
+    maxX: Math.min(SEAT_CANVAS_W,  Math.max(...items.map(i => i.x + i.w)) + pad),
+    maxY: Math.min(SEAT_CANVAS_H,  Math.max(...items.map(i => i.y + i.h)) + pad),
+  };
+}
+
+function startSeatingListener() {
+  if (!CLASS_ID) return;
+  db.channel('seating-changes')
+    .on('postgres_changes', {
+      event:  '*',
+      schema: 'public',
+      table:  'seating_plans',
+      filter: `class_id=eq.${CLASS_ID}`,
+    }, async () => {
+      // A plan was activated/deactivated/changed — reload and rebuild
+      await loadActiveSeatingPlan();
+      if (cells.length) buildGrid();
+    })
+    .subscribe();
+}
 const jsonCache  = {};  // charId → parsed JSON
 const imageCache = {};  // filename → HTMLImageElement
 
@@ -1572,6 +1928,25 @@ async function fetchImage(folder, filename) {
   });
   imageCache[key] = img;
   return img;
+}
+
+// Spread all eggs in a cell's pet list evenly across the ground zone.
+// Called whenever an egg is added or removed so they never overlap.
+function repositionEggs(pets) {
+  const eggs = pets.filter(p => p.stage === 'egg');
+  if (!eggs.length) return;
+  const count   = eggs.length;
+  const zoneTop = Math.floor(CH * 0.65);
+  const zoneH   = CH - zoneTop;
+  const padding = 12; // px from left/right edge
+  const usable  = CW - padding * 2;
+  eggs.forEach((egg, i) => {
+    // Distribute centers evenly; single egg stays centered
+    const fraction = count === 1 ? 0.5 : i / (count - 1);
+    egg.x = Math.round(padding + fraction * usable - egg.sw / 2);
+    egg.x = Math.max(padding, Math.min(CW - egg.sw - padding, egg.x));
+    egg.y = zoneTop + Math.round((zoneH - egg.sh) / 2);
+  });
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -1636,8 +2011,10 @@ class Pet {
       this._lastTick  = 0;
       this._forced    = null;
       // Feed/evolution tracking (populated from DB after construction)
-      this.fedWith = null;
-      this.fedAt   = null;
+      this.fedWith   = null;
+      this.fedAt     = null;
+      this.hatchedAt = null; // set when egg hatches; sick timer runs from here
+      this._eating   = null; // { entry, biteIdx, off } while eating animation runs
     }
   }
 
@@ -1669,6 +2046,8 @@ class Pet {
   _animDef(key) { return ANIMATION_DEFS[key]?.[this.gen] || null; }
   _animKey() {
     if (this._forced) return this._forced;
+    // Sick unfed babies always cry — overrides normal state machine
+    if (this.isBaby && isBabySick(this)) return 'crying_stand';
     switch (this.state) {
       case 'walk':  return 'walk';
       case 'stand': return 'idle';
@@ -1680,6 +2059,7 @@ class Pet {
 
   moveStep(dt) {
     if (this.stage !== 'adult' && this.stage !== 'baby') return;
+    if (this.isBaby && isBabySick(this)) { this.vx = 0; this.vy = 0; return; } // sick babies freeze
     if (this.state !== 'walk' || this._forced) return;
     this.steerTimer -= dt * 60;
     if (this.steerTimer <= 0) {
@@ -1714,7 +2094,28 @@ class Pet {
       this._lastTick = ts;
       this.holdCounter++;
       const fd = def.frames[this.frameIdx % def.frames.length];
-      if (this.holdCounter>=(fd.hold||1)){this.holdCounter=0;this.frameIdx=(this.frameIdx+1)%def.frames.length;}
+      if (this.holdCounter>=(fd.hold||1)){
+        this.holdCounter=0;
+        const prevIdx = this.frameIdx;
+        this.frameIdx=(this.frameIdx+1)%def.frames.length;
+
+        // Eating: detect transition onto the "closed" frame → register a bite
+        if (this._eating && key === 'eating') {
+          const newFd = def.frames[this.frameIdx];
+          const isClosed = this.isBaby
+            ? (newFd?.body === 'happy')
+            : (newFd?.face === 'eyes_closed_happy');
+          if (isClosed) {
+            this._eating.biteIdx++;
+            if (this._eating.biteIdx >= 3) {
+              // All bites done — clear food and resume
+              this._eating = null;
+              this.forceAnimation(null);
+              return;
+            }
+          }
+        }
+      }
       this.stateTimer--;
       switch (this.state) {
         case 'stand':
@@ -1756,8 +2157,27 @@ class Pet {
     const px  = Math.round(this.x), py = Math.round(this.y);
     const dw  = Math.round(bs.w * SPRITE_SCALE);
     const dh  = Math.round(bs.h * SPRITE_SCALE);
+
+    // Determine food position first so we can face toward it while eating
+    let foodFrame = null, foodFx = 0, foodFy = 0, foodToRight = false;
+    if (this._eating && this._eating.biteIdx < 3) {
+      const frame = this._eating.entry.frames[this._eating.biteIdx];
+      if (frame) {
+        const fw = Math.round(frame.w * SPRITE_SCALE);
+        const fh = Math.round(frame.h * SPRITE_SCALE);
+        const GAP = 3;
+        foodToRight = (px - fw - GAP) < 0;
+        foodFx = foodToRight ? px + dw + GAP : px - fw - GAP;
+        foodFy = py + Math.round((dh - fh) / 2);
+        foodFrame = { frame, fw, fh };
+      }
+    }
+
+    // While eating, face toward the food; otherwise use movement direction
+    const flipRight = this._eating ? foodToRight : this.facingRight;
+
     ctx.save();
-    if (this.facingRight){ctx.translate(px+dw/2,0);ctx.scale(-1,1);ctx.translate(-(px+dw/2),0);}
+    if (flipRight){ctx.translate(px+dw/2,0);ctx.scale(-1,1);ctx.translate(-(px+dw/2),0);}
     ctx.drawImage(this.off,bs.x,bs.y,bs.w,bs.h,px,py,dw,dh);
     if (!this.isBaby&&an.useFace&&fs) {
       const fw = Math.round(fs.w * SPRITE_SCALE);
@@ -1767,6 +2187,11 @@ class Pet {
       ctx.drawImage(this.off,fs.x,fs.y,fs.w,fs.h,px+fox,py+foy,fw,fh);
     }
     ctx.restore();
+
+    // Draw food sprite beside the tama
+    if (foodFrame) {
+      ctx.drawImage(this._eating.off, foodFrame.frame.x, foodFrame.frame.y, foodFrame.frame.w, foodFrame.frame.h, foodFx, foodFy, foodFrame.fw, foodFrame.fh);
+    }
   }
 
   forceAnimation(key) {
@@ -1824,10 +2249,21 @@ class GotchiCell {
     // Overlay label — sits inside the cell at the top
     const overlay = document.createElement('div');
     overlay.className = 'cell-overlay';
+    const nameParts = this.student.name.split(' ');
+    const mid = Math.ceil(nameParts.length / 2);
+    const displayName = nameParts.length > 2
+      ? nameParts.slice(0, mid).join(' ') + '<br>' + nameParts.slice(mid).join(' ')
+      : nameParts.join('<br>');
     overlay.innerHTML = `
-      <div class="cell-name">${this.student.name}</div>
+      <div class="cell-name">${displayName}</div>
       <div class="cell-pts" id="pts-${this.student.id}">${this.student.gotchiPoints} pts</div>`;
     vp.appendChild(overlay);
+
+    // Sick badge — shown when any baby is unfed for too long
+    this.sickBadge = document.createElement('div');
+    this.sickBadge.className = 'cell-sick-badge';
+    this.sickBadge.textContent = '🤒';
+    vp.appendChild(this.sickBadge);
 
     // Keep an invisible plate for any code that still queries cell-dot
     const plate = document.createElement('div');
@@ -1838,7 +2274,7 @@ class GotchiCell {
 
     this.wrap.appendChild(vp);
     this.wrap.appendChild(plate);
-    this.wrap.addEventListener('click', () => selectStudent(this.student.id));
+    this.wrap.addEventListener('click', () => { playTap(); selectStudent(this.student.id); });
     container.appendChild(this.wrap);
   }
 
@@ -1854,11 +2290,12 @@ class GotchiCell {
       } else {
         for (const dbPet of dbPets) {
           if (dbPet.stage === 'egg') {
-            await this._addEgg(dbPet.egg_variant, dbPet.id);
+            await this._addEgg(dbPet.egg_variant, dbPet.id, dbPet.created_at || null);
           } else {
             const pet = await this.addTama(dbPet.char_id, dbPet.id);
-            if (pet) pet.fedWith = dbPet.fed_with || null;
-            if (pet) pet.fedAt   = dbPet.fed_at   || null;
+            if (pet) pet.fedWith   = dbPet.fed_with   || null;
+            if (pet) pet.fedAt     = dbPet.fed_at      || null;
+            if (pet) pet.hatchedAt = dbPet.hatched_at  || null;
           }
         }
       }
@@ -1872,7 +2309,7 @@ class GotchiCell {
     }
   }
 
-  async _addEgg(eggVariant, dbId = null) {
+  async _addEgg(eggVariant, dbId = null, createdAt = null) {
     // eggVariant may be an integer index (from DB) or a full variant object (in-memory)
     // Resolve to the actual variant object from eggJSON
     let variant = eggVariant;
@@ -1892,8 +2329,11 @@ class GotchiCell {
     for (let i=0;i<d.length;i+=4) if(d[i]<15&&d[i+1]<15&&d[i+2]<15) d[i+3]=0;
     oc.putImageData(imgData, 0, 0);
     const pet = new Pet('egg', { eggVariant: variant, off });
-    pet.dbId = dbId;
+    pet.dbId      = dbId;
+    pet.createdAt = createdAt || new Date().toISOString();
     this.pets.push(pet);
+    // Reposition ALL eggs in this cell so they spread evenly across the ground zone
+    repositionEggs(this.pets);
     return pet;
   }
 
@@ -1918,6 +2358,8 @@ class GotchiCell {
     const tamaPet = await this.addTama(charId);
     // Remove the egg from pets array
     this.pets.splice(petIdx, 1);
+    // Reflow any remaining eggs
+    repositionEggs(this.pets);
     // Move tama to same position as where egg was (it'll start wandering from there)
     return tamaPet;
   }
@@ -1943,6 +2385,10 @@ class GotchiCell {
         else { p.moveStep(dt); p.updateFrame(ts); }
       });
       this._render();
+
+      // Update sick badge — any unfed baby over the threshold shows it
+      const hasSickBaby = this.pets.some(p => p.stage === 'baby' && isBabySick(p));
+      this.sickBadge.style.display = hasSickBaby ? 'block' : 'none';
     }
     requestAnimationFrame(t => this._loop(t));
   }
@@ -1960,6 +2406,7 @@ class GotchiCell {
     const dot = document.getElementById('dot-'+this.student.id);
     if (el)  el.textContent = this.student.gotchiPoints+' pts';
     if (dot) {dot.classList.add('flash');setTimeout(()=>dot.classList.remove('flash'),600);}
+    if (n > 0) playAddPoint();
     if (selected===this.student.id) refreshStudentPanel();
     updateHeader();
     // Persist to DB
@@ -1994,20 +2441,28 @@ function startRealtimeListeners() {
       if (!student) return;
 
       // Points changed externally (e.g. teacher dashboard awarded pts)
+      // Guard: ignore echo-backs from our own writes by comparing against
+      // the last value we wrote locally. Only react if the value differs
+      // from what we set — meaning it came from another client.
       if (updated.gotchi_pts !== student.gotchiPoints) {
         const delta = updated.gotchi_pts - student.gotchiPoints;
+
+        // If this matches the last value we intentionally wrote, it's our
+        // own Supabase echo — skip sounds/animations but still sync the value.
+        const isOwnEcho = (updated.gotchi_pts === student._lastWrittenPts);
+
         student.gotchiPoints = updated.gotchi_pts;
 
         // Update grid cell label
         const el = document.getElementById('pts-' + student.id);
         if (el) el.textContent = student.gotchiPoints + ' pts';
 
-        // Flash the dot and trigger a reaction if points were awarded
+        // Flash the dot and trigger a reaction only for external point awards
         const dot = document.getElementById('dot-' + student.id);
         if (dot) { dot.classList.add('flash'); setTimeout(() => dot.classList.remove('flash'), 600); }
 
-        // Broadcast wave to that student's pets if they got points
-        if (delta > 0) {
+        if (!isOwnEcho && delta > 0) {
+          playAddPoint();
           const cell = cells.find(c => c.student.id === student.id);
           if (cell) cell.forceAnimation('wave');
           setTimeout(() => {
@@ -2076,17 +2531,83 @@ let selected = null;
 function buildGrid() {
   const grid = document.getElementById('classroom-grid');
   grid.innerHTML = '';
+  cells = [];
+
   if (!STUDENTS.length) {
+    grid.removeAttribute('style');
     grid.innerHTML = '<div style="color:var(--muted);font-size:11px;padding:32px;text-align:center;">Select a class to begin</div>';
     return;
   }
-  cells = STUDENTS.map(s => new GotchiCell(grid, s));
+
+  if (activeSeatingPlan?.layout?.seats?.length) {
+    buildGridSeating(grid);
+  } else {
+    buildGridDefault(grid);
+  }
   updateHeader();
+}
+
+function buildGridDefault(grid) {
+  computeCellSize();
+  grid.removeAttribute('style'); // let CSS class handle layout
+  cells = STUDENTS.map(s => new GotchiCell(grid, s));
+}
+
+function buildGridSeating(grid) {
+  const plan    = activeSeatingPlan;
+  const seats   = plan.layout.seats || [];
+  const bounds  = getSeatBounds(plan.layout, Math.round(SEAT_SNAP * 0.5));
+  const cntW    = bounds.maxX - bounds.minX;
+  const cntH    = bounds.maxY - bounds.minY;
+
+  // Scale to fill available viewport
+  const HDR = 44, PAD = 8;
+  const availW = window.innerWidth  - PAD * 2;
+  const availH = window.innerHeight - HDR - PAD * 2;
+  const seatScale = Math.min(availW / cntW, availH / cntH);
+
+  // Cell canvas size derived from scale — clamped for legibility
+  const displaySize = Math.max(100, Math.min(280, Math.round(SEAT_DESK_W * seatScale)));
+  const ZOOM_OUT = 0.9; // render 30% more canvas area for a zoomed-out look
+  CW = Math.round(displaySize / ZOOM_OUT);
+  CH = Math.round(displaySize / ZOOM_OUT);
+  // CSS cell size stays at displaySize — browser compresses the larger render into it
+  document.documentElement.style.setProperty('--cw', displaySize + 'px');
+  document.documentElement.style.setProperty('--ch', displaySize + 'px');
+
+  const mapW = Math.round(cntW * seatScale);
+  const mapH = Math.round(cntH * seatScale);
+
+  // Switch classroom-grid to absolute positioning container
+  grid.style.cssText = `position:relative;width:${mapW}px;height:${mapH}px;display:block;`;
+
+  // Build and position each student cell
+  STUDENTS.forEach(student => {
+    const seat = seats.find(s => s.studentId === student.id);
+    const cell = new GotchiCell(grid, student);
+    cells.push(cell);
+
+    if (seat) {
+      const cx = Math.round((seat.x + SEAT_DESK_W/2 - bounds.minX) * seatScale);
+      const cy = Math.round((seat.y + SEAT_DESK_H/2 - bounds.minY) * seatScale);
+      cell.wrap.style.position = 'absolute';
+      cell.wrap.style.left     = (cx - displaySize/2) + 'px';
+      cell.wrap.style.top      = (cy - displaySize/2) + 'px';
+      cell.wrap.style.zIndex   = '1';
+    } else {
+      // Not in plan — hide but keep in cells[] for spotlight
+      cell.wrap.style.display = 'none';
+    }
+  });
 }
 
 async function init() {
   // Start auth — sets locked state immediately, then resolves async
   initAuth();
+
+  // Load prices from DB — falls back to hardcoded defaults if unavailable
+  await loadSettings();
+  startSettingsListener();
 
   try {
     await loadEggAssets();
@@ -2110,6 +2631,7 @@ async function init() {
 
   buildGrid();
   startRealtimeListeners();
+  startSeatingListener();
 }
 // ─── SELECTION ────────────────────────────────────────────────────────────
 function selectStudent(id) {
@@ -2188,6 +2710,7 @@ function buildPetRoster(cell) {
     card.appendChild(c);
     card.appendChild(label);
     card.addEventListener('click', () => {
+      playTap();
       selectedPetIdx = idx;
       buildPetRoster(cell);
       buildPetActions(cell);
@@ -2206,24 +2729,60 @@ function buildPetActions(cell) {
   if (!pet) { head.textContent = 'Actions'; return; }
 
   const name = pet.stage === 'egg' ? '???' : (pet.charJSON?.displayName || pet.stage);
-  head.textContent = name;
 
-  // ── Egg: hatch button ────────────────────────────────────────────────
+  // For unfed babies, show days since hatch as flavor text under the name
+  if (pet.stage === 'baby' && !pet.fedWith) {
+    const anchor = pet.hatchedAt || null;
+    let daysSince = 0;
+    if (anchor) {
+      daysSince = Math.floor((Date.now() - new Date(anchor).getTime()) / (1000 * 60 * 60 * 24));
+    } else if (pet.createdAt) {
+      daysSince = Math.max(0, Math.floor((Date.now() - new Date(pet.createdAt).getTime()) / (1000 * 60 * 60 * 24)) - HATCH_WAIT_DAYS);
+    }
+    const dayColor = isBabySick(pet) ? 'var(--red)' : daysSince >= 14 ? 'var(--orange)' : 'var(--muted)';
+    head.innerHTML = `${name}<br><span style="font-size:9px;color:${dayColor};letter-spacing:1px;font-family:'DM Mono',monospace;">Days without food: ${daysSince}</span>`;
+  } else {
+    head.textContent = name;
+  }
+
+  // ── Egg: hatch button (time-gated) ───────────────────────────────────
   if (pet.stage === 'egg') {
+    const ready    = isHatchReady(pet);
+    const daysLeft = daysUntilHatch(pet);
+
     const btn = document.createElement('button');
-    btn.className = 'btn btn-full auth-gated' + (currentUser ? '' : ' locked');
-    btn.style.cssText = 'border-color:var(--yellow);color:var(--yellow);';
-    btn.textContent = '🥚 Hatch Egg';
+    let label, color, locked;
+    if (!ready) {
+      label  = `⏳ Hatches in ${daysLeft} day${daysLeft !== 1 ? 's' : ''}`;
+      color  = 'var(--muted)';
+      locked = true;
+    } else {
+      label  = '🥚 Hatch Egg';
+      color  = 'var(--yellow)';
+      locked = false;
+    }
+
+    btn.className = 'btn btn-full auth-gated' + (!currentUser || locked ? ' locked' : '');
+    btn.style.cssText = `border-color:${color};color:${color};font-size:14px;`;
+    btn.textContent = label;
     btn.addEventListener('click', () => triggerHatch(selected, selectedPetIdx));
     body.appendChild(btn);
 
   // ── Baby: food shop + conditional evolve ─────────────────────────────
   } else if (pet.stage === 'baby') {
 
+    // Sick warning — shown prominently if baby is overdue for food
+    if (isBabySick(pet)) {
+      const sickDiv = document.createElement('div');
+      sickDiv.style.cssText = 'font-size:12px;color:var(--red);padding:6px 8px;background:rgba(255,107,107,0.1);border:1px solid var(--red);border-radius:4px;line-height:1.6;margin-bottom:4px;';
+      sickDiv.innerHTML = `🤒 <strong>Sick!</strong> This tama hasn't been fed in over ${SICK_DAYS} days. Feed them to nurse them back to health!`;
+      body.appendChild(sickDiv);
+    }
+
     // Food shop — only if not yet fed
     if (!pet.fedWith) {
       const foodHead = document.createElement('div');
-      foodHead.style.cssText = 'font-size:9px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;margin-top:4px;';
+      foodHead.style.cssText = 'font-size:13px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;margin-top:4px;';
       foodHead.textContent = 'Feed your tama';
       body.appendChild(foodHead);
 
@@ -2231,8 +2790,8 @@ function buildPetActions(cell) {
         const btn = document.createElement('button');
         btn.className = 'btn btn-full auth-gated' + (currentUser ? '' : ' locked');
         const tierColor = food.tier === 'premium' ? 'var(--orange)' : 'var(--green)';
-        btn.style.cssText = `border-color:${tierColor};color:${tierColor};display:flex;justify-content:space-between;align-items:center;`;
-        btn.innerHTML = `<span>${food.icon} ${food.name}</span><span style="font-size:9px;opacity:0.8;">${food.cost}pt</span>`;
+        btn.style.cssText = `border-color:${tierColor};color:${tierColor};display:flex;justify-content:space-between;align-items:center;font-size:14px;`;
+        btn.innerHTML = `<span>${food.icon} ${food.name}</span><span style="font-size:13px;opacity:0.8;">${food.cost}pt</span>`;
         btn.title = food.desc;
         btn.addEventListener('click', () => purchaseFood(food, pet));
         body.appendChild(btn);
@@ -2242,7 +2801,7 @@ function buildPetActions(cell) {
       // Already fed — show what they ate
       const food = FOODS.find(f => f.id === pet.fedWith);
       const fedDiv = document.createElement('div');
-      fedDiv.style.cssText = 'font-size:10px;color:var(--green);padding:4px 0;';
+      fedDiv.style.cssText = 'font-size:13px;color:var(--green);padding:4px 0;';
       fedDiv.textContent = `${food?.icon || '🍙'} Fed: ${food?.name || pet.fedWith}`;
       body.appendChild(fedDiv);
     }
@@ -2265,21 +2824,41 @@ function buildPetActions(cell) {
         color  = 'var(--muted)';
         locked = true;
       } else {
-        label  = `✨ Evolve (${EVOLVE_COST} pt)`;
+        label  = `✨ Evolve (${PRICES.evolve} pt)`;
         color  = 'var(--cyan)';
         locked = false;
       }
 
       btn.className = 'btn btn-full auth-gated' + (!currentUser || locked ? ' locked' : '');
-      btn.style.cssText = `border-color:${color};color:${color};margin-top:4px;`;
+      btn.style.cssText = `border-color:${color};color:${color};margin-top:4px;font-size:14px;`;
       btn.textContent = label;
       btn.addEventListener('click', () => triggerEvolve(selected, selectedPetIdx));
       body.appendChild(btn);
     }
 
-  // ── Adult: variant shop coming soon ──────────────────────────────────
+  // ── Adult: variant shop ───────────────────────────────────────────────
   } else {
-    // Variant evolution handled via the variant shop (coming soon)
+    const charId = pet.charJSON?.id;
+    if (charId) {
+      // Load tamadex (uses cache after first call — fast)
+      loadTamaDex().then(dex => {
+        if (!hasVariants(charId, dex)) {
+          const noVar = document.createElement('div');
+          noVar.style.cssText = 'font-size:13px;color:var(--muted);padding:4px 0;line-height:1.5;';
+          noVar.textContent = 'No variant forms available for this tama.';
+          body.appendChild(noVar);
+          return;
+        }
+        const btn = document.createElement('button');
+        btn.className = 'btn btn-full auth-gated' + (currentUser ? '' : ' locked');
+        btn.style.cssText = 'border-color:var(--cyan);color:var(--cyan);';
+        btn.textContent = '✨ Variant Shop';
+        btn.addEventListener('click', () => openVariantShop(pet));
+        body.appendChild(btn);
+      }).catch(() => {
+        // silently skip if tamadex can't load
+      });
+    }
   }
 }
 
@@ -2334,10 +2913,20 @@ function toast(msg) {
 }
 
 
+const MAX_EGGS = 5; // maximum eggs a student can hold at once
+
 document.getElementById('btn-add-egg').addEventListener('click', () => {
   if (!selected) return;
   const student = STUDENTS.find(s => s.id === selected);
   if (!student) return;
+
+  // Count current eggs — cap applies only to new purchases, not existing eggs
+  const cell     = cells.find(c => c.student.id === selected);
+  const eggCount = cell ? cell.pets.filter(p => p.stage === 'egg').length : 0;
+  if (eggCount >= MAX_EGGS) {
+    toast(`🥚 Max ${MAX_EGGS} eggs at a time!`);
+    return;
+  }
 
   if (student.gotchiPoints < PRICES.egg) {
     toast(`⚠ Not enough GotchiPts (need ${PRICES.egg})`);
@@ -2348,7 +2937,7 @@ document.getElementById('btn-add-egg').addEventListener('click', () => {
     `Are you sure you want to buy a<br>
      <strong style="color:var(--text);">New Egg</strong><br>
      for <strong style="color:var(--yellow);">${PRICES.egg} GotchiPts</strong>?<br>
-     <span style="font-size:10px;color:var(--muted);">Balance after: ${student.gotchiPoints - PRICES.egg} pts</span>`;
+     <span style="font-size:13px;color:var(--muted);">Balance after: ${student.gotchiPoints - PRICES.egg} pts</span>`;
 
   const confirmBtn = document.getElementById('btn-buy-confirm-yes');
   const handler = async () => {
@@ -2367,10 +2956,46 @@ document.getElementById('btn-add-egg').addEventListener('click', () => {
     const slot       = cell.pets.length;
     const dbPet      = await dbCreatePet(student.id, slot, 'egg', variantIdx);
     const variant    = eggJSON.variants[variantIdx];
-    await cell._addEgg(variant, dbPet?.id || null);
+    await cell._addEgg(variant, dbPet?.id || null, dbPet?.created_at || null);
     selectedPetIdx   = cell.pets.length - 1;
     refreshStudentPanel();
     toast('🥚 New egg added!');
+  };
+  confirmBtn.addEventListener('click', handler);
+  openOverlay('overlay-buy-confirm');
+});
+
+// ─── GACHA MACHINE ────────────────────────────────────────────────────────
+document.getElementById('btn-gacha').addEventListener('click', () => {
+  if (!selected) return;
+  const student = STUDENTS.find(s => s.id === selected);
+  if (!student) return;
+
+  if (student.gotchiPoints < PRICES.prize) {
+    toast(`⚠ Not enough GotchiPts (need ${PRICES.prize})`);
+    return;
+  }
+
+  document.getElementById('buy-confirm-text').innerHTML =
+    `Redeem a<br>
+     <strong style="color:var(--text);">🎰 Gacha Machine</strong> turn<br>
+     for <strong style="color:var(--pink);">${PRICES.prize} GotchiPts</strong>?<br>
+     <span style="font-size:13px;color:var(--muted);">Go use the physical machine in the classroom!</span><br>
+     <span style="font-size:13px;color:var(--muted);">Balance after: ${student.gotchiPoints - PRICES.prize} pts</span>`;
+
+  const confirmBtn = document.getElementById('btn-buy-confirm-yes');
+  const handler = () => {
+    confirmBtn.removeEventListener('click', handler);
+    closeOverlay('overlay-buy-confirm');
+
+    student.gotchiPoints -= PRICES.prize;
+    const el = document.getElementById('pts-' + student.id);
+    if (el) el.textContent = student.gotchiPoints + ' pts';
+    document.getElementById('sel-pts').textContent = student.gotchiPoints;
+    updateHeader();
+    dbUpdateStudent(student.id, { gotchi_pts: student.gotchiPoints });
+
+    toast('🎰 Gacha redeemed! Go use the machine!');
   };
   confirmBtn.addEventListener('click', handler);
   openOverlay('overlay-buy-confirm');
@@ -2392,15 +3017,15 @@ document.addEventListener('click', e => {
 
 // ─── DEBUG TOOLS ──────────────────────────────────────────────────────────
 // ─── ECONOMY ──────────────────────────────────────────────────────────────
-const PRICES = {
+let PRICES = {
   evolve:     3,   // baby → adult
   egg:        5,   // new egg from shop
   bg_basic:   5,   // standard background
   bg_rare:    15,  // rare background (future)
-  prize:      20,  // physical prize machine redemption (future)
+  prize:      5,   // gacha machine redemption
+  variant:    50,  // switch to a variant form
 };
 // Food prices live in FOODS array above
-const EVOLVE_COST = PRICES.evolve; // alias used throughout
 // Toggle debug dropdown
 const debugDropdown = document.getElementById('debug-dropdown');
 document.getElementById('btn-debug-toggle').addEventListener('click', e => {
@@ -2438,7 +3063,7 @@ document.getElementById('btn-debug-evolve').addEventListener('click', () => {
   getEvolutionHistory(selected).push(snapshotPets(cell));
   const pet = cell.pets[selectedPetIdx];
   if (!pet) return;
-  if (pet.stage === 'egg') triggerHatch(selected, selectedPetIdx);
+  if (pet.stage === 'egg') triggerHatch(selected, selectedPetIdx, true);
   else triggerEvolve(selected, selectedPetIdx, true); // true = bypass time gate
 });
 
@@ -2494,6 +3119,22 @@ document.getElementById('btn-debug-reset').addEventListener('click', async () =>
   toast('🥚 Reset to egg');
 });
 
+document.getElementById('btn-debug-sick').addEventListener('click', () => {
+  debugDropdown.style.display = 'none';
+  if (!selected) return;
+  const cell = cells.find(c => c.student.id === selected);
+  if (!cell) return;
+  const pet = cell.pets[selectedPetIdx];
+  if (!pet || pet.stage !== 'baby') { toast('⚠ Select a baby tama first'); return; }
+  if (pet.fedWith) { toast('⚠ Already fed — sick state only applies to unfed babies'); return; }
+
+  // Backdate hatchedAt far enough to satisfy isBabySick
+  const sickDate = new Date(Date.now() - (SICK_DAYS + 1) * 24 * 60 * 60 * 1000);
+  pet.hatchedAt = sickDate.toISOString();
+  refreshStudentPanel();
+  toast('🤒 Forced sick state');
+});
+
 document.getElementById('btn-do-award-all').addEventListener('click', () => {
   const amt = parseInt(document.getElementById('award-all-amount').value) || 10;
   cells.forEach(c => c.awardPoints(amt));
@@ -2517,8 +3158,8 @@ function purchaseFood(food, pet) {
   document.getElementById('buy-confirm-text').innerHTML =
     `Feed <strong style="color:var(--text);">${food.icon} ${food.name}</strong><br>
      to your baby tama?<br>
-     <span style="font-size:10px;color:${food.tier === 'premium' ? 'var(--orange)' : 'var(--green)'};">${food.tier === 'premium' ? '✨ Unlocks variant-capable evolution path' : '🌱 Standard evolution path'}</span><br>
-     <span style="font-size:10px;color:var(--muted);">Evolution ready in ${EVOLVE_WAIT_DAYS} days · Cost: ${food.cost} pt · Balance after: ${student.gotchiPoints - food.cost} pts</span>`;
+     <span style="font-size:13px;color:${food.tier === 'premium' ? 'var(--orange)' : 'var(--green)'};">${food.tier === 'premium' ? '✨ Unlocks variant-capable evolution path' : '🌱 Standard evolution path'}</span><br>
+     <span style="font-size:13px;color:var(--muted);">Evolution ready in ${EVOLVE_WAIT_DAYS} days · Cost: ${food.cost} pt · Balance after: ${student.gotchiPoints - food.cost} pts</span>`;
 
   const confirmBtn = document.getElementById('btn-buy-confirm-yes');
   const handler = async () => {
@@ -2538,8 +3179,11 @@ function purchaseFood(food, pet) {
     pet.fedAt   = fedAt;
     if (pet.dbId) dbUpsertPet({ id: pet.dbId, fed_with: food.id, fed_at: fedAt });
 
-    // Refresh actions panel
+    // Play eating animation
     const cell = cells.find(c => c.student.id === selected);
+    triggerEating(pet, food);
+
+    // Refresh actions panel
     if (cell) buildPetActions(cell);
 
     toast(`${food.icon} ${food.name} fed!`);
@@ -2618,7 +3262,7 @@ async function openBgPicker() {
           margin:0 6px 6px;padding:3px 0;
           background:none;border:1px solid var(--yellow);
           color:var(--yellow);font-family:'DM Mono',monospace;
-          font-size:9px;border-radius:3px;cursor:pointer;
+          font-size:13px;border-radius:3px;cursor:pointer;
           letter-spacing:1px;
         `;
         buyBtn.textContent = `BUY • ${PRICES.bg_basic} pt`;
@@ -2649,15 +3293,13 @@ function purchaseBackground(bg, price) {
     `Are you sure you want to buy<br>
      <strong style="color:var(--text);">${bg.name}</strong><br>
      for <strong style="color:var(--yellow);">${price} GotchiPt${price!==1?'s':''}</strong>?<br>
-     <span style="font-size:10px;color:var(--muted);">Balance after: ${student.gotchiPoints - price} pts</span>`;
+     <span style="font-size:13px;color:var(--muted);">Balance after: ${student.gotchiPoints - price} pts</span>`;
 
   // Wire confirm button
   const confirmBtn = document.getElementById('btn-buy-confirm-yes');
   const handler = async () => {
     confirmBtn.removeEventListener('click', handler);
     closeOverlay('overlay-buy-confirm');
-
-    // Deduct and unlock
     student.gotchiPoints -= price;
     student.unlockedBgs.push(bg.id);
 
@@ -2680,6 +3322,7 @@ function purchaseBackground(bg, price) {
     await applyBackground(bg);
   };
   confirmBtn.addEventListener('click', handler);
+  closeOverlay('overlay-bg-picker');
   openOverlay('overlay-buy-confirm');
 }
 
@@ -2714,6 +3357,288 @@ async function applyBackground(bg) {
   );
 
   toast(`🖼 Background changed to ${bg.name}`);
+}
+
+// ─── VARIANT SHOP ────────────────────────────────────────────────────────
+async function openVariantShop(pet) {
+  if (!selected || !currentUser) return;
+  const student = STUDENTS.find(s => s.id === selected);
+  if (!student || !pet?.charJSON) return;
+
+  openOverlay('overlay-variant-shop');
+
+  const grid    = document.getElementById('variant-shop-grid');
+  const subhead = document.getElementById('variant-shop-subhead');
+  grid.innerHTML = '<div style="color:var(--muted);font-size:11px;padding:8px;">Loading...</div>';
+  subhead.textContent = '';
+
+  try {
+    const dex = await loadTamaDex();
+    const currentCharId = pet.charJSON.id;
+    const parts  = currentCharId.split('-');
+    const family = parts[2];
+
+    // Collect all enabled variants for this family
+    const variants = dex.characters.filter(c => {
+      const cp = c.id.split('-');
+      return c.enabled && cp[1] === '002' && cp[2] === family && cp[3] !== '000';
+    });
+
+    if (!variants.length) {
+      subhead.textContent = 'No variants available for this tama.';
+      grid.innerHTML = '';
+      return;
+    }
+
+    // Always include the base adult (000) as the first option so they can revert
+    const baseId    = `TAM-002-${family}-000`;
+    const baseEntry = dex.characters.find(c => c.id === baseId);
+    const entries   = baseEntry
+      ? [baseEntry, ...variants]
+      : [...variants];
+
+    subhead.textContent =
+      `${pet.charJSON.displayName} · ${variants.length} variant${variants.length !== 1 ? 's' : ''} · ${PRICES.variant} pt each`;
+
+    grid.innerHTML = '';
+
+    for (const entry of entries) {
+      const isActive  = entry.id === currentCharId;
+      const isBase    = entry.id === baseId;
+
+      const card = document.createElement('div');
+      card.className = 'variant-card' + (isActive ? ' active' : '');
+
+      // ── Preview canvas ─────────────────────────────────────────────────
+      const cnv = document.createElement('canvas');
+      cnv.className = 'variant-card-preview';
+      cnv.width  = 1; cnv.height = 1; // placeholder until image loads
+
+      fetchJSON(entry.id).then(async varJSON => {
+        const sheetImg = await fetchImage(TAMA_PATH, varJSON.sheet);
+        // Band 1 = 'base' (assembled) — first sprite is the canonical preview frame
+        const baseBand = varJSON.bands?.find(b => b.role === 'base');
+        const bodyBand = varJSON.bands?.find(b => b.role === 'body_anim');
+        const sp = baseBand?.sprites?.[0] || bodyBand?.sprites?.[0];
+        if (!sp) return;
+
+        cnv.width  = sp.w;
+        cnv.height = sp.h;
+        const ctx  = cnv.getContext('2d');
+        ctx.imageSmoothingEnabled = false;
+        ctx.drawImage(sheetImg, sp.x, sp.y, sp.w, sp.h, 0, 0, sp.w, sp.h);
+      }).catch(() => {
+        cnv.width = 32; cnv.height = 32;
+        const ctx = cnv.getContext('2d');
+        ctx.fillStyle = '#222'; ctx.fillRect(0, 0, 32, 32);
+        ctx.fillStyle = '#666'; ctx.font = '9px monospace'; ctx.textAlign = 'center';
+        ctx.fillText('?', 16, 20);
+      });
+
+      // ── Name label ─────────────────────────────────────────────────────
+      const label = document.createElement('div');
+      label.className = 'variant-card-label';
+      label.textContent = isBase
+        ? `${entry.displayName} (base)`
+        : entry.displayName;
+
+      card.appendChild(cnv);
+      card.appendChild(label);
+
+      if (isActive) {
+        // Show "current" badge, no buy button
+        const tag = document.createElement('div');
+        tag.className = 'variant-card-active-tag';
+        tag.textContent = '★ Current';
+        card.appendChild(tag);
+      } else {
+        // Buy / switch button
+        const buyBtn = document.createElement('button');
+        buyBtn.style.cssText = `
+          margin:0 6px 6px;padding:3px 0;
+          background:none;border:1px solid var(--cyan);
+          color:var(--cyan);font-family:'DM Mono',monospace;
+          font-size:13px;border-radius:3px;cursor:pointer;letter-spacing:1px;
+        `;
+        buyBtn.textContent = `SWITCH • ${PRICES.variant} pt`;
+        buyBtn.addEventListener('click', e => {
+          e.stopPropagation();
+          purchaseVariant(pet, student, entry);
+        });
+        card.appendChild(buyBtn);
+      }
+
+      grid.appendChild(card);
+    }
+  } catch(e) {
+    grid.innerHTML = `<div style="color:var(--red);font-size:11px;padding:8px;">⚠ ${e.message}</div>`;
+  }
+}
+
+function purchaseVariant(pet, student, entry) {
+  if (!currentUser) return;
+  const price = PRICES.variant;
+
+  if (student.gotchiPoints < price) {
+    toast(`⚠ Not enough GotchiPts (need ${price})`);
+    return;
+  }
+
+  document.getElementById('buy-confirm-text').innerHTML =
+    `Switch to<br>
+     <strong style="color:var(--text);">${entry.displayName}</strong><br>
+     for <strong style="color:var(--yellow);">${price} GotchiPt${price !== 1 ? 's' : ''}</strong>?<br>
+     <span style="font-size:13px;color:var(--muted);">Switching back costs the same price.</span><br>
+     <span style="font-size:13px;color:var(--muted);">Balance after: ${student.gotchiPoints - price} pts</span>`;
+
+  const confirmBtn = document.getElementById('btn-buy-confirm-yes');
+  const handler = async () => {
+    confirmBtn.removeEventListener('click', handler);
+    closeOverlay('overlay-buy-confirm');
+
+    // Deduct points
+    student.gotchiPoints -= price;
+    const ptEl = document.getElementById('pts-' + student.id);
+    if (ptEl) ptEl.textContent = student.gotchiPoints + ' pts';
+    document.getElementById('sel-pts').textContent = student.gotchiPoints;
+    updateHeader();
+    dbUpdateStudent(student.id, { gotchi_pts: student.gotchiPoints });
+
+    // Run evolution-style animation, swap sprite mid-flash, then wave
+    const cell = cells.find(c => c.student.id === selected);
+    if (cell) {
+      await triggerVariantAnim(cell, pet, entry.id);
+    } else {
+      await applyVariant(pet, entry.id);
+    }
+
+    // Persist new char_id to DB
+    if (pet.dbId) dbUpsertPet({ id: pet.dbId, char_id: entry.id });
+
+    toast(`✨ Switched to ${entry.displayName}!`);
+    cellAnnounce(cell, `✨ ${entry.displayName}!`, 6000);
+
+    // Refresh roster portrait + actions panel
+    if (cell) {
+      buildPetRoster(cell);
+      buildPetActions(cell);
+    }
+  };
+  confirmBtn.addEventListener('click', handler);
+  closeOverlay('overlay-variant-shop');
+  openOverlay('overlay-buy-confirm');
+}
+
+async function triggerVariantAnim(cell, pet, newCharId) {
+  cell._hatching = true;
+
+  // Helper: draw cell with evolving pet at a specific body label
+  function renderPetFrame(bodyLabel, offsetX = 0) {
+    const ctx = cell.ctx; ctx.imageSmoothingEnabled = false;
+    if (cell.bgCanvas) ctx.drawImage(cell.bgCanvas, 0, 0, CW, CH);
+    else { ctx.fillStyle = '#87CEEB'; ctx.fillRect(0, 0, CW, CH); }
+    cell.pets.forEach(p => {
+      if (p === pet) return;
+      if (p.stage === 'egg') p.drawEgg(ctx); else p.drawTama(ctx);
+    });
+    const bs = pet._body[bodyLabel] || Object.values(pet._body)[0];
+    if (!bs) return;
+    const px = Math.round(pet.x + offsetX), py = Math.round(pet.y);
+    const dw = Math.round(bs.w * SPRITE_SCALE);
+    const dh = Math.round(bs.h * SPRITE_SCALE);
+    ctx.save();
+    if (pet.facingRight) { ctx.translate(px + dw / 2, 0); ctx.scale(-1, 1); ctx.translate(-(px + dw / 2), 0); }
+    ctx.drawImage(pet.off, bs.x, bs.y, bs.w, bs.h, px, py, dw, dh);
+    // Draw face overlay if this is an adult with a face band.
+    // Always use the 'stand' anchor so the face doesn't jump vertically
+    // as the body cycles between stand/happy frames.
+    if (!pet.isBaby) {
+      const faceLabel = bodyLabel === 'happy' ? 'happy' : 'normal';
+      const fs  = pet._face[faceLabel] || pet._face['normal'] || null;
+      const an  = pet._anch['stand'] || pet._anch[bodyLabel] || { offsetX: 0, offsetY: 0, useFace: true };
+      if (fs && an.useFace) {
+        const fw  = Math.round(fs.w * SPRITE_SCALE);
+        const fh  = Math.round(fs.h * SPRITE_SCALE);
+        const fox = Math.round(an.offsetX * SPRITE_SCALE);
+        const foy = Math.round(an.offsetY * SPRITE_SCALE);
+        ctx.drawImage(pet.off, fs.x, fs.y, fs.w, fs.h, px + fox, py + foy, fw, fh);
+      }
+    }
+    ctx.restore();
+  }
+
+  // ── Quick happy cycle ─────────────────────────────────────────────────
+  for (const label of ['stand','happy','stand','happy','stand','happy']) {
+    renderPetFrame(label); await sleep(200);
+  }
+
+  // ── Shake ─────────────────────────────────────────────────────────────
+  await new Promise(resolve => {
+    const start = performance.now();
+    function frame(ts) {
+      const elapsed = ts - start;
+      if (elapsed >= 1200) { renderPetFrame('stand', 0); resolve(); return; }
+      const offsetX = Math.sin(elapsed / 60 * Math.PI * 2) * 4;
+      renderPetFrame('stand', offsetX);
+      requestAnimationFrame(frame);
+    }
+    requestAnimationFrame(frame);
+  });
+
+  await sleep(150);
+
+  // ── White flash — swap sprite mid-flash ───────────────────────────────
+  await new Promise(resolve => {
+    const start = performance.now();
+    function frame(ts) {
+      const t = Math.min((ts - start) / 350, 1);
+      const ctx = cell.ctx;
+      ctx.globalAlpha = t; ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, CW, CH); ctx.globalAlpha = 1;
+      if (t < 1) requestAnimationFrame(frame); else resolve();
+    }
+    requestAnimationFrame(frame);
+  });
+
+  // Apply sprite swap at peak of flash (invisible moment)
+  await applyVariant(pet, newCharId);
+
+  // ── Fade in ───────────────────────────────────────────────────────────
+  cell._hatching = false;
+  cell.canvas.style.opacity    = '0';
+  cell.canvas.style.transition = 'opacity 0.45s';
+  await sleep(30);
+  cell.canvas.style.opacity = '1';
+
+  // ── Wave ──────────────────────────────────────────────────────────────
+  pet.forceAnimation('wave');
+  setTimeout(() => pet.forceAnimation(null), 2500);
+}
+
+async function applyVariant(pet, newCharId) {
+  const newJSON  = await fetchJSON(newCharId);
+  const sheetImg = await fetchImage(TAMA_PATH, newJSON.sheet);
+
+  // Rebuild offscreen canvas
+  const off = document.createElement('canvas');
+  off.width  = sheetImg.naturalWidth  || sheetImg.width;
+  off.height = sheetImg.naturalHeight || sheetImg.height;
+  const oc   = off.getContext('2d');
+  oc.imageSmoothingEnabled = false;
+  oc.drawImage(sheetImg, 0, 0);
+
+  // Patch the pet in place — next frame will pick up the new JSON + canvas
+  pet.charJSON = newJSON;
+  pet.off      = off;
+  pet._body    = {}; pet._face = {}; pet._anch = {};
+
+  const bb = newJSON.bands?.find(b => b.role === 'body_anim');
+  const fb = newJSON.bands?.find(b => b.role === 'face_small');
+  if (bb) bb.sprites.forEach(s => pet._body[s.label] = s);
+  if (fb) fb.sprites.forEach(s => pet._face[s.label] = s);
+  if (newJSON.bodyAnimAnchors && bb)
+    bb.sprites.forEach((s, i) =>
+      pet._anch[s.label] = newJSON.bodyAnimAnchors[i] || { offsetX: 0, offsetY: 0, useFace: true }
+    );
 }
 
 // ─── CELL COLOR PICKER ────────────────────────────────────────────────────
