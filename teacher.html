@@ -1802,57 +1802,71 @@ async function _loadImg(url) {
 const _tamaCache = {};
 async function _loadTamaSprite(charId) {
   if (_tamaCache[charId]) return _tamaCache[charId];
+
   const resp = await fetch(`${PHOTO_PAGES_BASE}/sprites/tamas/${charId}.json`);
   if (!resp.ok) throw new Error('No JSON: ' + charId);
   const data  = await resp.json();
   const bands = data.bands || [];
-  // Same priority as the original working version
-  const band  = bands.find(b => b.role === 'small_anim')
-             || bands.find(b => b.role === 'body_anim');
-  if (!band?.sprites.length) throw new Error('No body band: ' + charId);
-  const sp     = band.sprites[0];
-  const pngUrl = `${PHOTO_PAGES_BASE}/sprites/tamas/${encodeURIComponent(data.sheet)}`;
-  const img    = await _loadImg(pngUrl);
-  // Also grab happy face (face_small[2]) if available — drawn on top
-  const faceBand  = bands.find(b => b.role === 'face_small');
-  const faceSp    = faceBand?.sprites[2] ?? null;
-  const anchors   = data.bodyAnimAnchors ?? [];
-  const anchor    = anchors[0] ?? null;
-  const result = { img, sx: sp.x, sy: sp.y, sw: sp.w, sh: sp.h, faceSp, anchor };
+  const isBaby = data.generation === 'baby';
+
+  const img = await _loadImg(
+    `${PHOTO_PAGES_BASE}/sprites/tamas/${encodeURIComponent(data.sheet)}`
+  );
+
+  if (isBaby) {
+    // Babies: body_anim[0], no face — matches gotchigarden baby rendering
+    const bb = bands.find(b => b.role === 'body_anim')
+            || bands.find(b => b.role === 'small_anim');
+    if (!bb?.sprites.length) throw new Error('No band: ' + charId);
+    const sp = bb.sprites[0];
+    const result = { img, sx: sp.x, sy: sp.y, sw: sp.w, sh: sp.h, faceSp: null, anchor: null };
+    _tamaCache[charId] = result;
+    return result;
+  }
+
+  // Adults: body_anim 'stand' + face_small 'happy' — exactly matches gotchigarden wave/idle
+  const bb = bands.find(b => b.role === 'body_anim');
+  const fb = bands.find(b => b.role === 'face_small');
+  if (!bb?.sprites.length) throw new Error('No body_anim: ' + charId);
+
+  const bodySp = bb.sprites.find(s => s.label === 'stand') || bb.sprites[0];
+  const faceSp = fb
+    ? (fb.sprites.find(s => s.label === 'happy') || fb.sprites[2] || null)
+    : null;
+  const bodyIdx = bb.sprites.indexOf(bodySp);
+  const anchor  = data.bodyAnimAnchors?.[bodyIdx] ?? data.bodyAnimAnchors?.[0] ?? null;
+
+  const result = { img, sx: bodySp.x, sy: bodySp.y, sw: bodySp.w, sh: bodySp.h, faceSp, anchor };
   _tamaCache[charId] = result;
   return result;
 }
 
-// ── Draw one tama onto ctx ─────────────────────────────────────────────────
+// ── Draw one tama onto ctx — mirrors gotchigarden drawTama() ───────────────
 async function _drawTama(ctx, charId, slotX, rowY, slotW) {
   const { img, sx, sy, sw, sh, faceSp, anchor } = await _loadTamaSprite(charId);
 
-  const scaleH  = TAMA_H / sh;
-  const scaleW  = (slotW * 0.90) / sw;
-  const scale   = Math.min(scaleH, scaleW);
-  const drawW   = Math.round(sw * scale);
-  const drawH   = Math.round(sh * scale);
-  // Centre in slot; bottom-align in row
-  const drawX   = slotX + Math.round((slotW - drawW) / 2);
-  const drawY   = rowY  + (TAMA_H - drawH);
+  const scaleH = TAMA_H / sh;
+  const scaleW = (slotW * 0.90) / sw;
+  const scale  = Math.min(scaleH, scaleW);
+  const drawW  = Math.round(sw * scale);
+  const drawH  = Math.round(sh * scale);
+  const drawX  = slotX + Math.round((slotW - drawW) / 2);
+  const drawY  = rowY  + (TAMA_H - drawH);
 
+  // Body
   ctx.save();
-  ctx.shadowColor   = 'rgba(0,0,0,0.5)';
-  ctx.shadowBlur    = 5;
-  ctx.shadowOffsetX = 2;
-  ctx.shadowOffsetY = 2;
+  ctx.shadowColor = 'rgba(0,0,0,0.5)'; ctx.shadowBlur = 5;
+  ctx.shadowOffsetX = 2; ctx.shadowOffsetY = 2;
   ctx.drawImage(img, sx, sy, sw, sh, drawX, drawY, drawW, drawH);
   ctx.restore();
 
-  // Happy face overlay — best-effort, non-breaking
+  // Face overlay (adults only, matching gotchigarden's drawTama face composite)
   if (faceSp && anchor && anchor.useFace !== false) {
-    try {
-      const faceX = drawX + Math.round(anchor.offsetX * scale);
-      const faceY = drawY + Math.round(anchor.offsetY * scale);
-      const faceW = Math.round(faceSp.w * scale);
-      const faceH = Math.round(faceSp.h * scale);
-      ctx.drawImage(img, faceSp.x, faceSp.y, faceSp.w, faceSp.h, faceX, faceY, faceW, faceH);
-    } catch(e) { /* face overlay optional — ignore if it fails */ }
+    const faceX = drawX + Math.round(anchor.offsetX * scale);
+    const faceY = drawY + Math.round(anchor.offsetY * scale);
+    const faceW = Math.round(faceSp.w * scale);
+    const faceH = Math.round(faceSp.h * scale);
+    ctx.drawImage(img, faceSp.x, faceSp.y, faceSp.w, faceSp.h, faceX, faceY, faceW, faceH);
   }
 }
 
@@ -2002,8 +2016,9 @@ async function generatePhotoExport() {
     .order('name');
   if (error || !students) { toast('⚠ Could not load students'); btn.disabled = false; return; }
 
-  // Fetch all pets for these students in one explicit query, filtered by student_id
+  // Fetch all pets for these students — explicit filter, no reliance on FK inference
   const studentIds = students.map(s => s.id);
+  if (!studentIds.length) { toast('⚠ No students found'); btn.disabled = false; return; }
   const { data: allPets } = await db
     .from('pets')
     .select('id, student_id, stage, char_id, egg_variant, created_at')
