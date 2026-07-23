@@ -1842,25 +1842,29 @@ async function _loadTamaSprite(charId) {
 }
 
 // ── Draw one tama onto ctx — mirrors gotchigarden drawTama() ───────────────
-async function _drawTama(ctx, charId, slotX, rowY, slotW) {
+async function _drawTama(ctx, charId, slotX, rowBottom, slotW, tamaH) {
+  // rowBottom = the Y coordinate of the ground line for this row
+  // tamaH     = target sprite height (varies by depth row)
   const { img, sx, sy, sw, sh, faceSp, anchor } = await _loadTamaSprite(charId);
 
-  const scaleH = TAMA_H / sh;
-  const scaleW = (slotW * 0.90) / sw;
+  const scaleH = tamaH / sh;
+  const scaleW = (slotW * 0.88) / sw;
   const scale  = Math.min(scaleH, scaleW);
   const drawW  = Math.round(sw * scale);
   const drawH  = Math.round(sh * scale);
   const drawX  = slotX + Math.round((slotW - drawW) / 2);
-  const drawY  = rowY  + (TAMA_H - drawH);
+  const drawY  = rowBottom - drawH;  // bottom-anchor to ground line
 
-  // Body
+  // Shadow scales with depth (front = bigger shadow)
   ctx.save();
-  ctx.shadowColor = 'rgba(0,0,0,0.5)'; ctx.shadowBlur = 5;
-  ctx.shadowOffsetX = 2; ctx.shadowOffsetY = 2;
+  ctx.shadowColor   = 'rgba(0,0,0,0.45)';
+  ctx.shadowBlur    = Math.round(3 + (tamaH / 70) * 5);
+  ctx.shadowOffsetX = Math.round(1 + (tamaH / 70) * 2);
+  ctx.shadowOffsetY = Math.round(1 + (tamaH / 70) * 2);
   ctx.drawImage(img, sx, sy, sw, sh, drawX, drawY, drawW, drawH);
   ctx.restore();
 
-  // Face overlay (adults only, matching gotchigarden's drawTama face composite)
+  // Face overlay
   if (faceSp && anchor && anchor.useFace !== false) {
     const faceX = drawX + Math.round(anchor.offsetX * scale);
     const faceY = drawY + Math.round(anchor.offsetY * scale);
@@ -1905,37 +1909,49 @@ async function _renderCard(student, pets, bgManifest) {
   const allPets    = [...activePets, ...eggPets];
 
   if (allPets.length > 0) {
+    // ── Depth/perspective layout ─────────────────────────────────────────
+    // Back rows (index 0) are smaller and higher; front rows (last) are
+    // larger and lower. Rows overlap — painter's algorithm handles Z order.
+    const TAMA_H_BACK  = 38;   // sprite height for the furthest-back row
+    const TAMA_H_FRONT = 72;   // sprite height for the front row
+    const DEPTH_STEP   = 30;   // px the ground line moves up per row going back
+
     const numRows    = Math.ceil(allPets.length / TAMAS_PER_ROW);
-    const rowH       = TAMA_H + ROW_GAP;
-    const totalH     = numRows * rowH - ROW_GAP;
     const slotW      = iw / TAMAS_PER_ROW;
     const zoneBottom = iy + ih - CARD_NAME_H - CARD_PAD_BOT;
-    const startY     = zoneBottom - totalH;
 
-    for (let i = 0; i < allPets.length; i++) {
-      const pet      = allPets[i];
-      const rowIdx   = Math.floor(i / TAMAS_PER_ROW);
-      const colIdx   = i % TAMAS_PER_ROW;
-      const rowY     = startY + rowIdx * rowH;
+    // Draw row by row, back-to-front (painter's algorithm)
+    for (let rowIdx = 0; rowIdx < numRows; rowIdx++) {
+      // t=0 → back row, t=1 → front row
+      const t          = numRows > 1 ? rowIdx / (numRows - 1) : 1;
+      const rowTamaH   = Math.round(TAMA_H_BACK + t * (TAMA_H_FRONT - TAMA_H_BACK));
+      // Ground line for this row — front row is at zoneBottom, back rows step up
+      const rowBottom  = zoneBottom - (numRows - 1 - rowIdx) * DEPTH_STEP;
 
-      const isLastRow      = rowIdx === numRows - 1;
-      const countInThisRow = isLastRow ? allPets.length - rowIdx * TAMAS_PER_ROW : TAMAS_PER_ROW;
-      const rowOffsetX     = (TAMAS_PER_ROW - countInThisRow) * slotW / 2;
-      const slotX          = ix + rowOffsetX + colIdx * slotW;
+      const rowStart   = rowIdx * TAMAS_PER_ROW;
+      const rowPets    = allPets.slice(rowStart, rowStart + TAMAS_PER_ROW);
+      const countInRow = rowPets.length;
+      // Centre partial rows (last row may be incomplete)
+      const rowOffsetX = (TAMAS_PER_ROW - countInRow) * slotW / 2;
 
-      if (pet.stage === 'egg') {
-        ctx.save();
-        ctx.font = `${Math.round(TAMA_H * 0.65)}px serif`;
-        ctx.textAlign    = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText('🥚', slotX + slotW / 2, rowY + TAMA_H / 2);
-        ctx.restore();
-        continue;
+      for (let colIdx = 0; colIdx < rowPets.length; colIdx++) {
+        const pet   = rowPets[colIdx];
+        const slotX = ix + rowOffsetX + colIdx * slotW;
+
+        if (pet.stage === 'egg') {
+          ctx.save();
+          ctx.font = `${Math.round(rowTamaH * 0.65)}px serif`;
+          ctx.textAlign    = 'center';
+          ctx.textBaseline = 'bottom';
+          ctx.fillText('🥚', slotX + slotW / 2, rowBottom);
+          ctx.restore();
+          continue;
+        }
+
+        try {
+          await _drawTama(ctx, pet.char_id, slotX, rowBottom, slotW, rowTamaH);
+        } catch(e) { /* skip sprites that fail to load */ }
       }
-
-      try {
-        await _drawTama(ctx, pet.char_id, slotX, rowY, slotW);
-      } catch(e) { /* skip sprites that fail to load */ }
     }
   }
 
