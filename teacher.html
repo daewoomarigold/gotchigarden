@@ -1993,10 +1993,30 @@ async function generatePhotoExport() {
   const { jsPDF } = window.jspdf;
 
   statusEl.textContent = 'Loading class data…';
+
+  // Fetch students
   const { data: students, error } = await db
-    .from('students').select('*, pets(*)')
-    .eq('class_id', currentClassId).order('name');
+    .from('students')
+    .select('id, name, gotchi_pts, bg_id')
+    .eq('class_id', currentClassId)
+    .order('name');
   if (error || !students) { toast('⚠ Could not load students'); btn.disabled = false; return; }
+
+  // Fetch all pets for these students in one explicit query, filtered by student_id
+  const studentIds = students.map(s => s.id);
+  const { data: allPets } = await db
+    .from('pets')
+    .select('id, student_id, stage, char_id, egg_variant, created_at')
+    .in('student_id', studentIds);
+
+  // Attach each student's own pets
+  students.forEach(s => {
+    s.pets = (allPets || []).filter(p => p.student_id === s.id);
+  });
+
+  // Show a quick data summary in status for verification
+  const totalPets = (allPets || []).length;
+  statusEl.textContent = `Loaded ${students.length} students, ${totalPets} pets total. Rendering…`;
 
   let bgManifest = null;
   try {
@@ -2023,7 +2043,8 @@ async function generatePhotoExport() {
 
   for (let i = 0; i < students.length; i++) {
     const student = students[i];
-    statusEl.textContent = `Rendering ${i+1} / ${students.length}: ${student.name}…`;
+    const petCount = (student.pets || []).length;
+    statusEl.textContent = `Rendering ${i+1} / ${students.length}: ${student.name} (${petCount} pets)…`;
 
     const cardCanvas = await _renderCard(student, student.pets || [], bgManifest);
     const { x, y }   = getXY(col, row, pageNum === 1);
