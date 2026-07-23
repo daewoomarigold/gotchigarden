@@ -1909,38 +1909,47 @@ async function _renderCard(student, pets, bgManifest) {
   const allPets    = [...activePets, ...eggPets];
 
   if (allPets.length > 0) {
-    // ── Depth/perspective layout ─────────────────────────────────────────
-    // Back rows (index 0) are smaller and higher; front rows (last) are
-    // larger and lower. Rows overlap — painter's algorithm handles Z order.
-    const TAMA_H_BACK  = 38;   // sprite height for the furthest-back row
-    const TAMA_H_FRONT = 72;   // sprite height for the front row
-    const DEPTH_STEP   = 30;   // px the ground line moves up per row going back
+    // ── Hex-packed depth layout ──────────────────────────────────────────
+    // Wide rows (5 tamas) and narrow rows (4 tamas, offset by half slot)
+    // alternate so each row nestles into the gaps of the one behind it.
+    // All rows same sprite size; ground lines step up to create Z depth.
+    const TAMA_H_ALL   = 72;   // uniform sprite height for all rows
+    const DEPTH_STEP   = 20;   // px between ground lines (tighter = more overlap)
+    const WIDE_COUNT   = TAMAS_PER_ROW;      // 5 per wide row
+    const NARROW_COUNT = TAMAS_PER_ROW - 1;  // 4 per narrow row, offset half-slot
+    const slotW        = iw / WIDE_COUNT;    // base slot = iw/5
+    const zoneBottom   = iy + ih - CARD_NAME_H - CARD_PAD_BOT;
 
-    const numRows    = Math.ceil(allPets.length / TAMAS_PER_ROW);
-    const slotW      = iw / TAMAS_PER_ROW;
-    const zoneBottom = iy + ih - CARD_NAME_H - CARD_PAD_BOT;
+    // Assign pets to rows alternating wide/narrow
+    const rows = [];
+    let pIdx = 0;
+    while (pIdx < allPets.length) {
+      const isWide = rows.length % 2 === 0;
+      const count  = isWide ? WIDE_COUNT : NARROW_COUNT;
+      rows.push(allPets.slice(pIdx, pIdx + count));
+      pIdx += count;
+    }
+    const numRows = rows.length;
 
-    // Draw row by row, back-to-front (painter's algorithm)
+    // Draw back-to-front (painter's algorithm)
     for (let rowIdx = 0; rowIdx < numRows; rowIdx++) {
-      // t=0 → back row, t=1 → front row
-      const t          = numRows > 1 ? rowIdx / (numRows - 1) : 1;
-      const rowTamaH   = TAMA_H_FRONT;
-      // Ground line for this row — front row is at zoneBottom, back rows step up
-      const rowBottom  = zoneBottom - (numRows - 1 - rowIdx) * DEPTH_STEP;
+      const rowPets   = rows[rowIdx];
+      const isWide    = rowIdx % 2 === 0;
+      const rowBottom = zoneBottom - (numRows - 1 - rowIdx) * DEPTH_STEP;
+      // Narrow rows offset right by half a slot so they sit in the gaps
+      const rowLeft   = isWide ? ix : ix + slotW / 2;
 
-      const rowStart   = rowIdx * TAMAS_PER_ROW;
-      const rowPets    = allPets.slice(rowStart, rowStart + TAMAS_PER_ROW);
-      const countInRow = rowPets.length;
-      // Centre partial rows (last row may be incomplete)
-      const rowOffsetX = (TAMAS_PER_ROW - countInRow) * slotW / 2;
+      // Centre partial last row within its type's expected width
+      const expectedCount = isWide ? WIDE_COUNT : NARROW_COUNT;
+      const centreOffset  = (expectedCount - rowPets.length) * slotW / 2;
 
       for (let colIdx = 0; colIdx < rowPets.length; colIdx++) {
         const pet   = rowPets[colIdx];
-        const slotX = ix + rowOffsetX + colIdx * slotW;
+        const slotX = rowLeft + centreOffset + colIdx * slotW;
 
         if (pet.stage === 'egg') {
           ctx.save();
-          ctx.font = `${Math.round(rowTamaH * 0.65)}px serif`;
+          ctx.font = `${Math.round(TAMA_H_ALL * 0.65)}px serif`;
           ctx.textAlign    = 'center';
           ctx.textBaseline = 'bottom';
           ctx.fillText('🥚', slotX + slotW / 2, rowBottom);
@@ -1949,7 +1958,7 @@ async function _renderCard(student, pets, bgManifest) {
         }
 
         try {
-          await _drawTama(ctx, pet.char_id, slotX, rowBottom, slotW, rowTamaH);
+          await _drawTama(ctx, pet.char_id, slotX, rowBottom, slotW, TAMA_H_ALL);
         } catch(e) { /* skip sprites that fail to load */ }
       }
     }
