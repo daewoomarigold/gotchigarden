@@ -1924,7 +1924,7 @@ async function _renderCard(student, pets, bgManifest) {
     for (let rowIdx = 0; rowIdx < numRows; rowIdx++) {
       // t=0 → back row, t=1 → front row
       const t          = numRows > 1 ? rowIdx / (numRows - 1) : 1;
-      const rowTamaH   = Math.round(TAMA_H_BACK + t * (TAMA_H_FRONT - TAMA_H_BACK));
+      const rowTamaH   = TAMA_H_FRONT;
       // Ground line for this row — front row is at zoneBottom, back rows step up
       const rowBottom  = zoneBottom - (numRows - 1 - rowIdx) * DEPTH_STEP;
 
