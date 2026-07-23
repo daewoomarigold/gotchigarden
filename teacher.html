@@ -1906,12 +1906,18 @@ async function _renderCard(student, pets, bgManifest) {
   const eggPets    = pets.filter(p => p.stage === 'egg');
   const allPets    = [...activePets, ...eggPets];
 
+  // Debug: show pet count as small text at top of card
+  ctx.save();
+  ctx.fillStyle = 'rgba(255,255,255,0.7)';
+  ctx.font = '10px monospace';
+  ctx.fillText(`${allPets.length} pets (${activePets.length} active, ${eggPets.length} eggs)`, ix + 4, iy + 12);
+  ctx.restore();
+
   if (allPets.length > 0) {
     const numRows    = Math.ceil(allPets.length / TAMAS_PER_ROW);
     const rowH       = TAMA_H + ROW_GAP;
     const totalH     = numRows * rowH - ROW_GAP;
     const slotW      = iw / TAMAS_PER_ROW;
-    // Anchor rows just above the name bar
     const zoneBottom = iy + ih - CARD_NAME_H - CARD_PAD_BOT;
     const startY     = zoneBottom - totalH;
 
@@ -1921,15 +1927,10 @@ async function _renderCard(student, pets, bgManifest) {
       const colIdx   = i % TAMAS_PER_ROW;
       const rowY     = startY + rowIdx * rowH;
 
-      // Count tamas in this row — last row may be partial
-      const isLastRow       = rowIdx === numRows - 1;
-      const countInThisRow  = isLastRow
-        ? allPets.length - rowIdx * TAMAS_PER_ROW
-        : TAMAS_PER_ROW;
-
-      // Centre partial rows horizontally
-      const rowOffsetX = (TAMAS_PER_ROW - countInThisRow) * slotW / 2;
-      const slotX      = ix + rowOffsetX + colIdx * slotW;
+      const isLastRow      = rowIdx === numRows - 1;
+      const countInThisRow = isLastRow ? allPets.length - rowIdx * TAMAS_PER_ROW : TAMAS_PER_ROW;
+      const rowOffsetX     = (TAMAS_PER_ROW - countInThisRow) * slotW / 2;
+      const slotX          = ix + rowOffsetX + colIdx * slotW;
 
       if (pet.stage === 'egg') {
         ctx.save();
@@ -1943,7 +1944,18 @@ async function _renderCard(student, pets, bgManifest) {
 
       try {
         await _drawTama(ctx, pet.char_id, slotX, rowY, slotW);
-      } catch(e) { /* skip missing sprites */ }
+      } catch(e) {
+        // Draw a visible placeholder so we can see failures
+        ctx.save();
+        ctx.fillStyle = 'rgba(255,80,80,0.5)';
+        ctx.fillRect(slotX + 2, rowY + 2, slotW - 4, TAMA_H - 4);
+        ctx.fillStyle = '#fff';
+        ctx.font = '8px monospace';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(String(pet.char_id).slice(-7), slotX + slotW/2, rowY + TAMA_H/2);
+        ctx.restore();
+      }
     }
   }
 
