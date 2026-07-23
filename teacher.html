@@ -1800,7 +1800,6 @@ async function _loadImg(url) {
 }
 
 const _tamaCache = {};
-const _tamaCache = {};
 async function _loadTamaSprite(charId) {
   if (_tamaCache[charId]) return _tamaCache[charId];
   const resp = await fetch(`${PHOTO_PAGES_BASE}/sprites/tamas/${charId}.json`);
