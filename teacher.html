@@ -1944,8 +1944,17 @@ async function _renderCard(student, pets, bgManifest) {
       const centreOffset  = (expectedCount - rowPets.length) * slotW / 2;
 
       for (let colIdx = 0; colIdx < rowPets.length; colIdx++) {
-        const pet   = rowPets[colIdx];
-        const slotX = rowLeft + centreOffset + colIdx * slotW;
+        const pet = rowPets[colIdx];
+        // Partial rows: distribute evenly across the full inner width so
+        // they don't accidentally align with either wide or narrow rows behind.
+        let slotX;
+        if (rowPets.length < expectedCount) {
+          const groupW  = (rowPets.length - 1) * slotW;
+          const startX  = ix + (iw - groupW) / 2;
+          slotX = startX + colIdx * slotW - slotW / 2;
+        } else {
+          slotX = rowLeft + centreOffset + colIdx * slotW;
+        }
 
         if (pet.stage === 'egg') {
           ctx.save();
