@@ -1763,6 +1763,7 @@ window.addEventListener('resize', () => {
   }, 200);
 });
 
+
 // ═══════════════════════════════════════════════════════════════════════════
 // PHOTO EXPORT
 // ═══════════════════════════════════════════════════════════════════════════
@@ -1770,18 +1771,30 @@ window.addEventListener('resize', () => {
 const PHOTO_PAGES_BASE  = 'https://daewoomarigold.github.io/gotchigarden';
 const PHOTO_HEADER_TEXT = 'Marigold Class — Spring 2026';
 
-const CARD_PX_W = 480;
-const CARD_PX_H = 600;
+// ── Card dimensions (fixed for all students) ─────────────────────────────
+const CARD_PX_W    = 480;
+const CARD_PX_H    = 640;
+const CARD_BORDER  = 18;
+const CARD_NAME_H  = 75;
+const CARD_PAD_TOP = 14;
+const CARD_PAD_BOT = 8;
+const TAMAS_PER_ROW = 5;
+const ROW_GAP       = 6;
+// Tama sprite height — fills 8 rows perfectly inside the card
+// avail = 640 - 36 - 14 - 8 - 75 = 507px; TAMA_H = (507 - 7×6) / 8 ≈ 58px
+const TAMA_H = 58;
 
-const PDF_A4_W   = 210;
-const PDF_A4_H   = 297;
-const PDF_MARGIN = 10;
-const PDF_GAP    = 5;
-const PDF_COLS   = 3;
-const PDF_HDR_H  = 16;
-const PDF_CARD_W = (PDF_A4_W - PDF_MARGIN * 2 - PDF_GAP * (PDF_COLS - 1)) / PDF_COLS;
-const PDF_CARD_H = 78;
+// ── PDF layout ────────────────────────────────────────────────────────────
+const PDF_A4_W    = 210;
+const PDF_A4_H    = 297;
+const PDF_MARGIN  = 10;
+const PDF_GAP     = 5;
+const PDF_COLS    = 3;
+const PDF_HDR_H   = 16;
+const PDF_CARD_W  = (PDF_A4_W - PDF_MARGIN * 2 - PDF_GAP * (PDF_COLS - 1)) / PDF_COLS; // 60mm
+const PDF_CARD_H  = CARD_PX_H / CARD_PX_W * PDF_CARD_W; // ~80mm
 
+// ── Asset loaders ─────────────────────────────────────────────────────────
 const _photoImgCache = {};
 async function _loadImg(url) {
   if (_photoImgCache[url]) return _photoImgCache[url];
@@ -1810,6 +1823,7 @@ async function _loadTamaSprite(charId) {
   return result;
 }
 
+// ── Card renderer ─────────────────────────────────────────────────────────
 async function _renderCard(student, pets, bgManifest) {
   const cv = document.createElement('canvas');
   cv.width  = CARD_PX_W;
@@ -1817,19 +1831,20 @@ async function _renderCard(student, pets, bgManifest) {
   const ctx = cv.getContext('2d');
   ctx.imageSmoothingEnabled = false;
 
-  const BORDER = 18;
-  const NAME_H = 80;
-  const ix = BORDER, iy = BORDER;
-  const iw = CARD_PX_W - BORDER * 2;
-  const ih = CARD_PX_H - BORDER * 2;
+  const B  = CARD_BORDER;
+  const ix = B, iy = B;
+  const iw = CARD_PX_W - B * 2;
+  const ih = CARD_PX_H - B * 2;
 
-  // Background
+  // ── 1. Background ────────────────────────────────────────────────────────
   let bgDrawn = false;
   if (student.bg_id && bgManifest?.backgrounds) {
     const bgEntry = bgManifest.backgrounds.find(b => b.id === student.bg_id);
     if (bgEntry) {
       try {
-        const bgImg = await _loadImg(`${PHOTO_PAGES_BASE}/sprites/background/${encodeURIComponent(bgEntry.file)}`);
+        const bgImg = await _loadImg(
+          `${PHOTO_PAGES_BASE}/sprites/background/${encodeURIComponent(bgEntry.file)}`
+        );
         ctx.drawImage(bgImg, ix, iy, iw, ih);
         bgDrawn = true;
       } catch(e) {}
@@ -1843,81 +1858,98 @@ async function _renderCard(student, pets, bgManifest) {
     ctx.fillRect(ix, iy, iw, ih);
   }
 
-  // Tama sprites
+  // ── 2. Tama sprites in rows ──────────────────────────────────────────────
+  // Adults/babies first, eggs at end
   const activePets = pets.filter(p => p.stage !== 'egg' && p.char_id);
   const eggPets    = pets.filter(p => p.stage === 'egg');
   const allPets    = [...activePets, ...eggPets];
 
   if (allPets.length > 0) {
-    const TARGET_H  = 120;
-    const OVERLAP_X = Math.min(60, (iw - 60) / Math.max(allPets.length, 1));
-    const groupW    = OVERLAP_X * (allPets.length - 1) + 70;
-    const startX    = ix + Math.max(0, (iw - groupW) / 2);
-    const tamaY     = iy + ih - NAME_H - TARGET_H - 8;
+    const rowH      = TAMA_H + ROW_GAP;
+    const numRows   = Math.ceil(allPets.length / TAMAS_PER_ROW);
+    const totalH    = numRows * rowH - ROW_GAP;
+    // Anchor rows to bottom of tama zone (just above name bar)
+    const zoneBottom = iy + ih - CARD_NAME_H - CARD_PAD_BOT;
+    const startY    = zoneBottom - totalH;
+    const slotW     = iw / TAMAS_PER_ROW;
 
     for (let i = 0; i < allPets.length; i++) {
-      const pet   = allPets[i];
-      const drawX = Math.round(startX + i * OVERLAP_X);
+      const pet     = allPets[i];
+      const rowIdx  = Math.floor(i / TAMAS_PER_ROW);
+      const colIdx  = i % TAMAS_PER_ROW;
+      const drawY   = startY + rowIdx * rowH;
+      // Centre tama within its slot
+      const slotX   = ix + colIdx * slotW;
 
       if (pet.stage === 'egg') {
-        ctx.font = `${Math.round(TARGET_H * 0.55)}px serif`;
-        ctx.textAlign = 'center';
+        ctx.save();
+        ctx.font = `${Math.round(TAMA_H * 0.7)}px serif`;
+        ctx.textAlign    = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText('🥚', drawX + 30, tamaY + TARGET_H * 0.5);
+        ctx.fillText('🥚', slotX + slotW / 2, drawY + TAMA_H / 2);
+        ctx.restore();
         continue;
       }
+
       try {
         const { img, sx, sy, sw, sh } = await _loadTamaSprite(pet.char_id);
-        const scale = TARGET_H / sh;
-        const drawW = Math.round(sw * scale);
+        const scale  = TAMA_H / sh;
+        const drawW  = Math.round(sw * scale);
+        // Centre horizontally in slot
+        const drawX  = Math.round(slotX + (slotW - drawW) / 2);
         ctx.save();
-        ctx.shadowColor = 'rgba(0,0,0,0.6)'; ctx.shadowBlur = 8;
-        ctx.shadowOffsetX = 3; ctx.shadowOffsetY = 3;
-        ctx.drawImage(img, sx, sy, sw, sh, drawX, tamaY, drawW, TARGET_H);
+        ctx.shadowColor   = 'rgba(0,0,0,0.55)';
+        ctx.shadowBlur    = 6;
+        ctx.shadowOffsetX = 2;
+        ctx.shadowOffsetY = 2;
+        ctx.drawImage(img, sx, sy, sw, sh, drawX, drawY, drawW, TAMA_H);
         ctx.restore();
-      } catch(e) {}
+      } catch(e) { /* skip missing sprites silently */ }
     }
   }
 
-  // Name bar
-  const nameY = iy + ih - NAME_H;
+  // ── 3. Name bar ──────────────────────────────────────────────────────────
+  const nameY = iy + ih - CARD_NAME_H;
   ctx.fillStyle = 'rgba(0,0,0,0.68)';
-  ctx.fillRect(ix, nameY, iw, NAME_H);
+  ctx.fillRect(ix, nameY, iw, CARD_NAME_H);
   ctx.fillStyle = '#C9A227';
   ctx.fillRect(ix, nameY, iw, 2);
 
+  ctx.save();
   ctx.fillStyle    = '#ffffff';
-  ctx.font         = 'bold 28px Arial, sans-serif';
+  ctx.font         = 'bold 26px Arial, sans-serif';
   ctx.textAlign    = 'center';
   ctx.textBaseline = 'middle';
-  ctx.shadowColor  = 'rgba(0,0,0,0.8)'; ctx.shadowBlur = 4;
-  ctx.fillText(student.name, ix + iw / 2, nameY + NAME_H * 0.38, iw - 16);
-  ctx.fillStyle = '#FFD700';
-  ctx.font      = '16px monospace';
+  ctx.shadowColor  = 'rgba(0,0,0,0.85)';
+  ctx.shadowBlur   = 4;
+  ctx.fillText(student.name, ix + iw / 2, nameY + CARD_NAME_H * 0.38, iw - 16);
+  ctx.fillStyle  = '#FFD700';
+  ctx.font       = '15px monospace';
   ctx.shadowBlur = 2;
-  ctx.fillText(`${student.gotchi_pts ?? 0} pts`, ix + iw / 2, nameY + NAME_H * 0.72);
-  ctx.shadowBlur = 0;
+  ctx.fillText(`${student.gotchi_pts ?? 0} pts`, ix + iw / 2, nameY + CARD_NAME_H * 0.72);
+  ctx.restore();
 
-  // Brown frame
-  ctx.strokeStyle = '#4a2800'; ctx.lineWidth = BORDER;
-  ctx.strokeRect(BORDER / 2, BORDER / 2, CARD_PX_W - BORDER, CARD_PX_H - BORDER);
-  ctx.strokeStyle = '#8B6914'; ctx.lineWidth = BORDER * 0.5;
-  ctx.strokeRect(BORDER * 0.75, BORDER * 0.75, CARD_PX_W - BORDER * 1.5, CARD_PX_H - BORDER * 1.5);
+  // ── 4. Brown frame ────────────────────────────────────────────────────────
+  ctx.strokeStyle = '#4a2800'; ctx.lineWidth = B;
+  ctx.strokeRect(B / 2, B / 2, CARD_PX_W - B, CARD_PX_H - B);
+  ctx.strokeStyle = '#8B6914'; ctx.lineWidth = B * 0.5;
+  ctx.strokeRect(B * 0.75, B * 0.75, CARD_PX_W - B * 1.5, CARD_PX_H - B * 1.5);
   ctx.strokeStyle = '#C9A227'; ctx.lineWidth = 2;
-  ctx.strokeRect(BORDER + 2, BORDER + 2, CARD_PX_W - BORDER * 2 - 4, CARD_PX_H - BORDER * 2 - 4);
+  ctx.strokeRect(B + 2, B + 2, CARD_PX_W - B * 2 - 4, CARD_PX_H - B * 2 - 4);
 
-  // Corner ornaments
   const cs = 18;
   ctx.fillStyle = '#C9A227';
-  [[BORDER+4,BORDER+4],[CARD_PX_W-BORDER-4-cs,BORDER+4],
-   [BORDER+4,CARD_PX_H-BORDER-4-cs],[CARD_PX_W-BORDER-4-cs,CARD_PX_H-BORDER-4-cs]]
+  [[B+4,B+4],[CARD_PX_W-B-4-cs,B+4],
+   [B+4,CARD_PX_H-B-4-cs],[CARD_PX_W-B-4-cs,CARD_PX_H-B-4-cs]]
     .forEach(([cx,cy]) => { ctx.fillRect(cx,cy,cs,2); ctx.fillRect(cx,cy,2,cs); });
 
   return cv;
 }
 
+// ── Main export ───────────────────────────────────────────────────────────
 async function generatePhotoExport() {
   if (!currentClassId) { toast('⚠ Select a class first'); return; }
+
   const statusEl  = document.getElementById('photo-status');
   const previewEl = document.getElementById('photo-preview');
   const btn       = document.getElementById('btn-gen-photos');
@@ -1928,8 +1960,9 @@ async function generatePhotoExport() {
   if (!window.jspdf) {
     await new Promise((res, rej) => {
       const s = document.createElement('script');
-      s.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
-      s.onload = res; s.onerror = rej;
+      s.src     = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+      s.onload  = res;
+      s.onerror = () => rej(new Error('jsPDF load failed'));
       document.head.appendChild(s);
     });
   }
@@ -1948,50 +1981,51 @@ async function generatePhotoExport() {
   } catch(e) {}
 
   const pdf = new jsPDF({ orientation:'portrait', unit:'mm', format:'a4' });
-  const rowsFirst = Math.floor((PDF_A4_H - PDF_MARGIN - PDF_HDR_H - PDF_GAP - PDF_MARGIN) / (PDF_CARD_H + PDF_GAP));
-  const rowsOther = Math.floor((PDF_A4_H - PDF_MARGIN * 2) / (PDF_CARD_H + PDF_GAP));
 
+  // Grid tracking
+  const rowsFirstPage  = Math.floor((PDF_A4_H - PDF_MARGIN - PDF_HDR_H - PDF_GAP - PDF_MARGIN) / (PDF_CARD_H + PDF_GAP));
+  const rowsOtherPages = Math.floor((PDF_A4_H - PDF_MARGIN * 2) / (PDF_CARD_H + PDF_GAP));
   let pageNum = 1, col = 0, row = 0;
 
-  const cardXY = (c, r, first) => ({
+  const getXY = (c, r, first) => ({
     x: PDF_MARGIN + c * (PDF_CARD_W + PDF_GAP),
     y: (first ? PDF_MARGIN + PDF_HDR_H + PDF_GAP : PDF_MARGIN) + r * (PDF_CARD_H + PDF_GAP),
   });
 
-  // Header
+  // First page header
   pdf.setFont('helvetica','bold'); pdf.setFontSize(14);
-  pdf.setTextColor(74,40,0);
-  pdf.text(PHOTO_HEADER_TEXT, PDF_A4_W/2, PDF_MARGIN+8, { align:'center' });
-  pdf.setDrawColor(139,105,20); pdf.setLineWidth(0.4);
-  pdf.line(PDF_MARGIN, PDF_MARGIN+11, PDF_A4_W-PDF_MARGIN, PDF_MARGIN+11);
+  pdf.setTextColor(74, 40, 0);
+  pdf.text(PHOTO_HEADER_TEXT, PDF_A4_W / 2, PDF_MARGIN + 8, { align:'center' });
+  pdf.setDrawColor(139, 105, 20); pdf.setLineWidth(0.4);
+  pdf.line(PDF_MARGIN, PDF_MARGIN + 11, PDF_A4_W - PDF_MARGIN, PDF_MARGIN + 11);
 
   for (let i = 0; i < students.length; i++) {
     const student = students[i];
-    statusEl.textContent = `Rendering ${i+1} / ${students.length}: ${student.name}…`;
+    statusEl.textContent = `Rendering ${i + 1} / ${students.length}: ${student.name}…`;
 
     const cardCanvas = await _renderCard(student, student.pets || [], bgManifest);
-    const { x, y }   = cardXY(col, row, pageNum === 1);
+    const { x, y }   = getXY(col, row, pageNum === 1);
     pdf.addImage(cardCanvas.toDataURL('image/jpeg', 0.93), 'JPEG', x, y, PDF_CARD_W, PDF_CARD_H);
 
     // Thumbnail preview
     const thumb = document.createElement('canvas');
-    thumb.width = 96; thumb.height = 120;
+    thumb.width = 90; thumb.height = Math.round(90 * CARD_PX_H / CARD_PX_W);
     thumb.style.cssText = 'border:1px solid #8B6914;border-radius:3px;';
     thumb.title = student.name;
-    thumb.getContext('2d').drawImage(cardCanvas, 0, 0, CARD_PX_W, CARD_PX_H, 0, 0, 96, 120);
+    thumb.getContext('2d').drawImage(cardCanvas, 0, 0, CARD_PX_W, CARD_PX_H, 0, 0, thumb.width, thumb.height);
     const lbl = document.createElement('div');
-    lbl.style.cssText = 'font-size:9px;color:var(--muted);text-align:center;max-width:96px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;';
+    lbl.style.cssText = 'font-size:9px;color:var(--muted);text-align:center;max-width:90px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;';
     lbl.textContent = student.name;
     const wrap = document.createElement('div');
     wrap.style.cssText = 'display:flex;flex-direction:column;align-items:center;gap:3px;';
     wrap.appendChild(thumb); wrap.appendChild(lbl);
     previewEl.appendChild(wrap);
 
-    // Advance grid position
+    // Advance grid
     col++;
     if (col >= PDF_COLS) {
       col = 0; row++;
-      const maxRows = pageNum === 1 ? rowsFirst : rowsOther;
+      const maxRows = pageNum === 1 ? rowsFirstPage : rowsOtherPages;
       if (row >= maxRows && i < students.length - 1) {
         row = 0; pageNum++;
         pdf.addPage();
@@ -1999,7 +2033,7 @@ async function generatePhotoExport() {
     }
   }
 
-  statusEl.textContent = `✓ Done — ${students.length} cards across ${pageNum} page${pageNum>1?'s':''}.`;
+  statusEl.textContent = `✓ ${students.length} cards across ${pageNum} page${pageNum > 1 ? 's' : ''}.`;
   btn.disabled = false;
   pdf.save('marigold-tama-photos.pdf');
   toast('📸 PDF saved!');
