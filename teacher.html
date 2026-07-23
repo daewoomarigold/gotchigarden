@@ -1883,8 +1883,10 @@ async function _renderCard(student, pets, bgManifest) {
   const iw = CARD_PX_W - B * 2;
   const ih = CARD_PX_H - B * 2;
 
-  // 1. Background
-  let bgDrawn = false;
+  // 1. Background — fill with student's bg_color first so transparency shows correctly
+  ctx.fillStyle = student.bg_color || '#87CEEB';
+  ctx.fillRect(ix, iy, iw, ih);
+
   if (student.bg_id && bgManifest?.backgrounds) {
     const bgEntry = bgManifest.backgrounds.find(b => b.id === student.bg_id);
     if (bgEntry) {
@@ -1893,16 +1895,8 @@ async function _renderCard(student, pets, bgManifest) {
           `${PHOTO_PAGES_BASE}/sprites/background/${encodeURIComponent(bgEntry.file)}`
         );
         ctx.drawImage(bgImg, ix, iy, iw, ih);
-        bgDrawn = true;
       } catch(e) {}
     }
-  }
-  if (!bgDrawn) {
-    const grad = ctx.createLinearGradient(ix, iy, ix, iy + ih);
-    grad.addColorStop(0, '#1a2a3a');
-    grad.addColorStop(1, '#0a1a0a');
-    ctx.fillStyle = grad;
-    ctx.fillRect(ix, iy, iw, ih);
   }
 
   // 2. Tamas — adults/babies first, eggs last
@@ -1959,11 +1953,7 @@ async function _renderCard(student, pets, bgManifest) {
   ctx.shadowBlur   = 4;
   ctx.fillStyle    = '#ffffff';
   ctx.font         = 'bold 26px Arial, sans-serif';
-  ctx.fillText(student.name, ix + iw / 2, nameY + CARD_NAME_H * 0.38, iw - 16);
-  ctx.fillStyle    = '#FFD700';
-  ctx.font         = '15px monospace';
-  ctx.shadowBlur   = 2;
-  ctx.fillText(`${student.gotchi_pts ?? 0} pts`, ix + iw / 2, nameY + CARD_NAME_H * 0.72);
+  ctx.fillText(student.name, ix + iw / 2, nameY + CARD_NAME_H / 2, iw - 16);
   ctx.restore();
 
   // 4. Brown frame
@@ -2011,7 +2001,7 @@ async function generatePhotoExport() {
   // Fetch students
   const { data: students, error } = await db
     .from('students')
-    .select('id, name, gotchi_pts, bg_id')
+    .select('id, name, gotchi_pts, bg_id, bg_color')
     .eq('class_id', currentClassId)
     .order('name');
   if (error || !students) { toast('⚠ Could not load students'); btn.disabled = false; return; }
