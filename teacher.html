@@ -304,21 +304,15 @@ td.muted{color:var(--muted);}
       <!-- Seating plan panel -->
       <!-- ── Photos Export Panel ── -->
       <div id="photos-panel" style="display:none;flex:1;flex-direction:column;overflow-y:auto;padding:24px;gap:20px;">
-
         <div style="display:flex;justify-content:space-between;align-items:flex-start;">
           <div>
             <div style="font-family:'Pixelify Sans',monospace;font-size:1.1rem;color:var(--accent);">📸 Tama Photo Cards</div>
-            <div style="font-size:11px;color:var(--muted);margin-top:4px;">Generates a printable A4 PDF — one card per student, ordered alphabetically. Each card shows their background, all tamas, and their name.</div>
+            <div style="font-size:11px;color:var(--muted);margin-top:4px;">A4 PDF — one card per student, alphabetical. Shows background, all tamas (happy pose), name and points.</div>
           </div>
-          <div style="display:flex;gap:8px;flex-shrink:0;">
-            <button class="btn" id="btn-gen-photos" onclick="generatePhotoExport()" style="border-color:var(--accent);color:var(--accent);">↓ Generate PDF</button>
-          </div>
+          <button class="btn" id="btn-gen-photos" onclick="generatePhotoExport()" style="border-color:var(--accent);color:var(--accent);flex-shrink:0;">↓ Generate PDF</button>
         </div>
-
         <div id="photo-status" style="font-size:11px;color:var(--muted);min-height:16px;"></div>
-
         <div id="photo-preview" style="display:flex;flex-wrap:wrap;gap:10px;"></div>
-
       </div>
 
       <div id="seating-panel" style="display:none;flex:1;flex-direction:column;overflow:hidden;">
@@ -1763,7 +1757,6 @@ window.addEventListener('resize', () => {
   }, 200);
 });
 
-
 // ═══════════════════════════════════════════════════════════════════════════
 // PHOTO EXPORT
 // ═══════════════════════════════════════════════════════════════════════════
@@ -1771,30 +1764,29 @@ window.addEventListener('resize', () => {
 const PHOTO_PAGES_BASE  = 'https://daewoomarigold.github.io/gotchigarden';
 const PHOTO_HEADER_TEXT = 'Marigold Class — Spring 2026';
 
-// ── Card dimensions (fixed for all students) ─────────────────────────────
-const CARD_PX_W    = 480;
-const CARD_PX_H    = 640;
-const CARD_BORDER  = 18;
-const CARD_NAME_H  = 75;
-const CARD_PAD_TOP = 14;
-const CARD_PAD_BOT = 8;
+// ── Fixed card dimensions (same for every student) ─────────────────────────
+// Card sized to fit up to 40 tamas (8 rows × 5 per row) at 58px each.
+const CARD_PX_W     = 480;
+const CARD_PX_H     = 640;
+const CARD_BORDER   = 18;
+const CARD_NAME_H   = 75;
+const CARD_PAD_TOP  = 14;
+const CARD_PAD_BOT  = 8;
 const TAMAS_PER_ROW = 5;
 const ROW_GAP       = 6;
-// Tama sprite height — fills 8 rows perfectly inside the card
-// avail = 640 - 36 - 14 - 8 - 75 = 507px; TAMA_H = (507 - 7×6) / 8 ≈ 58px
-const TAMA_H = 58;
+const TAMA_H        = 58;  // max sprite height per tama
 
-// ── PDF layout ────────────────────────────────────────────────────────────
-const PDF_A4_W    = 210;
-const PDF_A4_H    = 297;
-const PDF_MARGIN  = 10;
-const PDF_GAP     = 5;
-const PDF_COLS    = 3;
-const PDF_HDR_H   = 16;
-const PDF_CARD_W  = (PDF_A4_W - PDF_MARGIN * 2 - PDF_GAP * (PDF_COLS - 1)) / PDF_COLS; // 60mm
-const PDF_CARD_H  = CARD_PX_H / CARD_PX_W * PDF_CARD_W; // ~80mm
+// ── PDF layout ─────────────────────────────────────────────────────────────
+const PDF_A4_W   = 210;
+const PDF_A4_H   = 297;
+const PDF_MARGIN = 10;
+const PDF_GAP    = 5;
+const PDF_COLS   = 3;
+const PDF_HDR_H  = 16;
+const PDF_CARD_W = (PDF_A4_W - PDF_MARGIN * 2 - PDF_GAP * (PDF_COLS - 1)) / PDF_COLS;
+const PDF_CARD_H = CARD_PX_H / CARD_PX_W * PDF_CARD_W;
 
-// ── Asset loaders ─────────────────────────────────────────────────────────
+// ── Asset cache & loaders ──────────────────────────────────────────────────
 const _photoImgCache = {};
 async function _loadImg(url) {
   if (_photoImgCache[url]) return _photoImgCache[url];
@@ -1808,22 +1800,71 @@ async function _loadImg(url) {
 }
 
 const _tamaCache = {};
-async function _loadTamaSprite(charId) {
+async function _loadTamaData(charId) {
   if (_tamaCache[charId]) return _tamaCache[charId];
+
   const resp = await fetch(`${PHOTO_PAGES_BASE}/sprites/tamas/${charId}.json`);
-  if (!resp.ok) throw new Error('No JSON for ' + charId);
+  if (!resp.ok) throw new Error('No JSON: ' + charId);
   const data  = await resp.json();
   const bands = data.bands || [];
-  const band  = bands.find(b => b.role === 'small_anim') || bands.find(b => b.role === 'body_anim');
-  if (!band?.sprites.length) throw new Error('No body band for ' + charId);
-  const sp  = band.sprites[0];
-  const img = await _loadImg(`${PHOTO_PAGES_BASE}/sprites/tamas/${encodeURIComponent(data.sheet)}`);
-  const result = { img, sx: sp.x, sy: sp.y, sw: sp.w, sh: sp.h };
+
+  // Body: use body_anim[0] (stand pose) so we can overlay the face
+  const bodyBand = bands.find(b => b.role === 'body_anim');
+  if (!bodyBand?.sprites.length) throw new Error('No body_anim: ' + charId);
+  const bodySp = bodyBand.sprites[0];
+
+  // Face: happy expression = index 2 in face_small
+  const faceBand = bands.find(b => b.role === 'face_small');
+  const faceSp   = faceBand?.sprites[2] ?? null;  // null for babies (no face band)
+
+  // Face anchor: offsetX/Y is face top-left relative to body top-left
+  const anchor = data.bodyAnimAnchors?.[0] ?? null;
+
+  const img = await _loadImg(
+    `${PHOTO_PAGES_BASE}/sprites/tamas/${encodeURIComponent(data.sheet)}`
+  );
+
+  const result = { img, bodySp, faceSp, anchor };
   _tamaCache[charId] = result;
   return result;
 }
 
-// ── Card renderer ─────────────────────────────────────────────────────────
+// ── Draw one tama (body + happy face) onto ctx at (drawX, drawY) ───────────
+async function _drawTama(ctx, charId, drawX, drawY, slotW) {
+  const { img, bodySp, faceSp, anchor } = await _loadTamaData(charId);
+  const { sx, sy, sw, sh } = bodySp;
+
+  // Scale to fit within slot — respect both height and slot width
+  const scaleH = TAMA_H / sh;
+  const scaleW = (slotW * 0.90) / sw;
+  const scale  = Math.min(scaleH, scaleW);
+  const drawW  = Math.round(sw * scale);
+  const drawH  = Math.round(sh * scale);
+
+  // Centre horizontally in slot; bottom-align vertically in row
+  const centeredX = drawX + Math.round((slotW - drawW) / 2);
+  const bottomY   = drawY + (TAMA_H - drawH);  // pin to bottom of row
+
+  // Body
+  ctx.save();
+  ctx.shadowColor   = 'rgba(0,0,0,0.5)';
+  ctx.shadowBlur    = 5;
+  ctx.shadowOffsetX = 2;
+  ctx.shadowOffsetY = 2;
+  ctx.drawImage(img, sx, sy, sw, sh, centeredX, bottomY, drawW, drawH);
+  ctx.restore();
+
+  // Happy face overlay (adults only — babies have no face_small band)
+  if (faceSp && anchor && anchor.useFace !== false) {
+    const faceX = centeredX + Math.round(anchor.offsetX * scale);
+    const faceY = bottomY   + Math.round(anchor.offsetY * scale);
+    const faceW = Math.round(faceSp.w * scale);
+    const faceH = Math.round(faceSp.h * scale);
+    ctx.drawImage(img, faceSp.x, faceSp.y, faceSp.w, faceSp.h, faceX, faceY, faceW, faceH);
+  }
+}
+
+// ── Render one student card ─────────────────────────────────────────────────
 async function _renderCard(student, pets, bgManifest) {
   const cv = document.createElement('canvas');
   cv.width  = CARD_PX_W;
@@ -1836,7 +1877,7 @@ async function _renderCard(student, pets, bgManifest) {
   const iw = CARD_PX_W - B * 2;
   const ih = CARD_PX_H - B * 2;
 
-  // ── 1. Background ────────────────────────────────────────────────────────
+  // 1. Background
   let bgDrawn = false;
   if (student.bg_id && bgManifest?.backgrounds) {
     const bgEntry = bgManifest.backgrounds.find(b => b.id === student.bg_id);
@@ -1858,57 +1899,53 @@ async function _renderCard(student, pets, bgManifest) {
     ctx.fillRect(ix, iy, iw, ih);
   }
 
-  // ── 2. Tama sprites in rows ──────────────────────────────────────────────
-  // Adults/babies first, eggs at end
+  // 2. Tamas — adults/babies first, eggs last
   const activePets = pets.filter(p => p.stage !== 'egg' && p.char_id);
   const eggPets    = pets.filter(p => p.stage === 'egg');
   const allPets    = [...activePets, ...eggPets];
 
   if (allPets.length > 0) {
-    const rowH      = TAMA_H + ROW_GAP;
-    const numRows   = Math.ceil(allPets.length / TAMAS_PER_ROW);
-    const totalH    = numRows * rowH - ROW_GAP;
-    // Anchor rows to bottom of tama zone (just above name bar)
+    const numRows    = Math.ceil(allPets.length / TAMAS_PER_ROW);
+    const rowH       = TAMA_H + ROW_GAP;
+    const totalH     = numRows * rowH - ROW_GAP;
+    const slotW      = iw / TAMAS_PER_ROW;
+    // Anchor rows just above the name bar
     const zoneBottom = iy + ih - CARD_NAME_H - CARD_PAD_BOT;
-    const startY    = zoneBottom - totalH;
-    const slotW     = iw / TAMAS_PER_ROW;
+    const startY     = zoneBottom - totalH;
 
     for (let i = 0; i < allPets.length; i++) {
-      const pet     = allPets[i];
-      const rowIdx  = Math.floor(i / TAMAS_PER_ROW);
-      const colIdx  = i % TAMAS_PER_ROW;
-      const drawY   = startY + rowIdx * rowH;
-      // Centre tama within its slot
-      const slotX   = ix + colIdx * slotW;
+      const pet      = allPets[i];
+      const rowIdx   = Math.floor(i / TAMAS_PER_ROW);
+      const colIdx   = i % TAMAS_PER_ROW;
+      const rowY     = startY + rowIdx * rowH;
+
+      // Count tamas in this row — last row may be partial
+      const isLastRow       = rowIdx === numRows - 1;
+      const countInThisRow  = isLastRow
+        ? allPets.length - rowIdx * TAMAS_PER_ROW
+        : TAMAS_PER_ROW;
+
+      // Centre partial rows horizontally
+      const rowOffsetX = (TAMAS_PER_ROW - countInThisRow) * slotW / 2;
+      const slotX      = ix + rowOffsetX + colIdx * slotW;
 
       if (pet.stage === 'egg') {
         ctx.save();
-        ctx.font = `${Math.round(TAMA_H * 0.7)}px serif`;
+        ctx.font = `${Math.round(TAMA_H * 0.65)}px serif`;
         ctx.textAlign    = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText('🥚', slotX + slotW / 2, drawY + TAMA_H / 2);
+        ctx.fillText('🥚', slotX + slotW / 2, rowY + TAMA_H / 2);
         ctx.restore();
         continue;
       }
 
       try {
-        const { img, sx, sy, sw, sh } = await _loadTamaSprite(pet.char_id);
-        const scale  = TAMA_H / sh;
-        const drawW  = Math.round(sw * scale);
-        // Centre horizontally in slot
-        const drawX  = Math.round(slotX + (slotW - drawW) / 2);
-        ctx.save();
-        ctx.shadowColor   = 'rgba(0,0,0,0.55)';
-        ctx.shadowBlur    = 6;
-        ctx.shadowOffsetX = 2;
-        ctx.shadowOffsetY = 2;
-        ctx.drawImage(img, sx, sy, sw, sh, drawX, drawY, drawW, TAMA_H);
-        ctx.restore();
-      } catch(e) { /* skip missing sprites silently */ }
+        await _drawTama(ctx, pet.char_id, slotX, rowY, slotW);
+      } catch(e) { /* skip missing sprites */ }
     }
   }
 
-  // ── 3. Name bar ──────────────────────────────────────────────────────────
+  // 3. Name bar
   const nameY = iy + ih - CARD_NAME_H;
   ctx.fillStyle = 'rgba(0,0,0,0.68)';
   ctx.fillRect(ix, nameY, iw, CARD_NAME_H);
@@ -1916,27 +1953,28 @@ async function _renderCard(student, pets, bgManifest) {
   ctx.fillRect(ix, nameY, iw, 2);
 
   ctx.save();
-  ctx.fillStyle    = '#ffffff';
-  ctx.font         = 'bold 26px Arial, sans-serif';
   ctx.textAlign    = 'center';
   ctx.textBaseline = 'middle';
   ctx.shadowColor  = 'rgba(0,0,0,0.85)';
   ctx.shadowBlur   = 4;
+  ctx.fillStyle    = '#ffffff';
+  ctx.font         = 'bold 26px Arial, sans-serif';
   ctx.fillText(student.name, ix + iw / 2, nameY + CARD_NAME_H * 0.38, iw - 16);
-  ctx.fillStyle  = '#FFD700';
-  ctx.font       = '15px monospace';
-  ctx.shadowBlur = 2;
+  ctx.fillStyle    = '#FFD700';
+  ctx.font         = '15px monospace';
+  ctx.shadowBlur   = 2;
   ctx.fillText(`${student.gotchi_pts ?? 0} pts`, ix + iw / 2, nameY + CARD_NAME_H * 0.72);
   ctx.restore();
 
-  // ── 4. Brown frame ────────────────────────────────────────────────────────
+  // 4. Brown frame
   ctx.strokeStyle = '#4a2800'; ctx.lineWidth = B;
-  ctx.strokeRect(B / 2, B / 2, CARD_PX_W - B, CARD_PX_H - B);
+  ctx.strokeRect(B/2, B/2, CARD_PX_W - B, CARD_PX_H - B);
   ctx.strokeStyle = '#8B6914'; ctx.lineWidth = B * 0.5;
-  ctx.strokeRect(B * 0.75, B * 0.75, CARD_PX_W - B * 1.5, CARD_PX_H - B * 1.5);
+  ctx.strokeRect(B*0.75, B*0.75, CARD_PX_W - B*1.5, CARD_PX_H - B*1.5);
   ctx.strokeStyle = '#C9A227'; ctx.lineWidth = 2;
-  ctx.strokeRect(B + 2, B + 2, CARD_PX_W - B * 2 - 4, CARD_PX_H - B * 2 - 4);
+  ctx.strokeRect(B+2, B+2, CARD_PX_W - B*2 - 4, CARD_PX_H - B*2 - 4);
 
+  // Corner ornaments
   const cs = 18;
   ctx.fillStyle = '#C9A227';
   [[B+4,B+4],[CARD_PX_W-B-4-cs,B+4],
@@ -1946,7 +1984,7 @@ async function _renderCard(student, pets, bgManifest) {
   return cv;
 }
 
-// ── Main export ───────────────────────────────────────────────────────────
+// ── Main PDF export ────────────────────────────────────────────────────────
 async function generatePhotoExport() {
   if (!currentClassId) { toast('⚠ Select a class first'); return; }
 
@@ -1981,43 +2019,42 @@ async function generatePhotoExport() {
   } catch(e) {}
 
   const pdf = new jsPDF({ orientation:'portrait', unit:'mm', format:'a4' });
+  const rowsFirst = Math.floor((PDF_A4_H - PDF_MARGIN - PDF_HDR_H - PDF_GAP - PDF_MARGIN) / (PDF_CARD_H + PDF_GAP));
+  const rowsOther = Math.floor((PDF_A4_H - PDF_MARGIN * 2) / (PDF_CARD_H + PDF_GAP));
 
-  // Grid tracking
-  const rowsFirstPage  = Math.floor((PDF_A4_H - PDF_MARGIN - PDF_HDR_H - PDF_GAP - PDF_MARGIN) / (PDF_CARD_H + PDF_GAP));
-  const rowsOtherPages = Math.floor((PDF_A4_H - PDF_MARGIN * 2) / (PDF_CARD_H + PDF_GAP));
   let pageNum = 1, col = 0, row = 0;
-
   const getXY = (c, r, first) => ({
     x: PDF_MARGIN + c * (PDF_CARD_W + PDF_GAP),
     y: (first ? PDF_MARGIN + PDF_HDR_H + PDF_GAP : PDF_MARGIN) + r * (PDF_CARD_H + PDF_GAP),
   });
 
-  // First page header
+  // Header
   pdf.setFont('helvetica','bold'); pdf.setFontSize(14);
-  pdf.setTextColor(74, 40, 0);
-  pdf.text(PHOTO_HEADER_TEXT, PDF_A4_W / 2, PDF_MARGIN + 8, { align:'center' });
-  pdf.setDrawColor(139, 105, 20); pdf.setLineWidth(0.4);
-  pdf.line(PDF_MARGIN, PDF_MARGIN + 11, PDF_A4_W - PDF_MARGIN, PDF_MARGIN + 11);
+  pdf.setTextColor(74,40,0);
+  pdf.text(PHOTO_HEADER_TEXT, PDF_A4_W/2, PDF_MARGIN+8, { align:'center' });
+  pdf.setDrawColor(139,105,20); pdf.setLineWidth(0.4);
+  pdf.line(PDF_MARGIN, PDF_MARGIN+11, PDF_A4_W-PDF_MARGIN, PDF_MARGIN+11);
 
   for (let i = 0; i < students.length; i++) {
     const student = students[i];
-    statusEl.textContent = `Rendering ${i + 1} / ${students.length}: ${student.name}…`;
+    statusEl.textContent = `Rendering ${i+1} / ${students.length}: ${student.name}…`;
 
     const cardCanvas = await _renderCard(student, student.pets || [], bgManifest);
     const { x, y }   = getXY(col, row, pageNum === 1);
     pdf.addImage(cardCanvas.toDataURL('image/jpeg', 0.93), 'JPEG', x, y, PDF_CARD_W, PDF_CARD_H);
 
-    // Thumbnail preview
+    // Thumbnail
     const thumb = document.createElement('canvas');
-    thumb.width = 90; thumb.height = Math.round(90 * CARD_PX_H / CARD_PX_W);
+    thumb.width  = 90;
+    thumb.height = Math.round(90 * CARD_PX_H / CARD_PX_W);
     thumb.style.cssText = 'border:1px solid #8B6914;border-radius:3px;';
-    thumb.title = student.name;
+    thumb.title  = student.name;
     thumb.getContext('2d').drawImage(cardCanvas, 0, 0, CARD_PX_W, CARD_PX_H, 0, 0, thumb.width, thumb.height);
     const lbl = document.createElement('div');
-    lbl.style.cssText = 'font-size:9px;color:var(--muted);text-align:center;max-width:90px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;';
-    lbl.textContent = student.name;
+    lbl.style.cssText   = 'font-size:9px;color:var(--muted);text-align:center;max-width:90px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;';
+    lbl.textContent     = student.name;
     const wrap = document.createElement('div');
-    wrap.style.cssText = 'display:flex;flex-direction:column;align-items:center;gap:3px;';
+    wrap.style.cssText  = 'display:flex;flex-direction:column;align-items:center;gap:3px;';
     wrap.appendChild(thumb); wrap.appendChild(lbl);
     previewEl.appendChild(wrap);
 
@@ -2025,7 +2062,7 @@ async function generatePhotoExport() {
     col++;
     if (col >= PDF_COLS) {
       col = 0; row++;
-      const maxRows = pageNum === 1 ? rowsFirstPage : rowsOtherPages;
+      const maxRows = pageNum === 1 ? rowsFirst : rowsOther;
       if (row >= maxRows && i < students.length - 1) {
         row = 0; pageNum++;
         pdf.addPage();
@@ -2033,7 +2070,7 @@ async function generatePhotoExport() {
     }
   }
 
-  statusEl.textContent = `✓ ${students.length} cards across ${pageNum} page${pageNum > 1 ? 's' : ''}.`;
+  statusEl.textContent = `✓ ${students.length} cards across ${pageNum} page${pageNum>1?'s':''}.`;
   btn.disabled = false;
   pdf.save('marigold-tama-photos.pdf');
   toast('📸 PDF saved!');
