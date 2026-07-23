@@ -1808,17 +1808,19 @@ async function _loadTamaData(charId) {
   const data  = await resp.json();
   const bands = data.bands || [];
 
-  // Body: use body_anim[0] (stand pose) so we can overlay the face
-  const bodyBand = bands.find(b => b.role === 'body_anim');
-  if (!bodyBand?.sprites.length) throw new Error('No body_anim: ' + charId);
-  const bodySp = bodyBand.sprites[0];
+  // Prefer body_anim (allows face overlay); fall back to small_anim
+  const bodyBand = bands.find(b => b.role === 'body_anim')
+                || bands.find(b => b.role === 'small_anim');
+  if (!bodyBand?.sprites.length) throw new Error('No body band: ' + charId);
+  const bodySp      = bodyBand.sprites[0];
+  const useBodyAnim = bodyBand.role === 'body_anim';
 
-  // Face: happy expression = index 2 in face_small
-  const faceBand = bands.find(b => b.role === 'face_small');
-  const faceSp   = faceBand?.sprites[2] ?? null;  // null for babies (no face band)
+  // Happy face (index 2) only possible when using body_anim
+  const faceBand = useBodyAnim ? bands.find(b => b.role === 'face_small') : null;
+  const faceSp   = faceBand?.sprites[2] ?? null;
 
-  // Face anchor: offsetX/Y is face top-left relative to body top-left
-  const anchor = data.bodyAnimAnchors?.[0] ?? null;
+  // Anchor only relevant for body_anim
+  const anchor = useBodyAnim ? (data.bodyAnimAnchors?.[0] ?? null) : null;
 
   const img = await _loadImg(
     `${PHOTO_PAGES_BASE}/sprites/tamas/${encodeURIComponent(data.sheet)}`
