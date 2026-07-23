@@ -1800,69 +1800,60 @@ async function _loadImg(url) {
 }
 
 const _tamaCache = {};
-async function _loadTamaData(charId) {
+const _tamaCache = {};
+async function _loadTamaSprite(charId) {
   if (_tamaCache[charId]) return _tamaCache[charId];
-
   const resp = await fetch(`${PHOTO_PAGES_BASE}/sprites/tamas/${charId}.json`);
   if (!resp.ok) throw new Error('No JSON: ' + charId);
   const data  = await resp.json();
   const bands = data.bands || [];
-
-  // Prefer body_anim (allows face overlay); fall back to small_anim
-  const bodyBand = bands.find(b => b.role === 'body_anim')
-                || bands.find(b => b.role === 'small_anim');
-  if (!bodyBand?.sprites.length) throw new Error('No body band: ' + charId);
-  const bodySp      = bodyBand.sprites[0];
-  const useBodyAnim = bodyBand.role === 'body_anim';
-
-  // Happy face (index 2) only possible when using body_anim
-  const faceBand = useBodyAnim ? bands.find(b => b.role === 'face_small') : null;
-  const faceSp   = faceBand?.sprites[2] ?? null;
-
-  // Anchor only relevant for body_anim
-  const anchor = useBodyAnim ? (data.bodyAnimAnchors?.[0] ?? null) : null;
-
-  const img = await _loadImg(
-    `${PHOTO_PAGES_BASE}/sprites/tamas/${encodeURIComponent(data.sheet)}`
-  );
-
-  const result = { img, bodySp, faceSp, anchor };
+  // Same priority as the original working version
+  const band  = bands.find(b => b.role === 'small_anim')
+             || bands.find(b => b.role === 'body_anim');
+  if (!band?.sprites.length) throw new Error('No body band: ' + charId);
+  const sp     = band.sprites[0];
+  const pngUrl = `${PHOTO_PAGES_BASE}/sprites/tamas/${encodeURIComponent(data.sheet)}`;
+  const img    = await _loadImg(pngUrl);
+  // Also grab happy face (face_small[2]) if available — drawn on top
+  const faceBand  = bands.find(b => b.role === 'face_small');
+  const faceSp    = faceBand?.sprites[2] ?? null;
+  const anchors   = data.bodyAnimAnchors ?? [];
+  const anchor    = anchors[0] ?? null;
+  const result = { img, sx: sp.x, sy: sp.y, sw: sp.w, sh: sp.h, faceSp, anchor };
   _tamaCache[charId] = result;
   return result;
 }
 
-// ── Draw one tama (body + happy face) onto ctx at (drawX, drawY) ───────────
-async function _drawTama(ctx, charId, drawX, drawY, slotW) {
-  const { img, bodySp, faceSp, anchor } = await _loadTamaData(charId);
-  const { sx, sy, sw, sh } = bodySp;
+// ── Draw one tama onto ctx ─────────────────────────────────────────────────
+async function _drawTama(ctx, charId, slotX, rowY, slotW) {
+  const { img, sx, sy, sw, sh, faceSp, anchor } = await _loadTamaSprite(charId);
 
-  // Scale to fit within slot — respect both height and slot width
-  const scaleH = TAMA_H / sh;
-  const scaleW = (slotW * 0.90) / sw;
-  const scale  = Math.min(scaleH, scaleW);
-  const drawW  = Math.round(sw * scale);
-  const drawH  = Math.round(sh * scale);
+  const scaleH  = TAMA_H / sh;
+  const scaleW  = (slotW * 0.90) / sw;
+  const scale   = Math.min(scaleH, scaleW);
+  const drawW   = Math.round(sw * scale);
+  const drawH   = Math.round(sh * scale);
+  // Centre in slot; bottom-align in row
+  const drawX   = slotX + Math.round((slotW - drawW) / 2);
+  const drawY   = rowY  + (TAMA_H - drawH);
 
-  // Centre horizontally in slot; bottom-align vertically in row
-  const centeredX = drawX + Math.round((slotW - drawW) / 2);
-  const bottomY   = drawY + (TAMA_H - drawH);  // pin to bottom of row
-
-  // Body
   ctx.save();
   ctx.shadowColor   = 'rgba(0,0,0,0.5)';
   ctx.shadowBlur    = 5;
   ctx.shadowOffsetX = 2;
   ctx.shadowOffsetY = 2;
-  ctx.drawImage(img, sx, sy, sw, sh, centeredX, bottomY, drawW, drawH);
+  ctx.drawImage(img, sx, sy, sw, sh, drawX, drawY, drawW, drawH);
   ctx.restore();
 
-  // Happy face overlay (adults only — babies have no face_small band)
+  // Happy face overlay — best-effort, non-breaking
   if (faceSp && anchor && anchor.useFace !== false) {
-    const faceX = centeredX + Math.round(anchor.offsetX * scale);
-    const faceY = bottomY   + Math.round(anchor.offsetY * scale);
-    const faceW = Math.round(faceSp.w * scale);
-    const faceH = Math.round(faceSp.h * scale);
-    ctx.drawImage(img, faceSp.x, faceSp.y, faceSp.w, faceSp.h, faceX, faceY, faceW, faceH);
+    try {
+      const faceX = drawX + Math.round(anchor.offsetX * scale);
+      const faceY = drawY + Math.round(anchor.offsetY * scale);
+      const faceW = Math.round(faceSp.w * scale);
+      const faceH = Math.round(faceSp.h * scale);
+      ctx.drawImage(img, faceSp.x, faceSp.y, faceSp.w, faceSp.h, faceX, faceY, faceW, faceH);
+    } catch(e) { /* face overlay optional — ignore if it fails */ }
   }
 }
 
@@ -1906,13 +1897,6 @@ async function _renderCard(student, pets, bgManifest) {
   const eggPets    = pets.filter(p => p.stage === 'egg');
   const allPets    = [...activePets, ...eggPets];
 
-  // Debug: show pet count as small text at top of card
-  ctx.save();
-  ctx.fillStyle = 'rgba(255,255,255,0.7)';
-  ctx.font = '10px monospace';
-  ctx.fillText(`${allPets.length} pets (${activePets.length} active, ${eggPets.length} eggs)`, ix + 4, iy + 12);
-  ctx.restore();
-
   if (allPets.length > 0) {
     const numRows    = Math.ceil(allPets.length / TAMAS_PER_ROW);
     const rowH       = TAMA_H + ROW_GAP;
@@ -1944,18 +1928,7 @@ async function _renderCard(student, pets, bgManifest) {
 
       try {
         await _drawTama(ctx, pet.char_id, slotX, rowY, slotW);
-      } catch(e) {
-        // Draw a visible placeholder so we can see failures
-        ctx.save();
-        ctx.fillStyle = 'rgba(255,80,80,0.5)';
-        ctx.fillRect(slotX + 2, rowY + 2, slotW - 4, TAMA_H - 4);
-        ctx.fillStyle = '#fff';
-        ctx.font = '8px monospace';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText(String(pet.char_id).slice(-7), slotX + slotW/2, rowY + TAMA_H/2);
-        ctx.restore();
-      }
+      } catch(e) { /* skip sprites that fail to load */ }
     }
   }
 
