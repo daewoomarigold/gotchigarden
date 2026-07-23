@@ -204,6 +204,7 @@ td.muted{color:var(--muted);}
       <button class="content-tab active" id="tab-students" onclick="switchContentTab('students')">👩‍🎓 Students</button>
       <button class="content-tab" id="tab-prices" onclick="switchContentTab('prices')">💰 Prices</button>
       <button class="content-tab" id="tab-seating" onclick="switchContentTab('seating')">🪑 Seating</button>
+      <button class="content-tab" id="tab-photos" onclick="switchContentTab('photos')">📸 Photos</button>
     </div>
     <div class="hdr-flex"></div>
     <div class="hdr-user">
@@ -301,6 +302,25 @@ td.muted{color:var(--muted);}
       </div>
 
       <!-- Seating plan panel -->
+      <!-- ── Photos Export Panel ── -->
+      <div id="photos-panel" style="display:none;flex:1;flex-direction:column;overflow-y:auto;padding:24px;gap:20px;">
+
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+          <div>
+            <div style="font-family:'Pixelify Sans',monospace;font-size:1.1rem;color:var(--accent);">📸 Tama Photo Cards</div>
+            <div style="font-size:11px;color:var(--muted);margin-top:4px;">Generates a printable A4 PDF — one card per student, ordered alphabetically. Each card shows their background, all tamas, and their name.</div>
+          </div>
+          <div style="display:flex;gap:8px;flex-shrink:0;">
+            <button class="btn" id="btn-gen-photos" onclick="generatePhotoExport()" style="border-color:var(--accent);color:var(--accent);">↓ Generate PDF</button>
+          </div>
+        </div>
+
+        <div id="photo-status" style="font-size:11px;color:var(--muted);min-height:16px;"></div>
+
+        <div id="photo-preview" style="display:flex;flex-wrap:wrap;gap:10px;"></div>
+
+      </div>
+
       <div id="seating-panel" style="display:none;flex:1;flex-direction:column;overflow:hidden;">
 
         <!-- Toolbar -->
@@ -1119,20 +1139,21 @@ function toast(msg) {
 
 // ─── CONTENT TAB SWITCHING ────────────────────────────────────────────────
 function switchContentTab(tab) {
-  ['students','prices','seating'].forEach(t => {
+  ['students','prices','seating','photos'].forEach(t => {
     document.getElementById(`tab-${t}`)?.classList.toggle('active', t === tab);
   });
   const studentPanel = document.getElementById('student-panel');
   const pricesPanel  = document.getElementById('prices-panel');
   const seatingPanel = document.getElementById('seating-panel');
+  const photosPanel  = document.getElementById('photos-panel');
   const emptyState   = document.getElementById('empty-state');
   studentPanel.style.display = tab === 'students' && currentClassId ? 'flex' : 'none';
-  pricesPanel.style.display  = tab === 'prices'  ? 'flex' : 'none';
-  seatingPanel.style.display = tab === 'seating' ? 'flex' : 'none';
+  pricesPanel.style.display  = tab === 'prices'   ? 'flex' : 'none';
+  seatingPanel.style.display = tab === 'seating'  ? 'flex' : 'none';
+  photosPanel.style.display  = tab === 'photos'   ? 'flex' : 'none';
   emptyState.style.display   = tab === 'students' && !currentClassId ? 'flex' : 'none';
   if (tab === 'prices')  loadPricesIntoForm();
   if (tab === 'seating') loadSeatPlans();
-  // Re-render students after paint so clientWidth/clientHeight are accurate
   if (tab === 'students' && currentClassId) {
     requestAnimationFrame(() => renderStudents(document.getElementById('search-input').value));
   }
@@ -1741,6 +1762,248 @@ window.addEventListener('resize', () => {
     }
   }, 200);
 });
+
+// ═══════════════════════════════════════════════════════════════════════════
+// PHOTO EXPORT
+// ═══════════════════════════════════════════════════════════════════════════
+
+const PHOTO_PAGES_BASE  = 'https://daewoomarigold.github.io/gotchigarden';
+const PHOTO_HEADER_TEXT = 'Marigold Class — Spring 2026';
+
+const CARD_PX_W = 480;
+const CARD_PX_H = 600;
+
+const PDF_A4_W   = 210;
+const PDF_A4_H   = 297;
+const PDF_MARGIN = 10;
+const PDF_GAP    = 5;
+const PDF_COLS   = 3;
+const PDF_HDR_H  = 16;
+const PDF_CARD_W = (PDF_A4_W - PDF_MARGIN * 2 - PDF_GAP * (PDF_COLS - 1)) / PDF_COLS;
+const PDF_CARD_H = 78;
+
+const _photoImgCache = {};
+async function _loadImg(url) {
+  if (_photoImgCache[url]) return _photoImgCache[url];
+  return new Promise((res, rej) => {
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload  = () => { _photoImgCache[url] = img; res(img); };
+    img.onerror = () => rej(new Error('img load failed: ' + url));
+    img.src = url;
+  });
+}
+
+const _tamaCache = {};
+async function _loadTamaSprite(charId) {
+  if (_tamaCache[charId]) return _tamaCache[charId];
+  const resp = await fetch(`${PHOTO_PAGES_BASE}/sprites/tamas/${charId}.json`);
+  if (!resp.ok) throw new Error('No JSON for ' + charId);
+  const data  = await resp.json();
+  const bands = data.bands || [];
+  const band  = bands.find(b => b.role === 'small_anim') || bands.find(b => b.role === 'body_anim');
+  if (!band?.sprites.length) throw new Error('No body band for ' + charId);
+  const sp  = band.sprites[0];
+  const img = await _loadImg(`${PHOTO_PAGES_BASE}/sprites/tamas/${encodeURIComponent(data.sheet)}`);
+  const result = { img, sx: sp.x, sy: sp.y, sw: sp.w, sh: sp.h };
+  _tamaCache[charId] = result;
+  return result;
+}
+
+async function _renderCard(student, pets, bgManifest) {
+  const cv = document.createElement('canvas');
+  cv.width  = CARD_PX_W;
+  cv.height = CARD_PX_H;
+  const ctx = cv.getContext('2d');
+  ctx.imageSmoothingEnabled = false;
+
+  const BORDER = 18;
+  const NAME_H = 80;
+  const ix = BORDER, iy = BORDER;
+  const iw = CARD_PX_W - BORDER * 2;
+  const ih = CARD_PX_H - BORDER * 2;
+
+  // Background
+  let bgDrawn = false;
+  if (student.bg_id && bgManifest?.backgrounds) {
+    const bgEntry = bgManifest.backgrounds.find(b => b.id === student.bg_id);
+    if (bgEntry) {
+      try {
+        const bgImg = await _loadImg(`${PHOTO_PAGES_BASE}/sprites/background/${encodeURIComponent(bgEntry.file)}`);
+        ctx.drawImage(bgImg, ix, iy, iw, ih);
+        bgDrawn = true;
+      } catch(e) {}
+    }
+  }
+  if (!bgDrawn) {
+    const grad = ctx.createLinearGradient(ix, iy, ix, iy + ih);
+    grad.addColorStop(0, '#1a2a3a');
+    grad.addColorStop(1, '#0a1a0a');
+    ctx.fillStyle = grad;
+    ctx.fillRect(ix, iy, iw, ih);
+  }
+
+  // Tama sprites
+  const activePets = pets.filter(p => p.stage !== 'egg' && p.char_id);
+  const eggPets    = pets.filter(p => p.stage === 'egg');
+  const allPets    = [...activePets, ...eggPets];
+
+  if (allPets.length > 0) {
+    const TARGET_H  = 120;
+    const OVERLAP_X = Math.min(60, (iw - 60) / Math.max(allPets.length, 1));
+    const groupW    = OVERLAP_X * (allPets.length - 1) + 70;
+    const startX    = ix + Math.max(0, (iw - groupW) / 2);
+    const tamaY     = iy + ih - NAME_H - TARGET_H - 8;
+
+    for (let i = 0; i < allPets.length; i++) {
+      const pet   = allPets[i];
+      const drawX = Math.round(startX + i * OVERLAP_X);
+
+      if (pet.stage === 'egg') {
+        ctx.font = `${Math.round(TARGET_H * 0.55)}px serif`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('🥚', drawX + 30, tamaY + TARGET_H * 0.5);
+        continue;
+      }
+      try {
+        const { img, sx, sy, sw, sh } = await _loadTamaSprite(pet.char_id);
+        const scale = TARGET_H / sh;
+        const drawW = Math.round(sw * scale);
+        ctx.save();
+        ctx.shadowColor = 'rgba(0,0,0,0.6)'; ctx.shadowBlur = 8;
+        ctx.shadowOffsetX = 3; ctx.shadowOffsetY = 3;
+        ctx.drawImage(img, sx, sy, sw, sh, drawX, tamaY, drawW, TARGET_H);
+        ctx.restore();
+      } catch(e) {}
+    }
+  }
+
+  // Name bar
+  const nameY = iy + ih - NAME_H;
+  ctx.fillStyle = 'rgba(0,0,0,0.68)';
+  ctx.fillRect(ix, nameY, iw, NAME_H);
+  ctx.fillStyle = '#C9A227';
+  ctx.fillRect(ix, nameY, iw, 2);
+
+  ctx.fillStyle    = '#ffffff';
+  ctx.font         = 'bold 28px Arial, sans-serif';
+  ctx.textAlign    = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.shadowColor  = 'rgba(0,0,0,0.8)'; ctx.shadowBlur = 4;
+  ctx.fillText(student.name, ix + iw / 2, nameY + NAME_H * 0.38, iw - 16);
+  ctx.fillStyle = '#FFD700';
+  ctx.font      = '16px monospace';
+  ctx.shadowBlur = 2;
+  ctx.fillText(`${student.gotchi_pts ?? 0} pts`, ix + iw / 2, nameY + NAME_H * 0.72);
+  ctx.shadowBlur = 0;
+
+  // Brown frame
+  ctx.strokeStyle = '#4a2800'; ctx.lineWidth = BORDER;
+  ctx.strokeRect(BORDER / 2, BORDER / 2, CARD_PX_W - BORDER, CARD_PX_H - BORDER);
+  ctx.strokeStyle = '#8B6914'; ctx.lineWidth = BORDER * 0.5;
+  ctx.strokeRect(BORDER * 0.75, BORDER * 0.75, CARD_PX_W - BORDER * 1.5, CARD_PX_H - BORDER * 1.5);
+  ctx.strokeStyle = '#C9A227'; ctx.lineWidth = 2;
+  ctx.strokeRect(BORDER + 2, BORDER + 2, CARD_PX_W - BORDER * 2 - 4, CARD_PX_H - BORDER * 2 - 4);
+
+  // Corner ornaments
+  const cs = 18;
+  ctx.fillStyle = '#C9A227';
+  [[BORDER+4,BORDER+4],[CARD_PX_W-BORDER-4-cs,BORDER+4],
+   [BORDER+4,CARD_PX_H-BORDER-4-cs],[CARD_PX_W-BORDER-4-cs,CARD_PX_H-BORDER-4-cs]]
+    .forEach(([cx,cy]) => { ctx.fillRect(cx,cy,cs,2); ctx.fillRect(cx,cy,2,cs); });
+
+  return cv;
+}
+
+async function generatePhotoExport() {
+  if (!currentClassId) { toast('⚠ Select a class first'); return; }
+  const statusEl  = document.getElementById('photo-status');
+  const previewEl = document.getElementById('photo-preview');
+  const btn       = document.getElementById('btn-gen-photos');
+  previewEl.innerHTML = '';
+  btn.disabled = true;
+
+  statusEl.textContent = 'Loading PDF library…';
+  if (!window.jspdf) {
+    await new Promise((res, rej) => {
+      const s = document.createElement('script');
+      s.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+      s.onload = res; s.onerror = rej;
+      document.head.appendChild(s);
+    });
+  }
+  const { jsPDF } = window.jspdf;
+
+  statusEl.textContent = 'Loading class data…';
+  const { data: students, error } = await db
+    .from('students').select('*, pets(*)')
+    .eq('class_id', currentClassId).order('name');
+  if (error || !students) { toast('⚠ Could not load students'); btn.disabled = false; return; }
+
+  let bgManifest = null;
+  try {
+    const r = await fetch(`${PHOTO_PAGES_BASE}/sprites/background/manifest.json`);
+    if (r.ok) bgManifest = await r.json();
+  } catch(e) {}
+
+  const pdf = new jsPDF({ orientation:'portrait', unit:'mm', format:'a4' });
+  const rowsFirst = Math.floor((PDF_A4_H - PDF_MARGIN - PDF_HDR_H - PDF_GAP - PDF_MARGIN) / (PDF_CARD_H + PDF_GAP));
+  const rowsOther = Math.floor((PDF_A4_H - PDF_MARGIN * 2) / (PDF_CARD_H + PDF_GAP));
+
+  let pageNum = 1, col = 0, row = 0;
+
+  const cardXY = (c, r, first) => ({
+    x: PDF_MARGIN + c * (PDF_CARD_W + PDF_GAP),
+    y: (first ? PDF_MARGIN + PDF_HDR_H + PDF_GAP : PDF_MARGIN) + r * (PDF_CARD_H + PDF_GAP),
+  });
+
+  // Header
+  pdf.setFont('helvetica','bold'); pdf.setFontSize(14);
+  pdf.setTextColor(74,40,0);
+  pdf.text(PHOTO_HEADER_TEXT, PDF_A4_W/2, PDF_MARGIN+8, { align:'center' });
+  pdf.setDrawColor(139,105,20); pdf.setLineWidth(0.4);
+  pdf.line(PDF_MARGIN, PDF_MARGIN+11, PDF_A4_W-PDF_MARGIN, PDF_MARGIN+11);
+
+  for (let i = 0; i < students.length; i++) {
+    const student = students[i];
+    statusEl.textContent = `Rendering ${i+1} / ${students.length}: ${student.name}…`;
+
+    const cardCanvas = await _renderCard(student, student.pets || [], bgManifest);
+    const { x, y }   = cardXY(col, row, pageNum === 1);
+    pdf.addImage(cardCanvas.toDataURL('image/jpeg', 0.93), 'JPEG', x, y, PDF_CARD_W, PDF_CARD_H);
+
+    // Thumbnail preview
+    const thumb = document.createElement('canvas');
+    thumb.width = 96; thumb.height = 120;
+    thumb.style.cssText = 'border:1px solid #8B6914;border-radius:3px;';
+    thumb.title = student.name;
+    thumb.getContext('2d').drawImage(cardCanvas, 0, 0, CARD_PX_W, CARD_PX_H, 0, 0, 96, 120);
+    const lbl = document.createElement('div');
+    lbl.style.cssText = 'font-size:9px;color:var(--muted);text-align:center;max-width:96px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;';
+    lbl.textContent = student.name;
+    const wrap = document.createElement('div');
+    wrap.style.cssText = 'display:flex;flex-direction:column;align-items:center;gap:3px;';
+    wrap.appendChild(thumb); wrap.appendChild(lbl);
+    previewEl.appendChild(wrap);
+
+    // Advance grid position
+    col++;
+    if (col >= PDF_COLS) {
+      col = 0; row++;
+      const maxRows = pageNum === 1 ? rowsFirst : rowsOther;
+      if (row >= maxRows && i < students.length - 1) {
+        row = 0; pageNum++;
+        pdf.addPage();
+      }
+    }
+  }
+
+  statusEl.textContent = `✓ Done — ${students.length} cards across ${pageNum} page${pageNum>1?'s':''}.`;
+  btn.disabled = false;
+  pdf.save('marigold-tama-photos.pdf');
+  toast('📸 PDF saved!');
+}
 
 init();
 </script>
